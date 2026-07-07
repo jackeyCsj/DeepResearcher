@@ -1,8 +1,8 @@
-"""Rubric models for test-time optimization.
+"""用于测试时优化的 Rubric 模型。
 
-Implements Section 2.2.3: ρ_t = (ρ_p, ρ^e_t).
-- Persistent Rubrics ρ_p: stable topic-level quality dimensions
-- Ephemeral Rubrics ρ^e_t: transient evidence-gap criteria
+对应论文 2.2.3：ρ_t = (ρ_p, ρ^e_t)。
+- 持久 Rubric ρ_p：稳定的话题级质量维度。
+- 瞬时 Rubric ρ^e_t：随证据状态刷新的缺口导向标准。
 """
 
 from __future__ import annotations
@@ -11,10 +11,9 @@ from pydantic import BaseModel, Field
 
 
 class Criterion(BaseModel):
-    """A single criterion c = (name, description, guidance).
+    """单条标准 c = (name, description, guidance)。
 
-    The guidance field is phrased as an actionable reasoning instruction
-    rather than a numeric score (per paper Section 2.2.3).
+    guidance 字段是可执行的推理指令，而不是数字评分。
     """
 
     name: str = ""
@@ -26,14 +25,14 @@ class Criterion(BaseModel):
 
 
 class Rubric(BaseModel):
-    """A set of criteria ρ = {c₁, ..., cₖ}."""
+    """多条 Criterion 构成的 Rubric：ρ = {c₁, ..., cₖ}。"""
 
     criteria: List[Criterion] = Field(default_factory=list)
 
     def has_outstanding_gap(self) -> bool:
-        """Returns True if ANY criterion indicates an evidence gap.
+        """只要任一标准暗示仍有证据缺口，就返回 True。
 
-        The ephemeral rubric uses this to signal the adaptive stopping predicate.
+        瞬时 Rubric 通过该方法向自适应停止机制传递“是否还要继续研究”。
         """
         gap_indicators = [
             "insufficient",
@@ -53,11 +52,11 @@ class Rubric(BaseModel):
 
 
 class RubricSignal(BaseModel):
-    """The full guidance signal ρ_t = (ρ_p, ρ^e_t)."""
+    """完整指导信号 ρ_t = (ρ_p, ρ^e_t)。"""
 
     persistent: Rubric = Field(default_factory=Rubric, description="Stable topic-level rubrics ρ_p")
     ephemeral: Rubric = Field(default_factory=Rubric, description="Transient evidence-gap rubrics ρ^e_t")
 
     def active(self) -> Rubric:
-        """Combined rubric for Planner / Search Agent consumption."""
+        """合并持久与瞬时 Rubric，供 Planner、Reflection 和 Search Agent 消费。"""
         return Rubric(criteria=self.persistent.criteria + self.ephemeral.criteria)

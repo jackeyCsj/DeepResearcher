@@ -1,4 +1,4 @@
-"""Evidence models for accumulating research findings."""
+"""证据模型：用于累计每轮研究发现。"""
 
 from __future__ import annotations
 from datetime import datetime
@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class EvidenceRecord(BaseModel):
-    """A single piece of evidence from a tool call or Search Agent return."""
+    """来自工具调用或 Search Agent 返回的一条原子证据。"""
 
     id: str = ""
     source_url: Optional[str] = None
@@ -22,7 +22,7 @@ class EvidenceRecord(BaseModel):
 
 
 class EvidenceBundle(BaseModel):
-    """Evidence returned by a single action execution (Δe_t in Algorithm 2)."""
+    """单个动作执行后返回的一组证据，对应 Algorithm 2 中的 Δe_t。"""
 
     subtask_id: str
     records: List[EvidenceRecord] = Field(default_factory=list)
@@ -31,11 +31,12 @@ class EvidenceBundle(BaseModel):
 
 
 class EvidenceBase(BaseModel):
-    """Accumulated global evidence e_t = ⋃_{i=1..t} Δe_i."""
+    """全局累计证据库 e_t = ⋃_{i=1..t} Δe_i。"""
 
     bundles: Dict[str, EvidenceBundle] = Field(default_factory=dict)
     all_records: List[EvidenceRecord] = Field(default_factory=list)
 
     def incorporate(self, bundle: EvidenceBundle) -> None:
+        """将新的 EvidenceBundle 合并进全局证据库。"""
         self.bundles[bundle.subtask_id] = bundle
         self.all_records.extend(bundle.records)

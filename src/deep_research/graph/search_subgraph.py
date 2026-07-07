@@ -1,14 +1,10 @@
-"""Inner Search Agent subgraph A^1.
+"""内层 Search Agent 子图 A^1。
 
-Implements Section 2.2.2: Recursive two-level execution.
-Each Search Agent is a complete Foundry Agent with its own Router-Planner-Execution cycle,
-limited to direct tool calls (no further nesting). Max 10 retrieval rounds.
+对应论文 2.2.2 的“递归两层执行”思想。
+每个 Search Agent 都是一个局部研究循环：它接收外层派发的子任务，自己改写查询、
+调用检索工具、汇总证据，再把 EvidenceBundle 返回给外层 Research Agent。
 
-The inner Search Agent:
-- Formulates and reformulates queries (progressive specificity)
-- Invokes retrieval tools directly
-- Consolidates returned evidence
-- Returns evidence bundles and summaries to the outer Research Agent
+当前实现是简化版：不再继续嵌套新的 Search Agent，只做多轮直接检索。
 """
 
 from __future__ import annotations
@@ -26,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class SearchAgentState(BaseModel):
-    """Local state for an inner Search Agent A^1."""
+    """内层 Search Agent 的局部状态。"""
 
     query: str
     sub_queries: List[str] = Field(default_factory=list)
@@ -39,12 +35,12 @@ class SearchAgentState(BaseModel):
 
 
 class SimpleSearchAgent:
-    """A simplified inner Search Agent for open-ended retrieval sub-tasks.
+    """用于开放式检索子任务的简化 Search Agent。
 
-    Implements the multi-turn retrieval loop with:
-    - Progressive specificity (broad → specific → OEM/supplier → standards)
-    - Multi-formulation query expansion
-    - Tool diversification (search + crawler)
+    实现一个多轮检索循环：
+    - 先宽后窄：从泛化查询逐步收敛到具体实体、案例或标准。
+    - 多查询扩展：每轮最多生成多个子查询并分别检索。
+    - 证据汇总：把每轮结果折叠进局部 EvidenceBase。
     """
 
     def __init__(self, tools: ToolRegistry, llm_client: LLMClient) -> None:
@@ -53,21 +49,21 @@ class SimpleSearchAgent:
         self.search_tool = tools.get("web_search")
 
     async def run(self, state: SearchAgentState) -> EvidenceBundle:
-        """Execute the full search agent loop.
+        """执行完整的内层检索循环。
 
         Args:
-            state: The SearchAgentState with query and configuration.
+            state: 包含查询、轮次上限和局部证据库的 SearchAgentState。
 
         Returns:
-            EvidenceBundle containing all collected evidence.
+            包含本子任务全部证据和摘要的 EvidenceBundle。
         """
         logger.info(f"Search Agent starting: '{state.query[:80]}...'")
 
-        # Round 1: Broad initial queries
+        # 第 1 轮使用原始子任务 query，先获得宽泛背景。
         state.sub_queries = [state.query]
         await self._search_round(state)
 
-        # Rounds 2+: Progressive refinement
+        # 第 2 轮起由 LLM 根据已有证据生成更具体的查询。
         while state.current_round < state.max_rounds and not state.stop_flag:
             state.current_round += 1
             new_queries = await self._formulate_next_queries(state)
@@ -78,11 +74,11 @@ class SimpleSearchAgent:
             state.sub_queries = new_queries
             await self._search_round(state)
 
-            # Check stopping
+            # 局部停止条件用于限制搜索成本，避免单个子任务无限扩张。
             if await self._check_sufficient(state):
                 state.stop_flag = True
 
-        # Final consolidation
+        # 将局部证据库压缩成一个摘要，返回给外层编排图。
         summary = await self._consolidate(state)
 
         return EvidenceBundle(
@@ -92,7 +88,7 @@ class SimpleSearchAgent:
         )
 
     async def _search_round(self, state: SearchAgentState) -> None:
-        """Execute one round of parallel searches."""
+        """执行一轮检索，并把结果写入局部 EvidenceBase。"""
         all_records: List[EvidenceRecord] = []
 
         for query in state.sub_queries[: state.queries_per_round]:
@@ -118,23 +114,23 @@ class SimpleSearchAgent:
         state.accumulated_evidence.incorporate(bundle)
 
     async def _formulate_next_queries(self, state: SearchAgentState) -> List[str]:
-        """Formulate more specific queries based on current findings."""
+        """根据当前发现生成下一轮更具体的查询。"""
         evidence_summary = "\n".join(
             f"- {r.snippet[:200]}" for r in state.accumulated_evidence.all_records[:10]
         )
         prompt = f"""Research query: {state.query}
-Current round: {state.current_round + 1}/{state.max_rounds}
-Evidence gathered so far:
-{evidence_summary or "No evidence yet."}
+            Current round: {state.current_round + 1}/{state.max_rounds}
+            Evidence gathered so far:
+            {evidence_summary or "No evidence yet."}
 
-Formulate up to {state.queries_per_round} more specific search queries to fill remaining gaps.
-If sufficient evidence has been gathered, return an empty list.
+            Formulate up to {state.queries_per_round} more specific search queries to fill remaining gaps.
+            If sufficient evidence has been gathered, return an empty list.
 
-Strategies:
-- Progressively narrow from broad concepts to specific details
-- Target specific OEMs, suppliers, standards, or case studies
-- Cross-reference contradictory or missing information
-"""
+            Strategies:
+            - Progressively narrow from broad concepts to specific details
+            - Target specific OEMs, suppliers, standards, or case studies
+            - Cross-reference contradictory or missing information
+        """
         response = await self.llm.generate(prompt)
         try:
             if isinstance(response, dict) and "queries" in response:
@@ -146,7 +142,7 @@ Strategies:
         return []
 
     async def _check_sufficient(self, state: SearchAgentState) -> bool:
-        """Check whether current evidence is sufficient to stop."""
+        """判断当前局部证据是否足够，足够则停止内层搜索。"""
         if state.current_round >= state.max_rounds - 1:
             return True
         if len(state.accumulated_evidence.all_records) > 30:
@@ -154,7 +150,7 @@ Strategies:
         return False
 
     async def _consolidate(self, state: SearchAgentState) -> str:
-        """Produce a consolidated summary of findings."""
+        """把多轮检索结果压缩成外层可消费的简短摘要。"""
         n_records = len(state.accumulated_evidence.all_records)
         urls = list(
             set(

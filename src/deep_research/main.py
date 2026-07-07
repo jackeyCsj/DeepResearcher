@@ -1,6 +1,6 @@
-"""CLI entry point for the DuMate-DeepResearch framework.
+"""DuMate-DeepResearch 框架的 CLI 入口。
 
-Usage:
+用法：
     python -m deep_research.main --query "Your research question"
     python -m deep_research.main --query "Your question" --max-iterations 10
     python -m deep_research.main --query "问题" --model gpt-4o --output report.md
@@ -43,7 +43,7 @@ console = Console()
 
 
 def setup_logging(verbose: bool = False) -> None:
-    """Configure logging with rich handler."""
+    """配置 Rich 日志输出；verbose=True 时开启 DEBUG 级别。"""
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
@@ -51,7 +51,7 @@ def setup_logging(verbose: bool = False) -> None:
         datefmt="[%X]",
         handlers=[RichHandler(rich_tracebacks=True, console=console, show_time=False)],
     )
-    # Quiet down noisy libs
+    # 降低第三方库日志噪声，避免淹没研究循环本身的进度信息。
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("openai").setLevel(logging.WARNING)
     logging.getLogger("langgraph").setLevel(logging.WARNING)
@@ -59,14 +59,16 @@ def setup_logging(verbose: bool = False) -> None:
 
 
 def create_default_tools() -> ToolRegistry:
-    """Create and register default tools."""
+    """创建并注册默认工具集合。"""
     registry = ToolRegistry()
 
     search_tool = create_search_provider("tavily")
     if search_tool is not None:
         registry.register(search_tool)
 
+    # 创建网页爬虫工具，用于抓取搜索结果的完整页面内容
     crawler = WebCrawlerTool()
+    # 将爬虫工具注册到工具注册表，供执行阶段的深度阅读节点调用
     registry.register(crawler)
 
     return registry
@@ -79,17 +81,17 @@ async def run_research(
     max_iterations: int = 15,
     verbose: bool = False,
 ) -> str:
-    """Run a full deep research session.
+    """运行一次完整的深度研究流程。
 
     Args:
-        query: The research question.
-        llm_client: Optional LLM client (created from config if not provided).
-        tools: Optional tool registry (created with defaults if not provided).
-        max_iterations: Maximum planning loop iterations.
-        verbose: Enable debug logging.
+        query: 用户输入的研究问题。
+        llm_client: 可选 LLM 客户端；未提供时按配置创建。
+        tools: 可选工具注册表；未提供时创建默认工具集合。
+        max_iterations: 外层规划循环最大轮次。
+        verbose: 是否开启调试日志。
 
     Returns:
-        The final research report as a string.
+        最终研究报告文本。
     """
     setup_logging(verbose)
 
@@ -98,7 +100,7 @@ async def run_research(
     if tools is None:
         tools = create_default_tools()
 
-    # Instantiate all modules
+    # 实例化外层编排图所需的核心模块。
     router = Router(llm_client)
     planner = GraphPlanner(llm_client)
     executor = ExecutionModule(tools, llm_client)
@@ -107,13 +109,13 @@ async def run_research(
     rubric_generator = RubricGenerator(llm_client)
     stopping = AdaptiveStopping()
 
-    # Build the orchestration graph
+    # 将核心模块装配成 LangGraph 主编排图。
     graph = build_orchestration_graph(
         router, planner, executor, writer,
         reflection_gate, rubric_generator, stopping,
     )
 
-    # Initialize state
+    # 初始化全局 ResearchState；后续所有节点都围绕这个状态读写。
     initial_state = ResearchState(
         context=TaskContext(
             topic=TopicSpec(query=query),
@@ -126,7 +128,7 @@ async def run_research(
     console.print(f"[dim]Max iterations:[/dim] {max_iterations}")
     console.print()
 
-    # Run with progress display
+    # 运行图并显示一个粗粒度进度条；实际步骤由 LangGraph 内部状态机驱动。
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -140,10 +142,12 @@ async def run_research(
             "[cyan]Researching...[/cyan]", total=max_iterations
         )
 
-        final_state = await graph.arun(
+        final_state = await graph.ainvoke(
             initial_state,
             {"recursion_limit": max_iterations * 3 + 10},
         )
+        if isinstance(final_state, dict):
+            final_state = ResearchState.model_validate(final_state)
 
         progress.update(task, completed=max_iterations)
 
@@ -163,7 +167,7 @@ async def run_research(
 
 
 def parse_args(argv: Optional[list] = None) -> argparse.Namespace:
-    """Parse command-line arguments."""
+    """解析命令行参数。"""
     parser = argparse.ArgumentParser(
         description="DuMate-DeepResearch: Multi-agent deep research framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -208,10 +212,10 @@ Examples:
 
 
 async def main_async(argv: Optional[list] = None) -> int:
-    """Async main entry point."""
+    """异步主入口。"""
     args = parse_args(argv)
 
-    # Override config from args
+    # 命令行参数优先级高于 .env 中的默认配置。
     config.llm_model = args.model
     config.max_plan_iterations = args.max_iterations
 
@@ -237,7 +241,7 @@ async def main_async(argv: Optional[list] = None) -> int:
 
 
 def main(argv: Optional[list] = None) -> int:
-    """Synchronous entry point."""
+    """同步入口：负责把异步 main 包装成普通 CLI 调用。"""
     return asyncio.run(main_async(argv))
 
 

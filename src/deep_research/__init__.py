@@ -1,6 +1,6 @@
-"""DuMate-DeepResearch: A multi-agent deep research framework.
+"""DuMate-DeepResearch：多智能体深度研究框架。
 
-Built on the architecture described in:
+本项目参考以下论文中的系统架构：
   "DuMate-DeepResearch: An Auditable Multi-Agent System
    with Recursive Search and Rubric-Grounded Reasoning"
    (Baidu AI Cloud, arXiv:2606.07299)

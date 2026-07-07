@@ -51,18 +51,26 @@ pip install -e .
 
 ## 配置
 
-复制 `.env.example` 为 `.env` 并填入 API 密钥:
+复制 `.env.example` 为 `.env` 并填入 API 密钥。项目使用 OpenAI-compatible 客户端，默认可直接接入 DeepSeek:
 
 ```env
-OPENAI_API_KEY=sk-...
-OPENAI_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4o
+LLM_API_KEY=sk-...
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
 
 TAVILY_API_KEY=tvly-...
 
 MAX_PLAN_ITERATIONS=15
 MAX_SEARCH_ROUNDS=10
 QUERIES_PER_ROUND=3
+```
+
+如果想继续使用 OpenAI，也可以改为：
+
+```env
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o
 ```
 
 ## 使用

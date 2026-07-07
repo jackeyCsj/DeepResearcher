@@ -1,4 +1,4 @@
-"""Web crawling tool for URL content extraction."""
+"""网页爬取工具：从 URL 中提取可读正文内容。"""
 
 from __future__ import annotations
 import logging
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class WebCrawlerTool(BaseTool):
-    """Crawl and extract main content from a URL."""
+    """抓取网页并提取主要正文。"""
 
     name = "crawler"
     description = "Extract readable content from a web page URL"
@@ -39,15 +39,15 @@ class WebCrawlerTool(BaseTool):
         max_chars: int = 5000,
         **kwargs: Any,
     ) -> ToolResult:
-        """Fetch and extract content from a URL.
+        """请求指定 URL 并提取正文内容。
 
         Args:
-            url: The web page URL to crawl.
-            extract_links: Whether to extract hyperlinks from the page.
-            max_chars: Maximum characters to extract.
+            url: 要抓取的网页地址。
+            extract_links: 是否额外提取页面中的链接。
+            max_chars: 最多返回的正文字符数。
 
         Returns:
-            ToolResult with extracted content.
+            包含正文、来源 URL 和可选链接结构化数据的 ToolResult。
         """
         try:
             response = await self._client.get(url)
@@ -72,21 +72,21 @@ class WebCrawlerTool(BaseTool):
         )
 
     def _extract_content(self, html: str, max_chars: int) -> str:
-        """Extract readable content from HTML, stripping scripts and styles."""
+        """从 HTML 中提取可读正文，并移除脚本、样式等非内容元素。"""
         soup = BeautifulSoup(html, "lxml")
 
-        # Remove non-content elements
+        # 删除导航、页脚、脚本等常见非正文元素，降低噪声。
         for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
             tag.decompose()
 
-        # Try to find main content area
+        # 优先使用语义化正文区域；找不到时退回到 body 或整页文本。
         article = soup.find("article") or soup.find("main") or soup.find("body")
         if article:
             text = article.get_text(separator="\n", strip=True)
         else:
             text = soup.get_text(separator="\n", strip=True)
 
-        # Clean up whitespace
+        # 合并过多空行，避免下游 LLM prompt 被无意义空白撑大。
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text[:max_chars]
 

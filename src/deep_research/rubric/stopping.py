@@ -1,11 +1,8 @@
-"""Adaptive stopping mechanism for the research loop.
+"""研究循环的自适应停止机制。
 
-When the ephemeral rubric reports no outstanding evidence gap,
-the stopping predicate STOP(s_t) halts the loop.
+当瞬时 Rubric 判断已经没有明显证据缺口时，STOP(s_t) 会终止外层循环。
 
-From the paper:
-"Once it reports no outstanding gap, the stopping predicate STOP of Algorithm 1
-halts the loop, tying factual sufficiency directly to the stopping rule."
+这把“事实证据是否充分”直接绑定到停止规则，而不是依赖固定检索轮次。
 """
 
 from __future__ import annotations
@@ -14,11 +11,11 @@ from deep_research.models.rubric import Rubric
 
 
 class AdaptiveStopping:
-    """Determines whether the research loop should stop.
+    """判断研究循环是否应该停止。
 
-    STOP predicate: halts when:
-    1. Maximum iterations reached (hard bound)
-    2. Ephemeral rubric reports no outstanding evidence gap
+    STOP 谓词在以下两种情况下触发：
+    1. 达到最大迭代轮次。
+    2. 瞬时 Rubric 判断没有剩余证据缺口。
     """
 
     def should_stop(
@@ -27,21 +24,21 @@ class AdaptiveStopping:
         iteration: int,
         max_iterations: int,
     ) -> bool:
-        """Evaluate the STOP predicate.
+        """评估 STOP 谓词。
 
         Args:
-            ephemeral_rubric: The current ephemeral rubric ρ^e_t.
-            iteration: The current loop iteration.
-            max_iterations: The maximum allowed iterations.
+            ephemeral_rubric: 当前瞬时 Rubric ρ^e_t。
+            iteration: 当前外层循环轮次。
+            max_iterations: 最大允许轮次。
 
         Returns:
-            True if the loop should stop, False to continue.
+            True 表示停止研究循环，False 表示继续。
         """
-        # Hard bound: max iterations reached
+        # 硬上限：达到最大迭代轮次。
         if iteration >= max_iterations:
             return True
 
-        # Adaptive stop: no outstanding evidence gaps
+        # 自适应停止：Rubric 判断没有明显证据缺口。
         if not ephemeral_rubric.has_outstanding_gap():
             return True
 
