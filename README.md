@@ -148,3 +148,39 @@ pytest tests/test_models/ -v
 ## License
 
 MIT
+
+## 更新日志
+
+### 2026-05-12
+
+- 修复 LangGraph 主编排图运行入口兼容问题：将旧式 `graph.arun(...)` 调整为当前 `CompiledStateGraph` 支持的 `graph.ainvoke(...)`。
+- 增加 `ResearchState.model_validate(...)` 兼容处理，解决 `ainvoke()` 返回 `dict` 后下游仍按状态对象访问字段的问题。
+- 修复执行节点中的动作字段笔误，将 `state._actions` 更正为 `state.transient_actions`，避免执行阶段访问不存在字段。
+
+### 2026-05-28
+
+- 增强 OpenAI-compatible LLM 客户端对 DeepSeek 的结构化输出兼容性：DeepSeek 场景优先使用 `response_format={"type": "json_object"}`。
+- 保留 OpenAI JSON Schema 路径，并增加 `json_schema → json_object → prompt-only JSON` 的自动降级链路。
+- 使用 Pydantic `TypeAdapter.validate_json(...)` 统一解析结构化输出，兼容 `TopicSpec`、`Outline`、`ResearchPlan`、`Rubric` 与 `list[Criterion]` 等类型。
+- 增加对 `{"items": [...]}`、`{"criteria": [...]}` 等列表包装格式的自动拆包，解决 DeepSeek `json_object` 顶层对象限制带来的列表解析问题。
+
+### 2026-06-11
+
+- 修复 `LLM_MAX_TOKENS` 配置未生效的问题：原先 `generate()` 实际默认仍使用 `4096`，导致较长 `ResearchPlan` JSON 容易被截断。
+- 新增 `default_output_tokens`，将常规结构化输出控制在合理范围内，同时避免把超大的上下文上限直接当作输出上限传给模型。
+- 为 Planner 初始化计划增加更紧凑的 DAG 输出约束，限制节点数量和描述长度，降低 JSON 截断概率。
+- 新增 `examples/debug_pipeline.py`，支持按 `Router → Outline → Planner → Ready Frontier → Actions` 顺序单步诊断并打印中间结果。
+
+### 2026-06-24
+
+- 修复 `select_actions()` 中动作选择结果解析不稳定的问题：由普通文本 `json.loads(...)` 改为结构化 `ActionList` 输出。
+- 为 DeepSeek 动作选择引入顶层对象格式：`{"actions": [...]}`，避免 JSON 顶层数组在 `json_object` 模式下不稳定。
+- 增加 `_fallback_actions_from_frontier(...)`，当 LLM 动作选择失败时按 `PlanNode.subtask_type` 生成确定性动作，避免误判为 `0 actions` 后提前进入最终报告。
+- 对搜索动作增加后处理，确保 `SearchAgentAction.sub_query` 与 `ToolCallAction.tool_input` 保留必要的时间和新鲜度关键词。
+
+### 2026-07-07
+
+- 为所有 LLM 调用统一注入运行时日期上下文，避免模型误解“当前、今年、至今、最近”等相对时间表达。
+- 明确将“2025年至今”解释为 `2025-01-01` 至当前运行日期，确保 Router、Outline、Planner 和最终报告都覆盖 2026 年进展。
+- 加强 Planner 搜索动作提示词：要求 `search_agent.sub_query` 显式包含 `2025`、`2026`、`2026年7月` 或 `最新` 等时间词。
+- 通过诊断脚本验证：`TopicSpec.scope`、报告大纲、DAG 节点与搜索动作均能正确保留 `2025-2026` 时间范围。
