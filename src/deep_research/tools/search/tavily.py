@@ -1,4 +1,4 @@
-"""Tavily search integration."""
+"""Tavily 搜索服务集成。"""
 
 from __future__ import annotations
 import logging
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class TavilySearchTool(BaseTool):
-    """Web search using the Tavily API."""
+    """基于 Tavily API 的网页搜索工具。"""
 
     name = "web_search"
     description = "Search the web using Tavily API"
@@ -29,15 +29,15 @@ class TavilySearchTool(BaseTool):
         search_depth: str = "advanced",
         **kwargs: Any,
     ) -> ToolResult:
-        """Execute a Tavily search.
+        """执行一次 Tavily 搜索。
 
         Args:
-            query: The search query string.
-            max_results: Number of results to return (1-10).
-            search_depth: "basic" or "advanced".
+            query: 搜索查询字符串。
+            max_results: 返回结果数量，通常为 1-10。
+            search_depth: Tavily 搜索深度，取值为 "basic" 或 "advanced"。
 
         Returns:
-            ToolResult with search results.
+            包含摘要、拼接正文、来源 URL 和结构化结果的 ToolResult。
         """
         if not self.api_key:
             return ToolResult(

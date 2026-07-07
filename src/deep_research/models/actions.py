@@ -1,4 +1,4 @@
-"""Action models for Planner-issued actions and audit records."""
+"""Planner 生成的动作模型，以及执行审计记录。"""
 
 from __future__ import annotations
 from datetime import datetime
@@ -18,7 +18,7 @@ class ActionType(str, Enum):
 
 
 class BaseAction(BaseModel):
-    """An action a_t issued by the Planner."""
+    """Planner 在某一轮生成的基础动作 a_t。"""
 
     id: str = ""
     type: ActionType
@@ -31,7 +31,7 @@ class BaseAction(BaseModel):
 
 
 class ToolCallAction(BaseAction):
-    """Direct tool invocation action."""
+    """直接调用工具生态中的某个工具。"""
 
     type: ActionType = ActionType.TOOL_CALL
     tool_name: str = ""
@@ -40,7 +40,7 @@ class ToolCallAction(BaseAction):
 
 
 class SearchAgentAction(BaseAction):
-    """Dispatch an inner Search Agent for open-ended retrieval."""
+    """派发内层 Search Agent 执行开放式检索。"""
 
     type: ActionType = ActionType.SEARCH_AGENT
     sub_query: str = ""
@@ -49,7 +49,7 @@ class SearchAgentAction(BaseAction):
 
 
 class LLMReasoningAction(BaseAction):
-    """Internal reasoning action (dedup, merge, cross-validate)."""
+    """内部 LLM 推理动作，用于去重、合并、交叉验证等轻量分析。"""
 
     type: ActionType = ActionType.LLM_REASONING
     instruction: str = ""
@@ -57,7 +57,7 @@ class LLMReasoningAction(BaseAction):
 
 
 class ActionRecord(BaseModel):
-    """Audit record for each executed action."""
+    """每个已执行动作的审计记录。"""
 
     action: BaseAction
     result_summary: str = ""

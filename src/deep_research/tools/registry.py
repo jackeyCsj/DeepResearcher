@@ -1,4 +1,4 @@
-"""Global tool registry."""
+"""全局工具注册表。"""
 
 from __future__ import annotations
 from typing import Any, Dict, List
@@ -7,7 +7,7 @@ from deep_research.tools.base import BaseTool
 
 
 class ToolRegistry:
-    """Global registry mapping tool names to BaseTool instances."""
+    """将工具名映射到 BaseTool 实例的全局注册表。"""
 
     def __init__(self) -> None:
         self._tools: Dict[str, BaseTool] = {}

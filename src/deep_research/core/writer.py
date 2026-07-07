@@ -1,11 +1,10 @@
-"""Writer module: Two-stage report generation.
+"""Writer 模块：两阶段报告生成。
 
-Stage 1: Generate report outline O from coarse exploration evidence.
-Stage 2: Synthesize final long-form report from accumulated evidence + persistent rubric.
+阶段 1：根据粗粒度探索证据生成报告大纲 O。
+阶段 2：根据累积证据和持久 Rubric 合成最终长报告。
 
-From the paper (Section 2.1.2):
-- First generates a unified "pivot report" ensuring logical coherence.
-- Then specialized renderers translate to multiple formats (Markdown, HTML, PPT).
+论文 2.1.2 中先生成统一的“pivot report”保证逻辑一致性，再由渲染器转成
+Markdown、HTML、PPT 等格式。本项目当前实现聚焦 Markdown 文本报告。
 """
 
 from __future__ import annotations
@@ -19,9 +18,11 @@ from deep_research.utils.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
+
 OUTLINE_SYSTEM_PROMPT = """You are a research outline generator. Create a detailed, structured
 report outline based on initial research findings. Each chapter must include actionable rubric
 guidance for evidence gathering."""
+
 
 REPORT_SYSTEM_PROMPT = """You are a research report writer. Synthesize a comprehensive,
 evidence-grounded report. Requirements:
@@ -33,7 +34,7 @@ evidence-grounded report. Requirements:
 
 
 class Writer:
-    """Two-stage report generation with rubric-conditioned synthesis."""
+    """带 Rubric 条件约束的两阶段报告生成器。"""
 
     def __init__(self, llm_client: LLMClient) -> None:
         self.llm = llm_client
@@ -43,14 +44,14 @@ class Writer:
         topic: TopicSpec,
         evidence: EvidenceBase,
     ) -> Outline:
-        """Generate structured report outline O from coarse exploration evidence.
+        """根据粗搜证据生成结构化报告大纲 O。
 
         Args:
-            topic: The structured topic specification x.
-            evidence: Initial coarse exploration evidence e_tc.
+            topic: Router 生成的结构化主题规格 x。
+            evidence: 粗粒度探索阶段获得的初始证据。
 
         Returns:
-            Outline with chapters, each containing rubric_guidance.
+            带章节和章节级 rubric_guidance 的 Outline。
         """
         evidence_summaries = "\n".join(
             f"[{bid}] {b.summary[:300]}"
@@ -58,21 +59,21 @@ class Writer:
         ) or "No preliminary evidence available."
 
         prompt = f"""Research topic: {topic.core_topic}
-Sub-questions: {topic.sub_questions}
-Scope: {topic.scope}
+            Sub-questions: {topic.sub_questions}
+            Scope: {topic.scope}
 
-Initial research findings:
-{evidence_summaries}
+            Initial research findings:
+            {evidence_summaries}
 
-Generate a multi-chapter research outline. Follow these principles:
-1. Start with background/context, end with conclusion/future work
-2. Each chapter should have a clear analytical purpose
-3. Include rubric_guidance for each chapter (actionable instruction for evidence gathering)
-4. Cover: historical background, current state, future trends, stakeholder perspectives,
-   quantitative/qualitative evidence, comparisons, risks/limitations
-"""
+            Generate a multi-chapter research outline. Follow these principles:
+            1. Start with background/context, end with conclusion/future work
+            2. Each chapter should have a clear analytical purpose
+            3. Include rubric_guidance for each chapter (actionable instruction for evidence gathering)
+            4. Cover: historical background, current state, future trends, stakeholder perspectives,
+            quantitative/qualitative evidence, comparisons, risks/limitations
+        """
         response = await self.llm.generate(prompt, response_model=Outline, system_prompt=OUTLINE_SYSTEM_PROMPT)
-        # Set title if empty
+        # 如果模型没有返回标题，则用核心主题兜底。
         if not response.title:
             response.title = topic.core_topic
         return response
@@ -83,18 +84,18 @@ Generate a multi-chapter research outline. Follow these principles:
         evidence: EvidenceBase,
         persistent_rubric: Optional[Rubric] = None,
     ) -> str:
-        """Guidance-conditioned synthesis: y = W(x, O, e_t, ρ_p).
+        """带指导信号的报告合成：y = W(x, O, e_t, ρ_p)。
 
-        Consumes ONLY the persistent rubric ρ_p (not ephemeral),
-        per the paper's design (Section 2.2.3).
+        按论文 2.2.3 的设计，最终写作只消费持久 Rubric ρ_p，
+        不直接使用瞬时 Rubric ρ^e_t。
 
         Args:
-            context: The task context z = (x, O).
-            evidence: The accumulated evidence base e_t.
-            persistent_rubric: The persistent rubric ρ_p for quality conditioning.
+            context: 固定任务上下文 z = (x, O)。
+            evidence: 累积证据库 e_t。
+            persistent_rubric: 用于约束最终写作质量的持久 Rubric ρ_p。
 
         Returns:
-            The synthesized long-form report as a string.
+            合成后的长篇研究报告字符串。
         """
         rubric_text = ""
         if persistent_rubric and persistent_rubric.criteria:

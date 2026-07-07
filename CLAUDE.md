@@ -26,6 +26,18 @@ pip install -e .
 # 代码风格 (当前无配置，后续添加 ruff)
 ```
 
+## LLM 配置
+
+项目使用 OpenAI-compatible 客户端，默认可接入 DeepSeek：
+
+```env
+LLM_API_KEY=sk-...
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
+```
+
+也兼容旧的 OpenAI 配置：`OPENAI_API_KEY`、`OPENAI_BASE_URL`、`LLM_MODEL=gpt-4o`。
+
 ## 项目结构
 
 ```

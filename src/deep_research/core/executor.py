@@ -1,12 +1,12 @@
-"""Execution Module: schedules and executes actions issued by the Planner.
+"""Execution Module：调度并执行 Planner 发出的动作。
 
-Routes to one of four targets:
-1. Direct tool call (Tool Ecosystem)
-2. Search Agent (inner Foundry Agent A^1)
-3. Writer (outline or report generation)
-4. Internal LLM reasoning (dedup, merge, cross-validate)
+动作会被路由到以下目标之一：
+1. 直接工具调用（Tool Ecosystem）
+2. 内层 Search Agent（论文中的 A^1）
+3. Writer（大纲或报告生成）
+4. 内部 LLM 推理（去重、合并、交叉验证等）
 
-Supports parallel fan-out for independent frontier nodes.
+该模块不决定研究策略，只负责把已批准的动作并行执行并转成 EvidenceBundle。
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExecutionModule:
-    """Schedules and executes actions. Sets no research strategy of its own."""
+    """动作执行器：只负责调度和执行，不内置研究策略。"""
 
     def __init__(self, tools: ToolRegistry, llm_client: LLMClient) -> None:
         self.tools = tools
@@ -40,23 +40,30 @@ class ExecutionModule:
         self,
         actions: List[BaseAction],
     ) -> List[EvidenceBundle]:
-        """Execute all actions in parallel (fan-out over independent frontier nodes).
+        """并行执行一批动作，适配 DAG 中互不依赖的前沿节点。
 
         Args:
-            actions: List of actions from the Planner.
+            actions: Planner 本轮选出的动作列表。
 
         Returns:
-            List of EvidenceBundle, one per action.
+            每个动作对应一个 EvidenceBundle。
         """
         if not actions:
             return []
 
+        # asyncio.gather 让同一批 frontier 节点并行执行
         tasks = [self._execute_single(action) for action in actions]
+        # bundles: List[EvidenceBundle | Exception] —— 每个 action 对应一个结果
+        # return_exceptions=True 确保单个 action 失败不会中断整批并行任务
         bundles = await asyncio.gather(*tasks, return_exceptions=True)
 
+        # 将并行的 gather 结果与原始 action 逐一配对，统一转换为 EvidenceBundle
+        # 无论成功还是失败，上游拿到的都是干净的 List[EvidenceBundle]
         results: List[EvidenceBundle] = []
         for action, result in zip(actions, bundles):
             if isinstance(result, Exception):
+                # 该 action 执行时抛出了异常 → 构造一个 marked-as-failed 的空证据包
+                # 不中断整体流程，异常信息附在 summary 中供 reflection 节点检查
                 logger.error(f"Action {action.id} failed: {result}")
                 results.append(
                     EvidenceBundle(
@@ -67,12 +74,13 @@ class ExecutionModule:
                     )
                 )
             else:
+                # 正常返回的 EvidenceBundle，直接透传
                 results.append(result)
 
         return results
 
     async def _execute_single(self, action: BaseAction) -> EvidenceBundle:
-        """Route a single action to the appropriate execution target."""
+        """根据 ActionType 将单个动作路由到对应执行目标。"""
         if action.type == ActionType.TOOL_CALL:
             return await self._execute_tool(action)
         elif action.type == ActionType.SEARCH_AGENT:
@@ -83,7 +91,7 @@ class ExecutionModule:
             raise ValueError(f"Unknown action type: {action.type}")
 
     async def _execute_tool(self, action: ToolCallAction) -> EvidenceBundle:
-        """Execute a direct tool call."""
+        """执行一次直接工具调用，并把工具返回包装成 EvidenceBundle。"""
         try:
             tool = self.tools.get(action.tool_name)
             result = await tool.arun(
@@ -113,10 +121,10 @@ class ExecutionModule:
             )
 
     async def _dispatch_search_agent(self, action: SearchAgentAction) -> EvidenceBundle:
-        """Dispatch an inner Search Agent for open-ended retrieval.
+        """派发一个内层 Search Agent 执行开放式检索。
 
-        In a full implementation, this would create and run a SearchAgent subgraph.
-        For now, we simulate by doing a simple search.
+        完整实现应创建并运行 search_subgraph 中的内层循环。
+        当前版本先用一次 web_search 模拟，保留接口以便后续替换为真正子图。
         """
         logger.info(f"Dispatching Search Agent for: {action.sub_query}")
         try:
@@ -145,7 +153,7 @@ class ExecutionModule:
             )
 
     async def _execute_llm_reasoning(self, action: LLMReasoningAction) -> EvidenceBundle:
-        """Execute an internal LLM reasoning action."""
+        """执行内部 LLM 推理动作，并将推理结果作为摘要型证据返回。"""
         response = await self.llm.generate(action.instruction)
         return EvidenceBundle(
             subtask_id=action.subtask_id,
