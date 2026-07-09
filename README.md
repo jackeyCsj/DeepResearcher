@@ -105,7 +105,7 @@ src/deep_research/
 │   ├── planner.py       # 图式动态规划 (Algorithm 2)
 │   ├── executor.py      # 并行执行器
 │   ├── writer.py        # 大纲+报告合成
-│   └── reflection.py    # 反思门控
+│   └── reflection.py    # 旧版动作质检模块（当前主流程未接入）
 ├── graph/               # LangGraph 图定义
 │   ├── orchestration_graph.py  # 主图拓扑
 │   ├── nodes.py         # 所有节点函数
@@ -123,6 +123,16 @@ src/deep_research/
 └── utils/
     └── llm_client.py    # OpenAI-compatible LLM 客户端
 ```
+
+
+
+# LangGraph结构
+
+<img src="%E9%99%84%E4%BB%B6/ChatGPT%20Image%202026%E5%B9%B47%E6%9C%887%E6%97%A5%2013_05_29.png" alt="ChatGPT Image 2026年7月7日 13_05_29" style="zoom: 67%;" />
+
+
+
+
 
 ## 验证
 

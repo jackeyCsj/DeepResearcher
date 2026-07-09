@@ -18,7 +18,12 @@ from deep_research.models import (
     SubtaskType,
     EvidenceBase,
     EvidenceBundle,
+    EvidenceClaim,
+    EvidenceExtraction,
     EvidenceRecord,
+    SearchHit,
+    EvidenceQualityReport,
+    QualityFeedback,
     Rubric,
     Criterion,
     RubricSignal,
@@ -27,7 +32,14 @@ from deep_research.models import (
     SearchAgentAction,
     ActionType,
 )
-from deep_research.core import Router, GraphPlanner, ExecutionModule, Writer, ReflectionGate
+from deep_research.core import (
+    Router,
+    GraphPlanner,
+    ExecutionModule,
+    Writer,
+    ReflectionGate,
+    EvidenceQualityGate,
+)
 from deep_research.rubric import RubricGenerator, AdaptiveStopping
 from deep_research.tools import BaseTool, ToolResult, ToolRegistry, WebCrawlerTool
 from deep_research.utils import LLMClient
@@ -49,7 +61,12 @@ __all__ = [
     "SubtaskType",
     "EvidenceBase",
     "EvidenceBundle",
+    "EvidenceClaim",
+    "EvidenceExtraction",
     "EvidenceRecord",
+    "SearchHit",
+    "EvidenceQualityReport",
+    "QualityFeedback",
     "Rubric",
     "Criterion",
     "RubricSignal",
@@ -62,6 +79,7 @@ __all__ = [
     "ExecutionModule",
     "Writer",
     "ReflectionGate",
+    "EvidenceQualityGate",
     "RubricGenerator",
     "AdaptiveStopping",
     "BaseTool",

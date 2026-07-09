@@ -8,14 +8,13 @@ async def node(state: ResearchState) -> dict
 
 from __future__ import annotations
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from deep_research.models.state import ResearchState
 from deep_research.models.topic import TaskContext
 from deep_research.models.evidence import EvidenceBase, EvidenceBundle
 from deep_research.models.rubric import RubricSignal
 from deep_research.models.actions import (
-    BaseAction,
     ToolCallAction,
     ActionType,
     ActionRecord,
@@ -24,7 +23,7 @@ from deep_research.core.router import Router
 from deep_research.core.planner import GraphPlanner
 from deep_research.core.executor import ExecutionModule
 from deep_research.core.writer import Writer
-from deep_research.core.reflection import ReflectionGate
+from deep_research.core.evidence_quality import EvidenceQualityGate
 from deep_research.rubric.generator import RubricGenerator
 from deep_research.rubric.stopping import AdaptiveStopping
 from deep_research.config import config
@@ -37,7 +36,7 @@ def create_nodes(
     planner: GraphPlanner,
     executor: ExecutionModule,
     writer: Writer,
-    reflection_gate: ReflectionGate,
+    evidence_quality_gate: EvidenceQualityGate,
     rubric_generator: RubricGenerator,
     stopping: AdaptiveStopping,
 ) -> Dict[str, Any]:
@@ -118,51 +117,27 @@ def create_nodes(
             frontier=state.transient_frontier,
             evidence=state.evidence_base,
             rubric=rubric_signal,
+            quality_feedback=state.quality_feedback,
         )
+
+        # 如果上一轮证据质量未通过，不允许 Planner 用“无动作”或写报告绕过修复回路。
+        if not state.quality_gate_passed:
+            actions = [a for a in actions if a.type != ActionType.WRITER_REPORT]
 
         # 停止条件判断（会通过条件边路由到 synthesis 或继续循环）
         should_stop = False
-        if not actions:
+        if not actions and state.quality_gate_passed:
             # 条件1: 无可派发动作 → DAG 已耗尽或所有缺口已填
             should_stop = True
-        elif any(a.type == ActionType.WRITER_REPORT for a in actions):
+        elif state.quality_gate_passed and any(a.type == ActionType.WRITER_REPORT for a in actions):
             # 条件2: Planner 主动发出报告写作指令 → 质量已达标
             should_stop = True
 
         logger.info(f"Planner: selected {len(actions)} actions (stop={should_stop})")
         return {"transient_actions": actions, "stop_flag": should_stop}
 
-    async def reflection_node(state: ResearchState) -> dict:
-        """反思门控：动作真正执行前，先按 Rubric 检查其是否具体、必要且可执行。"""
-        if not state.transient_actions:
-            return {}
-
-        rubric_signal = RubricSignal(
-            persistent=state.persistent_rubric,
-            ephemeral=state.ephemeral_rubric,
-        )
-        all_passed = True
-        revised_actions: List[BaseAction] = []
-
-        for action in state.transient_actions:
-            # 每个 action 单独评估，避免一个低质量动作污染整批并行动作。
-            passed, feedback, revised = await reflection_gate.evaluate(
-                action, state.plan, state.evidence_base, rubric_signal
-            )
-            if passed:
-                revised_actions.append(action)
-            elif revised and action.revision_count < action.max_revisions:
-                logger.info(f"Action {action.id} revised (attempt {revised.revision_count})")
-                revised_actions.append(revised)
-                all_passed = False
-            else:
-                revised_actions.append(action)
-
-        logger.info(f"Reflection: {'all passed' if all_passed else 'some revised'}")
-        return {"transient_actions": revised_actions, "transient_reflection_passed": all_passed}
-
     async def execution_node(state: ResearchState) -> dict:
-        """并行执行所有通过反思门控的动作。"""
+        """并行执行 Planner 选出的动作。"""
         if not state.transient_actions:
             return {"transient_new_bundles": []}
 
@@ -191,6 +166,25 @@ def create_nodes(
         logger.info(f"Evidence: {len(state.transient_new_bundles)} bundle(s) incorporated")
         return {"evidence_base": state.evidence_base, "plan": state.plan}
 
+    async def evidence_quality_node(state: ResearchState) -> dict:
+        """证据质量门控：Grounding + Cross-source Verify，并生成 Planner 反馈。"""
+        rubric_signal = RubricSignal(
+            persistent=state.persistent_rubric,
+            ephemeral=state.ephemeral_rubric,
+        )
+        report = await evidence_quality_gate.review(
+            context=state.context,
+            evidence=state.evidence_base,
+            rubric=rubric_signal,
+        )
+        return {
+            "evidence_base": state.evidence_base,
+            "evidence_quality_report": report,
+            "quality_feedback": report.feedback,
+            "quality_gate_passed": report.passed,
+            "stop_flag": state.stop_flag and report.passed,
+        }
+
     async def rubric_update_node(state: ResearchState) -> dict:
         """根据最新证据刷新瞬时 Rubric：ρ^e_{t+1} = G_e(O, e_{t+1})。"""
         ephemeral = await rubric_generator.update_ephemeral(
@@ -203,6 +197,8 @@ def create_nodes(
         should_stop = stopping.should_stop(
             ephemeral, state.iteration, state.max_iterations
         )
+        if not state.quality_gate_passed:
+            should_stop = False
 
         return {
             "ephemeral_rubric": ephemeral,
@@ -219,6 +215,7 @@ def create_nodes(
             state.plan,
             evidence=state.evidence_base,
             rubric=rubric_signal,
+            quality_feedback=state.quality_feedback,
         )
         logger.info(f"Replan: {len(updated_plan.nodes)} nodes, {len(updated_plan.edges)} edges")
         return {"plan": updated_plan, "iteration": state.iteration + 1}
@@ -239,9 +236,9 @@ def create_nodes(
         "init_rubric": init_rubric_node,
         "compute_frontier": frontier_node,
         "planner_actions": planner_action_node,
-        "reflection_gate": reflection_node,
         "execute_parallel": execution_node,
         "update_evidence": evidence_update_node,
+        "evidence_quality_gate": evidence_quality_node,
         "update_rubric": rubric_update_node,
         "replan": replan_node,
         "final_synthesis": synthesis_node,

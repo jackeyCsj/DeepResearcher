@@ -50,7 +50,28 @@ class Router:
             5. clarification_needed: Is the query ambiguous or incomplete?
             6. clarification_question: If ambiguous, what clarification would you ask?
         """
-        return await self.llm.generate(prompt, response_model=TopicSpec, system_prompt=SYSTEM_PROMPT)
+        try:
+            return await self.llm.generate(
+                prompt,
+                response_model=TopicSpec,
+                system_prompt=SYSTEM_PROMPT,
+                max_tokens=1024,
+                temperature=0,
+            )
+        except Exception as exc:
+            logger.warning("Router LLM analysis failed; using fallback topic spec: %s", exc)
+            return TopicSpec(
+                query=query,
+                core_topic=query,
+                sub_questions=[
+                    f"{query}的基本定义是什么？",
+                    f"{query}的核心组成和应用场景是什么？",
+                    f"{query}有哪些代表性来源和观点？",
+                ],
+                scope="基于当前可检索资料进行概念解释、背景梳理和应用分析。",
+                language="zh",
+                clarification_needed=False,
+            )
 
     async def clarify(self, query: str, user_response: str) -> TopicSpec:
         """结合用户澄清内容，重新生成更精确的 TopicSpec。
@@ -67,4 +88,15 @@ class Router:
 
             Produce an updated structured TopicSpec.
         """
-        return await self.llm.generate(prompt, response_model=TopicSpec, system_prompt=SYSTEM_PROMPT)
+        try:
+            return await self.llm.generate(
+                prompt,
+                response_model=TopicSpec,
+                system_prompt=SYSTEM_PROMPT,
+                max_tokens=1024,
+                temperature=0,
+            )
+        except Exception as exc:
+            logger.warning("Router clarification failed; using fallback topic spec: %s", exc)
+            merged_query = f"{query} {user_response}".strip()
+            return TopicSpec(query=query, core_topic=merged_query, language="zh")

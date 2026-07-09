@@ -20,11 +20,7 @@ graph TB
         CF[Compute Frontier Fₜ<br/>计算就绪前沿] --> PA[Planner Actions<br/>选择并行动作]
 
         PA -->|"if stop_flag / empty"| FS[Final Synthesis<br/>最终报告合成]
-        PA -->|"if has actions"| RG[Reflection Gate<br/>反思门控]
-
-        RG -->|"pass ✅"| EP[Execute Parallel<br/>并行执行]
-        RG -->|"revise 🔄<br/>未达最大修正次数"| PA
-        RG -->|"fail_after_revisions<br/>已达最大次数"| EP
+        PA -->|"if has actions"| EP[Execute Parallel<br/>并行执行]
 
         EP --> UE[Update Evidence<br/>eₜ₊₁ = eₜ ∪ Δeₜ<br/>标记节点χ(v)=1]
         UE --> UR[Update Rubric<br/>ρᵉₜ₊₁ = Gₑ(O, eₜ₊₁)]
@@ -81,7 +77,6 @@ graph TB
     style IR fill:#4A90D9,color:#fff
     style CF fill:#50B86C,color:#fff
     style PA fill:#50B86C,color:#fff
-    style RG fill:#F5A623,color:#fff
     style EP fill:#D0021B,color:#fff
     style UE fill:#50B86C,color:#fff
     style UR fill:#9B59B6,color:#fff
@@ -114,12 +109,7 @@ graph TB
 │  │ stop    has actions                                    │  │
 │  │  │         │                                          │  │
 │  │  │         ↓                                          │  │
-│  │  │    Reflection Gate (quality check)                  │  │
-│  │  │         │        │        │                        │  │
-│  │  │      pass ✅  revise  fail_after                    │  │
-│  │  │         │        │(≤3x)    │                        │  │
-│  │  │         ↓    ←───┘        │                        │  │
-│  │  │    Execute Parallel        │                        │  │
+│  │  │    Execute Parallel                                 │  │
 │  │  │      ├── Tool Call         │                        │  │
 │  │  │      ├── Search Agent A¹   │                        │  │
 │  │  │      └── LLM Reasoning     │                        │  │
@@ -205,13 +195,10 @@ PlannerActions(aₜ)                         continue  stop
  stop   has_actions                       Replan ─────┘
    │         │                               │
    v         v                               v
-FinalSynth  ReflectionGate              ComputeFrontier(loop)
+FinalSynth  ExecuteParallel             ComputeFrontier(loop)
                 │
-          ┌─────┼─────┐
-         pass revise fail_after
-          │     │(≤3x)   │
-          v     v        v
-       ExecuteParallel────┘
+                v
+       UpdateEvidence
         ├─ ToolCall
         ├─ SearchAgent ──→ [Subgraph: Inner Search Agent]
         │                      Router→Planner→Execute→Evaluate(loop)

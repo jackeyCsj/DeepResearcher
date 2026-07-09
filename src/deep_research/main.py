@@ -16,9 +16,7 @@ from typing import Optional
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import (
-    BarColumn,
     Progress,
-    SpinnerColumn,
     TextColumn,
     TimeElapsedColumn,
 )
@@ -30,7 +28,7 @@ from deep_research.core.router import Router
 from deep_research.core.planner import GraphPlanner
 from deep_research.core.executor import ExecutionModule
 from deep_research.core.writer import Writer
-from deep_research.core.reflection import ReflectionGate
+from deep_research.core.evidence_quality import EvidenceQualityGate
 from deep_research.rubric.generator import RubricGenerator
 from deep_research.rubric.stopping import AdaptiveStopping
 from deep_research.tools.registry import ToolRegistry
@@ -40,6 +38,16 @@ from deep_research.utils.llm_client import LLMClient
 from deep_research.graph.orchestration_graph import build_orchestration_graph
 
 console = Console()
+
+
+def print_plain_text_safely(text: str) -> None:
+    """Print report text without Rich markup, tolerating legacy Windows encodings."""
+    stream = sys.stdout
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    safe_text = text.encode(encoding, errors="replace").decode(encoding, errors="replace")
+    stream.write(safe_text)
+    if not safe_text.endswith("\n"):
+        stream.write("\n")
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -105,14 +113,14 @@ async def run_research(
     planner = GraphPlanner(llm_client)
     executor = ExecutionModule(tools, llm_client)
     writer = Writer(llm_client)
-    reflection_gate = ReflectionGate(llm_client)
+    evidence_quality_gate = EvidenceQualityGate()
     rubric_generator = RubricGenerator(llm_client)
     stopping = AdaptiveStopping()
 
     # 将核心模块装配成 LangGraph 主编排图。
     graph = build_orchestration_graph(
         router, planner, executor, writer,
-        reflection_gate, rubric_generator, stopping,
+        evidence_quality_gate, rubric_generator, stopping,
     )
 
     # 初始化全局 ResearchState；后续所有节点都围绕这个状态读写。
@@ -130,9 +138,7 @@ async def run_research(
 
     # 运行图并显示一个粗粒度进度条；实际步骤由 LangGraph 内部状态机驱动。
     with Progress(
-        SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
         TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         TimeElapsedColumn(),
         console=console,
@@ -152,7 +158,7 @@ async def run_research(
         progress.update(task, completed=max_iterations)
 
     console.print()
-    console.print("[bold green]✓ Research complete![/bold green]")
+    console.print("[bold green]Research complete![/bold green]")
     console.print(f"[dim]Iterations:[/dim] {final_state.iteration}")
     console.print(
         f"[dim]Evidence collected:[/dim] {len(final_state.evidence_base.all_records)} records"
@@ -235,7 +241,7 @@ async def main_async(argv: Optional[list] = None) -> int:
     else:
         console.print()
         console.print("[bold]=== REPORT ===[/bold]")
-        console.print(report)
+        print_plain_text_safely(report)
 
     return 0
 

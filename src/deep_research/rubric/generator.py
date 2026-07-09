@@ -99,7 +99,7 @@ class RubricGenerator:
         # 300 字摘要已经足够让 LLM 判断"这个话题有没有覆盖"，无需全文。
         # 用 [:300] 而非完整 summary 是为了把 prompt 控制在合理长度内。
         evidence_summaries = "\n".join(
-            f"[{bid}] {b.summary[:300]}"
+            f"[{bid}] {self._bundle_evidence_summary(b.summary, b.records)}"
             for bid, b in evidence.bundles.items()
         ) or "No evidence collected yet."
 
@@ -121,8 +121,40 @@ class RubricGenerator:
 
             If no outstanding gaps exist, set each criterion's guidance to "sufficient".
         """
-        response = await self.llm.generate(prompt, response_model=Rubric, system_prompt=RUBRIC_SYSTEM_PROMPT)
-        return response
+        try:
+            response = await self.llm.generate(
+                prompt,
+                response_model=Rubric,
+                system_prompt=RUBRIC_SYSTEM_PROMPT,
+                max_tokens=2048,
+                temperature=0,
+            )
+            return response
+        except Exception as exc:
+            logger.info("Ephemeral rubric generation unavailable; using fallback rubric: %s", exc)
+            return Rubric(
+                criteria=[
+                    Criterion(
+                        name="evidence_quality_followup",
+                        description="Fallback evidence quality check",
+                        guidance="sufficient" if evidence.all_records else "missing evidence; run at least one targeted search",
+                    )
+                ]
+            )
+
+    def _bundle_evidence_summary(self, summary: str, records: list) -> str:
+        """给瞬时 Rubric 使用的紧凑证据摘要，优先使用抽取 claims。"""
+        claims = []
+        for record in records[:5]:
+            for claim in getattr(record, "key_claims", [])[:2]:
+                claims.append(f"{claim.text} ({getattr(record, 'source_url', None) or 'N/A'})")
+                if len(claims) >= 6:
+                    break
+            if len(claims) >= 6:
+                break
+        if claims:
+            return "; ".join(claims)[:700]
+        return summary[:300]
 
     async def _generate_cross_cutting(self, context: TaskContext) -> List[Criterion]:
         """生成跨章节质量标准，如多源验证、来源可信度和定量证据要求。"""
@@ -135,5 +167,26 @@ class RubricGenerator:
 
             Each criterion needs: name, description, and actionable guidance (not a score).
         """
-        response = await self.llm.generate(prompt, response_model=List[Criterion], system_prompt=RUBRIC_SYSTEM_PROMPT)
-        return response if isinstance(response, list) else response
+        try:
+            response = await self.llm.generate(
+                prompt,
+                response_model=List[Criterion],
+                system_prompt=RUBRIC_SYSTEM_PROMPT,
+                max_tokens=1536,
+                temperature=0,
+            )
+            return response if isinstance(response, list) else response
+        except Exception as exc:
+            logger.info("Cross-cutting rubric generation unavailable; using fallback criteria: %s", exc)
+            return [
+                Criterion(
+                    name="source_grounding",
+                    description="Every important claim should be grounded in source text.",
+                    guidance="Use claims only when they include a supporting quote and source URL.",
+                ),
+                Criterion(
+                    name="cross_source_verification",
+                    description="Important findings should be checked across sources when possible.",
+                    guidance="Distinguish verified claims from single-source or conflicted evidence.",
+                ),
+            ]

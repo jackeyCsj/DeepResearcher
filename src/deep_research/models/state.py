@@ -5,11 +5,12 @@
 
 from __future__ import annotations
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from deep_research.models.topic import TaskContext
 from deep_research.models.plan import ResearchPlan, PlanNode
 from deep_research.models.evidence import EvidenceBase, EvidenceBundle
+from deep_research.models.quality import EvidenceQualityReport, QualityFeedback
 from deep_research.models.rubric import Rubric
 from deep_research.models.actions import BaseAction, ActionRecord
 
@@ -20,6 +21,8 @@ class ResearchState(BaseModel):
     它作为外层编排图的 StateModel，承载跨节点传递的全部上下文。
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
     # 固定上下文 z = (x, O)：研究主题 x 和报告大纲 O。
     context: TaskContext = Field(default_factory=TaskContext)
 
@@ -28,6 +31,9 @@ class ResearchState(BaseModel):
 
     # 累计证据 e_t：由每轮执行返回的 EvidenceBundle 合并而来。
     evidence_base: EvidenceBase = Field(default_factory=EvidenceBase)
+    evidence_quality_report: EvidenceQualityReport = Field(default_factory=EvidenceQualityReport)
+    quality_feedback: QualityFeedback = Field(default_factory=QualityFeedback)
+    quality_gate_passed: bool = True
 
     # 指导信号 ρ_t = (ρ_p, ρ^e_t)：持久 Rubric + 瞬时 Rubric。
     persistent_rubric: Rubric = Field(default_factory=Rubric)
@@ -45,11 +51,6 @@ class ResearchState(BaseModel):
     transient_frontier: List[PlanNode] = Field(default_factory=list)
     transient_actions: List[BaseAction] = Field(default_factory=list)
     transient_new_bundles: List[EvidenceBundle] = Field(default_factory=list)
-    transient_reflection_passed: bool = True
 
     # 最终输出报告。
     final_report: Optional[str] = None
-
-    class Config:
-        arbitrary_types_allowed = True
-        extra = "allow"

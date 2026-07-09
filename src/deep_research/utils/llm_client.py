@@ -31,35 +31,36 @@ class LLMClient:
         base_url: Optional[str] = None,
         model: Optional[str] = None,
     ):
-        # 配置优先级：显式参数 > 通用 LLM_* > DeepSeek_* > 旧 OPENAI_*。
-        self.api_key = (
-            api_key
-            or config.llm_api_key
-            or config.deepseek_api_key
-            or config.openai_api_key
-        )
         self.model = model or config.llm_model
+        configured_base_url = base_url or config.llm_base_url
+        use_dashscope_default = self.model.startswith("qwen")
         use_deepseek_default = (
             self.model.startswith("deepseek-")
-            or bool(config.deepseek_api_key)
+            or (bool(config.deepseek_api_key) and not use_dashscope_default)
         )
         self.base_url = (
-            base_url
-            or config.llm_base_url
+            configured_base_url
+            or (config.dashscope_base_url if use_dashscope_default else "")
             or (config.deepseek_base_url if use_deepseek_default else "")
             or config.openai_base_url
         )
+        self.api_key = self._select_api_key(api_key)
         self.max_tokens = config.llm_max_tokens
         # LLM_MAX_TOKENS may describe a provider/context limit. Keep routine outputs
         # bounded so structured JSON calls do not request an invalid or excessive size.
-        self.default_output_tokens = min(self.max_tokens, 8192)
+        self.default_output_tokens = min(self.max_tokens, config.llm_default_output_tokens)
         self.temperature = config.llm_temperature
         if not self.api_key:
             raise ValueError(
                 "未配置 LLM API Key。请在 .env 中设置 LLM_API_KEY、"
-                "DEEPSEEK_API_KEY 或 OPENAI_API_KEY。"
+                "DASHSCOPE_API_KEY、DEEPSEEK_API_KEY 或 OPENAI_API_KEY。"
             )
-        self._client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
+        self._client = AsyncOpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=config.llm_request_timeout_seconds,
+            max_retries=config.llm_max_retries,
+        )
         self._supports_json_schema_response_format: Optional[bool] = None
         self._supports_json_object_response_format: Optional[bool] = None
 
@@ -212,9 +213,29 @@ class LLMClient:
             or "deepseek" in (self.base_url or "").lower()
         )
 
+    def _is_dashscope_provider(self) -> bool:
+        """阿里云百炼 DashScope OpenAI 兼容接口。"""
+        return (
+            self.model.startswith("qwen")
+            or "dashscope" in (self.base_url or "").lower()
+            or "aliyuncs" in (self.base_url or "").lower()
+        )
+
+    def _select_api_key(self, explicit_api_key: Optional[str]) -> str:
+        """按当前 provider 选择匹配的 API key，避免 base_url 和 key 串台。"""
+        if explicit_api_key:
+            return explicit_api_key
+        if config.llm_api_key:
+            return config.llm_api_key
+        if self._is_dashscope_provider():
+            return config.dashscope_api_key or config.openai_api_key
+        if self._is_deepseek_provider():
+            return config.deepseek_api_key or config.openai_api_key
+        return config.openai_api_key or config.dashscope_api_key or config.deepseek_api_key
+
     def _select_response_format(self) -> Optional[str]:
         """选择当前服务最合适的结构化输出 response_format。"""
-        if self._is_deepseek_provider():
+        if self._is_deepseek_provider() or self._is_dashscope_provider():
             if self._supports_json_object_response_format is not False:
                 return "json_object"
             return None

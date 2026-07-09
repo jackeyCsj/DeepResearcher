@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field, ValidationError
 from deep_research.models.topic import TopicSpec, Outline
 from deep_research.models.plan import ResearchPlan, PlanNode, SubtaskType
 from deep_research.models.evidence import EvidenceBase
+from deep_research.models.quality import QualityFeedback
 from deep_research.models.rubric import RubricSignal, Rubric
 from deep_research.models.actions import (
     BaseAction,
@@ -120,8 +121,8 @@ class GraphPlanner:
                 max_tokens=max(self.llm.default_output_tokens, 8192),
             )
             return response
-        except (ValidationError, ValueError, json.JSONDecodeError) as e:
-            logger.warning("Failed to initialize LLM research plan; using fallback DAG: %s", e)
+        except Exception as e:
+            logger.info("Failed to initialize LLM research plan; using fallback DAG: %s", e)
             return self._fallback_initial_plan(topic, outline)
 
     def _build_init_plan_prompt(self, topic: TopicSpec, outline: Outline) -> str:
@@ -148,6 +149,7 @@ class GraphPlanner:
         frontier: Optional[List[PlanNode]] = None,
         evidence: Optional[EvidenceBase] = None,
         rubric: Optional[RubricSignal] = None,
+        quality_feedback: Optional[QualityFeedback] = None,
     ) -> List[BaseAction]:
         """给定 ready frontier F_t，选择本轮可并行执行的动作。
 
@@ -179,11 +181,14 @@ class GraphPlanner:
             rubric_text = "\n".join(
                 f"- {c.name}: {c.guidance}" for c in rubric.active().criteria
             )
+        quality_feedback_text = self._quality_feedback_text(quality_feedback)
 
         prompt = f"""Current ready frontier (F_t) of available subtasks:
             {frontier_desc}
 
             {"Active rubric:" + rubric_text if rubric_text else "No active rubric."}
+
+            {quality_feedback_text}
 
             Select which subtasks to execute in this parallel batch.
             Rules:
@@ -223,8 +228,8 @@ class GraphPlanner:
             )
             actions = self._parse_actions([a.model_dump() for a in response.actions])
             return self._ensure_search_action_time_terms(actions)
-        except (ValidationError, ValueError, json.JSONDecodeError, TypeError) as e:
-            logger.warning("Failed to parse structured planner actions; using frontier fallback: %s", e)
+        except Exception as e:
+            logger.info("Failed to parse structured planner actions; using frontier fallback: %s", e)
             return self._fallback_actions_from_frontier(frontier)
 
     def _fallback_actions_from_frontier(self, frontier: List[PlanNode]) -> List[BaseAction]:
@@ -303,6 +308,7 @@ class GraphPlanner:
         plan: ResearchPlan,
         evidence: Optional[EvidenceBase] = None,
         rubric: Optional[RubricSignal] = None,
+        quality_feedback: Optional[QualityFeedback] = None,
     ) -> ResearchPlan:
         """应用重规划算子 Π(p_t, e_{t+1}, ρ_{t+1})。
 
@@ -337,6 +343,7 @@ class GraphPlanner:
             rubric_text = "\n".join(
                 f"- {c.name}: {c.guidance}" for c in rubric.active().criteria
             )
+        quality_feedback_text = self._quality_feedback_text(quality_feedback)
 
         prompt = f"""Current research plan state:
                 Nodes:
@@ -346,6 +353,8 @@ class GraphPlanner:
                 {frontier_desc}
 
                 {"Active rubric:" + rubric_text if rubric_text else "No active rubric."}
+
+                {quality_feedback_text}
 
                 Evaluate if the plan needs updating:
 
@@ -363,7 +372,17 @@ class GraphPlanner:
                 Preserve all executed nodes (executed=true).
         """
         
-        response = await self.llm.generate(prompt, response_model=ResearchPlan, system_prompt=PLANNER_SYSTEM_PROMPT)
+        try:
+            response = await self.llm.generate(
+                prompt,
+                response_model=ResearchPlan,
+                system_prompt=PLANNER_SYSTEM_PROMPT,
+                max_tokens=4096,
+                temperature=0,
+            )
+        except Exception as e:
+            logger.info("Failed to replan with LLM; reusing current plan: %s", e)
+            return plan
 
         # LLM 可能重写整个计划对象，因此这里显式恢复已有节点的执行状态和摘要。
         for nid, node in response.nodes.items():
@@ -372,6 +391,22 @@ class GraphPlanner:
                 node.result_summary = plan.nodes[nid].result_summary
 
         return response
+
+    def _quality_feedback_text(self, quality_feedback: Optional[QualityFeedback]) -> str:
+        if not quality_feedback or quality_feedback.passed:
+            return "No unresolved evidence quality feedback."
+        reasons = "\n".join(f"- {r}" for r in quality_feedback.failure_reasons[:5])
+        actions = "\n".join(f"- {a}" for a in quality_feedback.recommended_actions[:5])
+        claims = "\n".join(f"- {c}" for c in quality_feedback.affected_claims[:5])
+        return f"""Evidence quality feedback from the previous review:
+Summary: {quality_feedback.summary}
+Failure reasons:
+{reasons or "- N/A"}
+Affected claims:
+{claims or "- N/A"}
+Recommended follow-up actions:
+{actions or "- N/A"}
+Prioritize actions that repair these grounding or cross-source verification issues."""
 
     def _parse_actions(self, raw_actions: List[Dict[str, Any]]) -> List[BaseAction]:
         """把 LLM 返回的原始 action 字典解析成强类型 Action 对象。"""

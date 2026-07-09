@@ -9,7 +9,7 @@ COLOR PALETTE:
 - Orchestration Layer background: light blue (#E8F4FD)
 - Rubric Layer background: light purple (#F3E8FD)  
 - Search Layer background: light green (#E8FDE8)
-- Node fill colors: Blue (#4A90D9) for pipeline nodes, Green (#50B86C) for loop nodes, Orange (#F5A623) for decision/reflection nodes, Red (#D0021B) for execution nodes, Purple (#9B59B6) for rubric nodes
+- Node fill colors: Blue (#4A90D9) for pipeline nodes, Green (#50B86C) for loop nodes, Orange (#F5A623) for decision/quality nodes, Red (#D0021B) for execution nodes, Purple (#9B59B6) for rubric nodes
 - Arrow color: dark gray (#555555)
 - Text: dark (#333333), use sans-serif font
 
@@ -24,12 +24,7 @@ Then below this pipeline, draw a large LOOP labeled "Research Loop (Algorithm 1 
 [Compute Frontier Fₜ] → [Planner Actions]
 [Planner Actions] has a DIAMOND decision node with two outgoing arrows:
 - Left arrow labeled "stop ❌" going to [Final Report Synthesis]
-- Right arrow labeled "has actions ✅" going to [Reflection Gate]
-
-[Reflection Gate] is a DIAMOND with THREE outgoing arrows:
-- Left: "pass ✅" → [Execute Parallel]
-- Middle: "revise 🔄 (≤3 attempts)" looping BACK to [Planner Actions]
-- Right: "fail_after_revisions" → [Execute Parallel]
+- Right arrow labeled "has actions ✅" going to [Execute Parallel]
 
 [Execute Parallel] → [Update Evidence eₜ₊₁] → [Update Rubric ρᵉₜ₊₁]
 [Update Rubric] is a DIAMOND with two arrows:
@@ -71,7 +66,7 @@ OUTPUT FORMAT: 16:9 aspect ratio, clean sans-serif font, professional technical 
 - 编排层背景：浅蓝色 (#E8F4FD)
 - Rubric层背景：浅紫色 (#F3E8FD)
 - 搜索层背景：浅绿色 (#E8FDE8)
-- 节点颜色：蓝色(管线节点)、绿色(循环节点)、橙色(决策/反思节点)、红色(执行节点)、紫色(Rubric节点)
+- 节点颜色：蓝色(管线节点)、绿色(循环节点)、橙色(决策/质量节点)、红色(执行节点)、紫色(Rubric节点)
 - 使用无衬线字体
 
 从上到下三个泳道区域：
@@ -81,7 +76,7 @@ OUTPUT FORMAT: 16:9 aspect ratio, clean sans-serif font, professional technical 
 下方是一个大循环"Research Loop"，包含：
 Compute Frontier → Planner Actions（菱形分支）
   - stop → Final Report Synthesis
-  - has actions → Reflection Gate（菱形，三分支：pass→执行 / revise→回退重试 / fail→执行）
+  - has actions → Execute Parallel（Planner 选出动作后直接执行）
 Execute Parallel → Update Evidence → Update Rubric（菱形分支：stop→合成报告 / continue→Replan→回到Compute Frontier）
 
 第二层"Rubric测试时优化层"（右侧纵向）：
@@ -109,10 +104,8 @@ Generate a system architecture diagram with these elements arranged in 3 horizon
 Lane 1 (Top) - Orchestration Layer:
 Sequence: Router → CoarseSearch → GenerateOutline → InitPlan → InitRubric
 Loop (below): ComputeFrontier → PlannerActions[decision] →|stop| FinalSynthesis
-                    ↓has actions → ReflectionGate[3-way decision]
-                    pass → ExecuteParallel → UpdateEvidence → UpdateRubric[decision]
-                    revise → back to PlannerActions
-                    fail → ExecuteParallel
+                    ↓has actions → ExecuteParallel
+                    ExecuteParallel → UpdateEvidence → UpdateRubric[decision]
               UpdateRubric →|continue| Replan → back to ComputeFrontier
               UpdateRubric →|stop| FinalSynthesis
 

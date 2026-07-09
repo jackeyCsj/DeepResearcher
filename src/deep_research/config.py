@@ -20,8 +20,13 @@ class ResearchConfig(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
+    dashscope_api_key: str = ""
+    dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     llm_model: str = "deepseek-chat"
     llm_max_tokens: int = 128000
+    llm_default_output_tokens: int = 2048
+    llm_request_timeout_seconds: float = 30.0
+    llm_max_retries: int = 0
     llm_temperature: float = 0.7
 
     # 搜索后端配置。
@@ -33,8 +38,12 @@ class ResearchConfig(BaseSettings):
     queries_per_round: int = 3
     max_parallel_tools: int = 5
 
-    # 反思门控允许的最大动作修订次数。
-    max_action_revisions: int = 3
+    # 证据抽取配置。
+    # auto: DashScope/qwen 默认使用搜索片段 fallback，避免逐来源结构化抽取大量超时。
+    # llm: 总是调用 LLM 从来源正文抽取 claims。
+    # fallback: 总是使用搜索片段/正文开头生成低成本 claims。
+    evidence_extraction_mode: str = "auto"
+    evidence_extraction_timeout_seconds: float = 12.0
 
 
 config = ResearchConfig()
