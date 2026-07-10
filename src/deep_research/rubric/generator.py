@@ -13,9 +13,16 @@ from __future__ import annotations
 import logging
 from typing import List
 
+from pydantic import BaseModel, Field
+
 from deep_research.models.topic import TaskContext, Outline
-from deep_research.models.evidence import EvidenceBase
-from deep_research.models.rubric import Rubric, Criterion
+from deep_research.models.evidence import EvidenceBase, EvidenceStatus
+from deep_research.models.rubric import (
+    Criterion,
+    CriterionKind,
+    CriterionStatus,
+    Rubric,
+)
 from deep_research.utils.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
@@ -23,6 +30,12 @@ logger = logging.getLogger(__name__)
 RUBRIC_SYSTEM_PROMPT = """You are a research quality criteria generator. Generate structured,
 actionable rubrics for evaluating and guiding deep research. All guidance must be phrased as
 executable reasoning instructions, NOT numeric scores."""
+
+
+class CriterionList(BaseModel):
+    """用对象包装列表，兼容只接受 json_object 的模型服务。"""
+
+    criteria: List[Criterion] = Field(default_factory=list)
 
 
 class RubricGenerator:
@@ -112,17 +125,33 @@ class RubricGenerator:
             {evidence_summaries}
 
             Generate 2-5 ephemeral quality criteria that capture the most important evidence gaps.
-            Each criterion must have actionable guidance (not a numeric score).
+            Each criterion must have actionable guidance (not a numeric score), a structured kind,
+            and a structured status.
 
             Types of gaps to identify:
             1. Coverage blanks — chapters with no corresponding evidence
             2. Depth imbalance — chapters with only shallow/surface information
             3. Conflicts — contradictory information across sources needing verification
 
-            If no outstanding gaps exist, set each criterion's guidance to "sufficient".
+            Allowed kind values: coverage, depth, conflict, source_credibility, quantitative, other.
+            Allowed status values: outstanding, sufficient, unknown.
+            Use status="outstanding" for an unresolved gap and status="sufficient" when covered.
+            If no outstanding gaps exist, set every criterion's status to "sufficient" and guidance
+            to "sufficient".
         """
-        response = await self.llm.generate(prompt, response_model=Rubric, system_prompt=RUBRIC_SYSTEM_PROMPT)
-        return response
+        try:
+            response = await self.llm.generate(
+                prompt,
+                response_model=Rubric,
+                system_prompt=RUBRIC_SYSTEM_PROMPT,
+            )
+            return response
+        except Exception as exc:
+            logger.warning(
+                "Ephemeral rubric generation failed; using deterministic fallback: %s",
+                exc,
+            )
+            return self._fallback_ephemeral(evidence)
 
     async def _generate_cross_cutting(self, context: TaskContext) -> List[Criterion]:
         """生成跨章节质量标准，如多源验证、来源可信度和定量证据要求。"""
@@ -133,7 +162,106 @@ class RubricGenerator:
             2. Source credibility — assess authority, timeliness, and potential bias of sources
             3. Quantitative evidence — claims should be backed by concrete data where possible
 
-            Each criterion needs: name, description, and actionable guidance (not a score).
+            Each criterion needs: name, description, actionable guidance (not a score),
+            kind, and status="unknown".
         """
-        response = await self.llm.generate(prompt, response_model=List[Criterion], system_prompt=RUBRIC_SYSTEM_PROMPT)
-        return response if isinstance(response, list) else response
+        try:
+            response = await self.llm.generate(
+                prompt,
+                response_model=CriterionList,
+                system_prompt=RUBRIC_SYSTEM_PROMPT,
+            )
+            return response.criteria
+        except Exception as exc:
+            logger.warning(
+                "Persistent rubric generation failed; using deterministic fallback: %s",
+                exc,
+            )
+            return self._fallback_cross_cutting()
+
+    def _fallback_cross_cutting(self) -> List[Criterion]:
+        """返回稳定的跨章节质量标准，避免初始化阶段因 JSON 错误中断。"""
+        return [
+            Criterion(
+                name="multi_source_validation",
+                description="Cross-check important claims across independent sources.",
+                guidance=(
+                    "Verify each important conclusion with at least two independent "
+                    "sources from different source categories."
+                ),
+                kind=CriterionKind.SOURCE_CREDIBILITY,
+                status=CriterionStatus.UNKNOWN,
+            ),
+            Criterion(
+                name="source_credibility",
+                description="Assess authority, recency, and potential source bias.",
+                guidance=(
+                    "Prefer authoritative and recent primary sources; identify possible "
+                    "commercial, editorial, or methodological bias."
+                ),
+                kind=CriterionKind.SOURCE_CREDIBILITY,
+                status=CriterionStatus.UNKNOWN,
+            ),
+            Criterion(
+                name="quantitative_support",
+                description="Support causal claims with measurable evidence.",
+                guidance=(
+                    "For each causal claim, collect relevant prices, growth rates, "
+                    "shipment data, capacity data, or other quantitative indicators."
+                ),
+                kind=CriterionKind.QUANTITATIVE,
+                status=CriterionStatus.UNKNOWN,
+            ),
+        ]
+
+    def _fallback_ephemeral(self, evidence: EvidenceBase) -> Rubric:
+        """根据当前证据状态生成保守的瞬时 Rubric。"""
+        records = evidence.all_records
+        unresolved = [
+            record
+            for record in records
+            if record.validation_status
+            in {
+                EvidenceStatus.UNVERIFIED,
+                EvidenceStatus.NEEDS_VERIFICATION,
+                EvidenceStatus.DISPUTED,
+            }
+        ]
+        if not records:
+            return Rubric(
+                criteria=[
+                    Criterion(
+                        name="evidence_coverage",
+                        description="No usable evidence has been collected.",
+                        guidance="Collect traceable evidence for the report outline.",
+                        kind=CriterionKind.COVERAGE,
+                        status=CriterionStatus.OUTSTANDING,
+                    )
+                ]
+            )
+        if unresolved:
+            return Rubric(
+                criteria=[
+                    Criterion(
+                        name="evidence_verification",
+                        description="Some collected evidence is not yet verified.",
+                        guidance=(
+                            "Cross-check unresolved records against independent sources "
+                            "before treating them as established facts."
+                        ),
+                        kind=CriterionKind.SOURCE_CREDIBILITY,
+                        status=CriterionStatus.OUTSTANDING,
+                    )
+                ]
+            )
+        return Rubric(
+            criteria=[
+                Criterion(
+                    name="evidence_quality",
+                    description="Collected evidence passed the available checks.",
+                    guidance="sufficient",
+                    kind=CriterionKind.OTHER,
+                    status=CriterionStatus.SUFFICIENT,
+                )
+            ]
+        )

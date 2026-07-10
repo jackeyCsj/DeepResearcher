@@ -175,7 +175,25 @@ class LLMClient:
                 )
                 content = retry_response.choices[0].message.content or ""
             # 将 JSON 文本解析为 Pydantic 模型（兼容 markdown 包裹等异常格式）
-            return self._parse_structured_response(content, response_model)
+            try:
+                return self._parse_structured_response(content, response_model)
+            except Exception as parse_error:
+                logger.warning(
+                    "Invalid structured response for %s; requesting one JSON repair: %s",
+                    self._response_model_name(response_model),
+                    parse_error,
+                )
+                repair_response = await self._retry_invalid_structured_response(
+                    kwargs,
+                    messages,
+                    response_model,
+                    content,
+                )
+                repaired_content = repair_response.choices[0].message.content or ""
+                return self._parse_structured_response(
+                    repaired_content,
+                    response_model,
+                )
 
         # 未指定 response_model → 直接返回原始文本
         return content
@@ -309,6 +327,38 @@ class LLMClient:
         )
         if self._is_deepseek_provider():
             retry_kwargs["response_format"] = {"type": "json_object"}
+        return await self._client.chat.completions.create(**retry_kwargs)
+
+    async def _retry_invalid_structured_response(
+        self,
+        kwargs: dict[str, Any],
+        messages: list[dict[str, str]],
+        response_model: Any,
+        invalid_content: str,
+    ) -> Any:
+        """结构化文本不是合法 JSON 时，请模型只修复格式并重试一次。"""
+        retry_kwargs = dict(kwargs)
+        repair_messages = self._messages_with_json_instruction(
+            messages,
+            response_model,
+        )
+        repair_messages.append(
+            {
+                "role": "assistant",
+                "content": invalid_content[:6000],
+            }
+        )
+        repair_messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "The previous response is invalid JSON. Repair its JSON syntax and "
+                    "return ONLY the corrected JSON. Preserve the intended data, escape "
+                    "double quotes inside string values, and do not add explanations."
+                ),
+            }
+        )
+        retry_kwargs["messages"] = repair_messages
         return await self._client.chat.completions.create(**retry_kwargs)
 
     def _messages_with_json_instruction(

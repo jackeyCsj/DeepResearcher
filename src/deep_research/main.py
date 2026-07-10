@@ -23,7 +23,7 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 
-from deep_research.config import config, ResearchConfig
+from deep_research.config import config
 from deep_research.models.state import ResearchState
 from deep_research.models.topic import TopicSpec, TaskContext
 from deep_research.core.router import Router
@@ -31,6 +31,7 @@ from deep_research.core.planner import GraphPlanner
 from deep_research.core.executor import ExecutionModule
 from deep_research.core.writer import Writer
 from deep_research.core.reflection import ReflectionGate
+from deep_research.core.evidence_validator import EvidenceQualityGate
 from deep_research.rubric.generator import RubricGenerator
 from deep_research.rubric.stopping import AdaptiveStopping
 from deep_research.tools.registry import ToolRegistry
@@ -108,11 +109,13 @@ async def run_research(
     reflection_gate = ReflectionGate(llm_client)
     rubric_generator = RubricGenerator(llm_client)
     stopping = AdaptiveStopping()
+    evidence_quality_gate = EvidenceQualityGate(llm_client)
 
     # 将核心模块装配成 LangGraph 主编排图。
     graph = build_orchestration_graph(
         router, planner, executor, writer,
         reflection_gate, rubric_generator, stopping,
+        evidence_quality_gate=evidence_quality_gate,
     )
 
     # 初始化全局 ResearchState；后续所有节点都围绕这个状态读写。
@@ -144,7 +147,7 @@ async def run_research(
 
         final_state = await graph.ainvoke(
             initial_state,
-            {"recursion_limit": max_iterations * 3 + 10},
+            {"recursion_limit": max_iterations * 12 + 20},
         )
         if isinstance(final_state, dict):
             final_state = ResearchState.model_validate(final_state)

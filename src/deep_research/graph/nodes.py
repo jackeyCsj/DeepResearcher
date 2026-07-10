@@ -8,26 +8,34 @@ async def node(state: ResearchState) -> dict
 
 from __future__ import annotations
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from deep_research.models.state import ResearchState
 from deep_research.models.topic import TaskContext
-from deep_research.models.evidence import EvidenceBase, EvidenceBundle
-from deep_research.models.rubric import RubricSignal
+from deep_research.models.evidence import (
+    EvidenceBase,
+    EvidenceValidationResult,
+)
+from deep_research.models.rubric import (
+    Criterion,
+    CriterionKind,
+    CriterionStatus,
+    Rubric,
+    RubricSignal,
+)
 from deep_research.models.actions import (
     BaseAction,
     ToolCallAction,
     ActionType,
-    ActionRecord,
 )
 from deep_research.core.router import Router
 from deep_research.core.planner import GraphPlanner
 from deep_research.core.executor import ExecutionModule
 from deep_research.core.writer import Writer
 from deep_research.core.reflection import ReflectionGate
+from deep_research.core.evidence_validator import EvidenceQualityGate
 from deep_research.rubric.generator import RubricGenerator
 from deep_research.rubric.stopping import AdaptiveStopping
-from deep_research.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +48,12 @@ def create_nodes(
     reflection_gate: ReflectionGate,
     rubric_generator: RubricGenerator,
     stopping: AdaptiveStopping,
+    evidence_quality_gate: Optional[EvidenceQualityGate] = None,
 ) -> Dict[str, Any]:
     """创建所有节点函数，并把核心模块依赖注入闭包中。"""
+    evidence_quality_gate = evidence_quality_gate or EvidenceQualityGate(
+        rubric_generator.llm
+    )
 
     async def router_node(state: ResearchState) -> dict:
         """Router：理解用户查询并生成结构化研究主题。"""
@@ -103,9 +115,8 @@ def create_nodes(
         - 已有证据（哪些缺口已填）
         - Rubric 信号（持久质量标准 + 瞬时缺口）
 
-        同时负责设置停止标志：
-        - 没有动作可派发 → 停止
-        - Planner 发出 WRITER_REPORT 动作 → 停止（进入最终报告阶段）
+        Planner 不在这里决定停止。没有研究动作时仍会让空批次经过
+        Rubric、交叉验证和质量门，只有质量门可以进入最终报告。
         """
         # 把两套 Rubric（持久 ρ_p + 瞬时 ρ^e_t）打包为统一信号传入 Planner
         rubric_signal = RubricSignal(
@@ -120,17 +131,8 @@ def create_nodes(
             rubric=rubric_signal,
         )
 
-        # 停止条件判断（会通过条件边路由到 synthesis 或继续循环）
-        should_stop = False
-        if not actions:
-            # 条件1: 无可派发动作 → DAG 已耗尽或所有缺口已填
-            should_stop = True
-        elif any(a.type == ActionType.WRITER_REPORT for a in actions):
-            # 条件2: Planner 主动发出报告写作指令 → 质量已达标
-            should_stop = True
-
-        logger.info(f"Planner: selected {len(actions)} actions (stop={should_stop})")
-        return {"transient_actions": actions, "stop_flag": should_stop}
+        logger.info("Planner: selected %s actions", len(actions))
+        return {"transient_actions": actions, "stop_flag": False}
 
     async def reflection_node(state: ResearchState) -> dict:
         """反思门控：动作真正执行前，先按 Rubric 检查其是否具体、必要且可执行。"""
@@ -170,12 +172,26 @@ def create_nodes(
         bundles = await executor.execute_parallel(state.transient_actions)
         return {"transient_new_bundles": bundles}
 
+    async def consolidate_evidence_node(state: ResearchState) -> dict:
+        """整理本轮 frontier 结果：标准化来源、去重并生成批次质量标记。"""
+        batch = evidence_quality_gate.consolidate(
+            state.transient_new_bundles,
+            state.transient_actions,
+            state.iteration,
+        )
+        logger.info(
+            "Evidence consolidation: %s bundle(s), %s record(s)",
+            len(batch),
+            sum(len(bundle.records) for bundle in batch),
+        )
+        return {"transient_evidence_batch": batch}
+
     async def evidence_update_node(state: ResearchState) -> dict:
         """把本轮新增证据合并到全局证据库：e_{t+1} = e_t ∪ Δe_t。"""
-        if not state.transient_new_bundles:
+        if not state.transient_evidence_batch:
             return {}
 
-        for bundle in state.transient_new_bundles:
+        for bundle in state.transient_evidence_batch:
             state.evidence_base.incorporate(bundle)
 
         # 将对应 DAG 节点标记为已执行，并保存简短结果摘要，供后续 replan 使用。
@@ -184,11 +200,18 @@ def create_nodes(
                 node = state.plan.nodes[action.subtask_id]
                 node.executed = True
                 # 用 subtask_id 对齐 action 和 EvidenceBundle，写回节点结果。
-                matching = [b for b in state.transient_new_bundles if b.subtask_id == action.subtask_id]
+                matching = [
+                    bundle
+                    for bundle in state.transient_evidence_batch
+                    if bundle.subtask_id == action.subtask_id
+                ]
                 if matching:
                     node.result_summary = matching[0].summary
 
-        logger.info(f"Evidence: {len(state.transient_new_bundles)} bundle(s) incorporated")
+        logger.info(
+            "Evidence: %s normalized bundle(s) incorporated",
+            len(state.transient_evidence_batch),
+        )
         return {"evidence_base": state.evidence_base, "plan": state.plan}
 
     async def rubric_update_node(state: ResearchState) -> dict:
@@ -198,15 +221,61 @@ def create_nodes(
         )
         has_gaps = ephemeral.has_outstanding_gap()
         logger.info(f"Rubric update: {'gaps remain' if has_gaps else 'no gaps'}")
+        return {"ephemeral_rubric": ephemeral}
 
-        # Rubric 同时承担“缺口检测”和“停止信号”的职责。
-        should_stop = stopping.should_stop(
-            ephemeral, state.iteration, state.max_iterations
+    async def cross_validate_evidence_node(state: ResearchState) -> dict:
+        """根据最新 Rubric 对本轮证据执行按需交叉验证。"""
+        result = await evidence_quality_gate.validate(
+            state.transient_evidence_batch,
+            state.evidence_base,
+            state.ephemeral_rubric,
+            state.persistent_rubric,
         )
-
+        updated_rubric = _rubric_with_validation_guidance(
+            state.ephemeral_rubric,
+            result,
+            state.iteration,
+        )
+        logger.info(
+            "Evidence validation: passed=%s, follow_up=%s, issues=%s, llm=%s",
+            result.passed,
+            result.requires_follow_up,
+            len(result.issues),
+            result.llm_validation_used,
+        )
         return {
-            "ephemeral_rubric": ephemeral,
-            "stop_flag": state.stop_flag or should_stop,
+            "evidence_base": state.evidence_base,
+            "ephemeral_rubric": updated_rubric,
+            "transient_validation_result": result,
+            "validation_history": [*state.validation_history, result],
+        }
+
+    async def quality_gate_node(state: ResearchState) -> dict:
+        """质量门通过后才允许自适应停止，否则强制进入重规划。"""
+        result = state.transient_validation_result or EvidenceValidationResult()
+        max_reached = state.iteration >= state.max_iterations
+
+        if (result.requires_follow_up or not result.passed) and not max_reached:
+            decision = "follow_up"
+            should_stop = False
+        else:
+            should_stop = stopping.should_stop(
+                state.ephemeral_rubric,
+                state.iteration,
+                state.max_iterations,
+            )
+            decision = "stop" if should_stop else "continue"
+
+        result.quality_decision = decision
+        validation_history = list(state.validation_history)
+        if validation_history:
+            validation_history[-1] = result
+        logger.info("Quality gate: decision=%s", decision)
+        return {
+            "transient_quality_decision": decision,
+            "transient_validation_result": result,
+            "validation_history": validation_history,
+            "stop_flag": should_stop,
         }
 
     async def replan_node(state: ResearchState) -> dict:
@@ -241,8 +310,67 @@ def create_nodes(
         "planner_actions": planner_action_node,
         "reflection_gate": reflection_node,
         "execute_parallel": execution_node,
+        "consolidate_evidence": consolidate_evidence_node,
         "update_evidence": evidence_update_node,
         "update_rubric": rubric_update_node,
+        "cross_validate_evidence": cross_validate_evidence_node,
+        "quality_gate": quality_gate_node,
         "replan": replan_node,
         "final_synthesis": synthesis_node,
     }
+
+
+def _rubric_with_validation_guidance(
+    rubric: Rubric,
+    result: EvidenceValidationResult,
+    iteration: int,
+) -> Rubric:
+    """把质量门问题转成下一轮 Planner 可消费的瞬时 Rubric。"""
+    criteria = list(rubric.criteria)
+    existing_names = {criterion.name for criterion in criteria}
+
+    for index, issue in enumerate(result.issues, start=1):
+        if not result.requires_follow_up and result.passed:
+            break
+        name = f"validation_{iteration}_{index}_{issue.issue_type}"
+        if name in existing_names:
+            continue
+        criteria.append(
+            Criterion(
+                name=name,
+                description=issue.description,
+                guidance=issue.recommended_action or issue.description,
+                kind=_criterion_kind_for_issue(issue.issue_type),
+                status=CriterionStatus.OUTSTANDING,
+            )
+        )
+        existing_names.add(name)
+
+    for index, guidance in enumerate(result.follow_up_guidance, start=1):
+        name = f"validation_{iteration}_guidance_{index}"
+        if name in existing_names:
+            continue
+        criteria.append(
+            Criterion(
+                name=name,
+                description="Evidence quality follow-up required by the latest batch.",
+                guidance=guidance,
+                kind=CriterionKind.SOURCE_CREDIBILITY,
+                status=CriterionStatus.OUTSTANDING,
+            )
+        )
+        existing_names.add(name)
+
+    return Rubric(criteria=criteria)
+
+
+def _criterion_kind_for_issue(issue_type: str) -> CriterionKind:
+    """把验证问题映射为 Rubric 质量类别。"""
+    normalized = issue_type.lower()
+    if "conflict" in normalized or "contradict" in normalized:
+        return CriterionKind.CONFLICT
+    if "source" in normalized or "citation" in normalized:
+        return CriterionKind.SOURCE_CREDIBILITY
+    if "empty" in normalized or "failure" in normalized:
+        return CriterionKind.COVERAGE
+    return CriterionKind.OTHER

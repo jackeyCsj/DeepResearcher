@@ -10,6 +10,7 @@ from deep_research.config import config
 from deep_research.tools.base import BaseTool, ToolResult
 
 logger = logging.getLogger(__name__)
+MAX_TAVILY_QUERY_CHARS = 350
 
 
 class TavilySearchTool(BaseTool):
@@ -45,19 +46,42 @@ class TavilySearchTool(BaseTool):
                 content="No results: API key missing.",
             )
 
+        normalized_query = self._normalize_query(query)
         response = await self._client.post(
             "https://api.tavily.com/search",
             json={
                 "api_key": self.api_key,
-                "query": query,
-                "max_results": max_results,
-                "search_depth": search_depth,
+                "query": normalized_query,
+                "max_results": min(max(int(max_results), 1), 10),
+                "search_depth": (
+                    search_depth if search_depth in {"basic", "advanced"} else "advanced"
+                ),
             },
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            body = response.text[:500]
+            raise RuntimeError(
+                f"Tavily search failed with HTTP {response.status_code}: {body}"
+            ) from exc
         data = response.json()
 
         return self._parse_response(data)
+
+    def _normalize_query(self, query: str) -> str:
+        """清理空白并限制查询长度，避免 Tavily 对超长请求返回 400。"""
+        normalized = " ".join((query or "").split()).strip()
+        if not normalized:
+            raise ValueError("Tavily search query must not be empty.")
+        if len(normalized) > MAX_TAVILY_QUERY_CHARS:
+            logger.warning(
+                "Truncating Tavily query from %s to %s characters.",
+                len(normalized),
+                MAX_TAVILY_QUERY_CHARS,
+            )
+            normalized = normalized[:MAX_TAVILY_QUERY_CHARS].rstrip()
+        return normalized
 
     def _parse_response(self, data: Dict[str, Any]) -> ToolResult:
         results = data.get("results", [])

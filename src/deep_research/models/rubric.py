@@ -6,8 +6,28 @@
 """
 
 from __future__ import annotations
+from enum import Enum
 from typing import List
 from pydantic import BaseModel, Field
+
+
+class CriterionKind(str, Enum):
+    """Rubric 标准对应的质量问题类别。"""
+
+    COVERAGE = "coverage"
+    DEPTH = "depth"
+    CONFLICT = "conflict"
+    SOURCE_CREDIBILITY = "source_credibility"
+    QUANTITATIVE = "quantitative"
+    OTHER = "other"
+
+
+class CriterionStatus(str, Enum):
+    """Rubric 标准当前是否仍未满足。"""
+
+    OUTSTANDING = "outstanding"
+    SUFFICIENT = "sufficient"
+    UNKNOWN = "unknown"
 
 
 class Criterion(BaseModel):
@@ -22,6 +42,8 @@ class Criterion(BaseModel):
         default="",
         description="Actionable reasoning instruction (NOT a numeric score)",
     )
+    kind: CriterionKind = CriterionKind.OTHER
+    status: CriterionStatus = CriterionStatus.UNKNOWN
 
 
 class Rubric(BaseModel):
@@ -34,6 +56,18 @@ class Rubric(BaseModel):
 
         瞬时 Rubric 通过该方法向自适应停止机制传递“是否还要继续研究”。
         """
+        if any(
+            criterion.status == CriterionStatus.OUTSTANDING
+            for criterion in self.criteria
+        ):
+            return True
+
+        if self.criteria and all(
+            criterion.status == CriterionStatus.SUFFICIENT
+            for criterion in self.criteria
+        ):
+            return False
+
         gap_indicators = [
             "insufficient",
             "missing",
@@ -44,6 +78,10 @@ class Rubric(BaseModel):
             "lacking",
             "uncovered",
             "not addressed",
+            "conflict",
+            "contradict",
+            "verify",
+            "single source",
         ]
         return any(
             any(indicator in c.guidance.lower() for indicator in gap_indicators)
