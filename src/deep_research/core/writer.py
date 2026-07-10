@@ -11,8 +11,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from deep_research.models.topic import TopicSpec, Outline, Chapter, TaskContext
-from deep_research.models.evidence import EvidenceBase
+from deep_research.models.topic import TopicSpec, Outline, TaskContext
+from deep_research.models.evidence import EvidenceBase, EvidenceStatus
 from deep_research.models.rubric import Rubric
 from deep_research.utils.llm_client import LLMClient
 
@@ -105,19 +105,52 @@ class Writer:
             )
 
         evidence_sections = []
-        for subtask_id, bundle in evidence.bundles.items():
+        unresolved_sections = []
+        for bundle_id, bundle in evidence.bundles.items():
+            verified_records = [
+                record
+                for record in bundle.records
+                if record.validation_status == EvidenceStatus.VERIFIED
+            ]
             records_text = "\n".join(
-                f"- Source: {r.source_url or 'N/A'} | {r.snippet[:200]}"
-                for r in bundle.records[:5]
+                f"- Source: {record.source_url or 'N/A'} | "
+                f"{(record.content or record.snippet)[:200]}"
+                for record in verified_records[:5]
             )
-            evidence_sections.append(f"### {subtask_id}: {bundle.summary}\n{records_text}")
+            if records_text:
+                evidence_sections.append(
+                    f"### {bundle_id} ({bundle.subtask_id})\n"
+                    f"Context summary: {bundle.summary}\n"
+                    f"Verified evidence:\n{records_text}"
+                )
+
+            unresolved_records = [
+                record
+                for record in bundle.records
+                if record.validation_status
+                in {
+                    EvidenceStatus.UNVERIFIED,
+                    EvidenceStatus.NEEDS_VERIFICATION,
+                    EvidenceStatus.DISPUTED,
+                }
+            ]
+            for record in unresolved_records[:5]:
+                notes = "; ".join(record.validation_notes) or "No validation notes."
+                unresolved_sections.append(
+                    f"- [{record.validation_status.value}] "
+                    f"{record.source_url or 'N/A'} | {notes}"
+                )
 
         chapter_outline = "\n".join(
             f"## {ch.title}\n{ch.description}\nRubric: {ch.rubric_guidance}"
             for ch in context.outline.chapters
         )
 
-        evidence_text = "\n".join(evidence_sections)
+        evidence_text = "\n".join(evidence_sections) or "No verified evidence available."
+        unresolved_text = (
+            "\n".join(unresolved_sections)
+            or "No unresolved evidence was retained."
+        )
         prompt = f"""Topic: {context.topic.core_topic}
 
 Report Outline:
@@ -129,8 +162,12 @@ Quality Criteria:
 Accumulated Evidence:
 {evidence_text}
 
+Unresolved Evidence and Limitations:
+{unresolved_text}
+
 Synthesize a comprehensive, well-structured research report. Follow the outline closely.
-Ensure every analytical claim is grounded in specific, cited evidence.
+Use only the Verified evidence section to support analytical claims. Treat unresolved evidence
+as limitations or open questions, never as established fact.
 """
         report = await self.llm.generate_long(
             prompt,

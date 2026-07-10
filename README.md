@@ -11,6 +11,7 @@
 - **Router**: 任务理解与分析，提取核心研究主题
 - **GraphPlanner**: 基于 DAG 的动态规划（Algorithm 2），支持粗到细扩展、反思、重规划
 - **ExecutionModule**: 并行执行动作（工具调用 / Search Agent 派发）
+- **EvidenceQualityGate**: frontier 证据归纳、来源检查、按需交叉验证与质量门
 - **Writer**: 大纲生成 + 最终报告合成
 
 ### 2. Rubric 测试时优化 (Rubric-Based Test-Time Optimization)
@@ -22,13 +23,23 @@
 - **Search Agent A¹**: 内层独立搜索智能体，每子任务最多 10 轮检索
 - **渐进式特异性**: 从宽泛到具体，逐步聚焦
 
+
+
+![ChatGPT Image 2026年7月9日 23_10_10](%E9%99%84%E4%BB%B6/ChatGPT%20Image%202026%E5%B9%B47%E6%9C%889%E6%97%A5%2023_10_10.png)
+
+
+
+
+
 ### 工作流程
 
 ```
 Query → Router → Coarse Search → Outline → Init Plan → Init Rubric
   ↓
 Loop:
-  Compute Frontier → Select Actions → Reflect → Execute → Update Evidence → Update Rubric → Replan
+  Compute Frontier → Select Actions → Reflect → Execute
+  → Consolidate Evidence → Update Evidence → Update Rubric
+  → Cross Validate Evidence → Quality Gate → Replan
   ↓ (当无信息缺口或达最大迭代)
 Final Report Synthesis
 ```
@@ -104,6 +115,7 @@ src/deep_research/
 │   ├── router.py        # 任务理解
 │   ├── planner.py       # 图式动态规划 (Algorithm 2)
 │   ├── executor.py      # 并行执行器
+│   ├── evidence_validator.py # 证据归纳、交叉验证与质量门
 │   ├── writer.py        # 大纲+报告合成
 │   └── reflection.py    # 反思门控
 ├── graph/               # LangGraph 图定义
@@ -184,3 +196,18 @@ MIT
 - 明确将“2025年至今”解释为 `2025-01-01` 至当前运行日期，确保 Router、Outline、Planner 和最终报告都覆盖 2026 年进展。
 - 加强 Planner 搜索动作提示词：要求 `search_agent.sub_query` 显式包含 `2025`、`2026`、`2026年7月` 或 `最新` 等时间词。
 - 通过诊断脚本验证：`TopicSpec.scope`、报告大纲、DAG 节点与搜索动作均能正确保留 `2025-2026` 时间范围。
+
+### 2026-07-10
+
+- 新增 frontier 批次证据整理流程，在每轮并行执行后统一进行结果归纳、来源规范化、重复证据消除和失败结果检查。
+- 新增 Rubric 更新后的证据交叉验证与质量门，根据冲突、来源单一和覆盖缺口决定是否触发语义验证。
+- 为证据记录和证据包增加验证状态及审计信息，区分已验证、待验证、存在争议和无效证据。
+- 调整自适应停止路由：只有证据质量门通过后才允许进入最终报告，否则根据验证反馈重新规划补充任务。
+- 最终 Writer 默认仅使用已验证证据支撑确定性结论，并将未解决的争议证据列入报告限制说明。
+- 增加证据去重、交叉验证触发、质量门路由、验证器异常和最终写作过滤等单元测试与图集成测试。
+- 修复质量循环启用后重复重规划导致 DAG 持续膨胀的问题：重规划改为最多新增 3 个节点的增量决策，不再反复输出完整 `ResearchPlan`。
+- 修复 Replan 结构化 JSON 达到输出上限时直接终止研究的问题；解析或生成失败时保留当前计划并继续执行。
+- 搜索证据现在保留 Tavily 返回的标题、正文摘要和相关度，避免验证器因只有 URL、没有证据内容而持续要求补充全文。
+- 增加 Tavily 查询清理、350 字符长度保护和工具并发上限，并确保最终报告只能由证据质量门放行。
+- 修复 Rubric 结构化输出包含未转义引号时的初始化崩溃：解析失败会自动请求一次 JSON 格式修复。
+- Persistent 与 Ephemeral Rubric 增加确定性兜底标准，即使模型连续返回无效 JSON 也能继续研究流程。

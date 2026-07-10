@@ -12,12 +12,14 @@
 from __future__ import annotations
 import json
 import logging
+import re
 from typing import Dict, List, Optional, Any
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, ValidationError
 
 from deep_research.models.topic import TopicSpec, Outline
-from deep_research.models.plan import ResearchPlan, PlanNode, SubtaskType
+from deep_research.models.plan import Edge, ResearchPlan, PlanNode, SubtaskType
 from deep_research.models.evidence import EvidenceBase
 from deep_research.models.rubric import RubricSignal, Rubric
 from deep_research.models.actions import (
@@ -50,6 +52,21 @@ class ActionList(BaseModel):
     """DeepSeek json_object 模式要求顶层是对象，因此用 actions 包住列表。"""
 
     actions: List[ActionSpec] = Field(default_factory=list)
+
+
+class ReplanDecision(BaseModel):
+    """重规划只返回增量操作，避免反复输出完整 DAG 导致响应截断。"""
+
+    needs_replan: bool = False
+    new_nodes: List[PlanNode] = Field(default_factory=list)
+    new_edges: List[Edge] = Field(default_factory=list)
+    prune_node_ids: List[str] = Field(default_factory=list)
+
+
+MAX_REPLAN_NEW_NODES = 3
+MAX_PLAN_NODES = 24
+MAX_SEARCH_QUERY_CHARS = 350
+
 
 PLANNER_SYSTEM_PROMPT = """You are a deep research planning expert. Given a research topic,
     outline, current plan, execution results, and active rubric, you must maintain a complete,
@@ -204,7 +221,7 @@ class GraphPlanner:
               "actions": [
                 {{
                   "id": "act-<subtask_id>",
-                  "type": "search_agent | llm | writer_report",
+                  "type": "search_agent | llm",
                   "subtask_id": "<frontier node id>",
                   "description": "short executable action description",
                   "sub_query": "specific search query for search_agent",
@@ -267,36 +284,86 @@ class GraphPlanner:
                     )
                 )
             elif node.subtask_type == SubtaskType.REPORT:
-                actions.append(
-                    BaseAction(
-                        id=action_id,
-                        type=ActionType.WRITER_REPORT,
-                        subtask_id=node.id,
-                        description=node.description or node.title,
-                    )
-                )
+                # 报告节点由质量门后的 final_synthesis 专门处理，
+                # 不能作为普通 action 绕过证据质量检查。
+                continue
         return actions
 
     def _ensure_search_action_time_terms(self, actions: List[BaseAction]) -> List[BaseAction]:
-        """确保模型生成的搜索动作保留显式时间范围。"""
+        """清理搜索动作，并在任务明确要求时保留时间范围。"""
         for action in actions:
             if isinstance(action, SearchAgentAction):
-                action.sub_query = self._append_time_terms(action.sub_query or action.description)
+                query = self._sanitize_search_query(
+                    action.sub_query or action.description,
+                    fallback=action.description,
+                )
+                action.sub_query = self._append_time_terms(query)
             elif isinstance(action, ToolCallAction):
-                action.tool_input = self._append_time_terms(action.tool_input or action.description)
+                query = self._sanitize_search_query(
+                    action.tool_input or action.description,
+                    fallback=action.description,
+                )
+                action.tool_input = self._append_time_terms(query)
         return actions
 
     def _fallback_search_query(self, node: PlanNode) -> str:
         """为 fallback 搜索动作补充明确时间词，避免“至今/当前”被搜索引擎弱化。"""
-        base_query = node.description or node.title
+        base_query = self._sanitize_search_query(
+            node.description or node.title,
+            fallback=node.title,
+        )
         return self._append_time_terms(base_query)
 
     def _append_time_terms(self, query: str) -> str:
-        """给搜索 query 补充 2025-2026 时间限定和新鲜度词。"""
+        """仅给明确的时效性任务补充 2025-2026 时间限定。"""
+        freshness_markers = (
+            "当前",
+            "目前",
+            "最新",
+            "趋势",
+            "近年",
+            "至今",
+            "current",
+            "recent",
+            "latest",
+            "2025",
+            "2026",
+        )
+        if not any(marker in query.lower() for marker in freshness_markers):
+            return query
         time_terms = ("2025", "2026", "2026年7月", "最新")
         if any(term in query for term in time_terms):
             return query
         return f"{query} 2025 2026 2026年7月 最新"
+
+    def _sanitize_search_query(self, query: str, fallback: str = "") -> str:
+        """把计划器生成的检索指令压缩成 Tavily 可接受的短查询。"""
+        raw = query or fallback
+        urls = re.findall(r"https?://[^\s,，]+", raw)
+        cleaned = re.sub(r"https?://[^\s,，]+", " ", raw)
+        boilerplate = (
+            "下载并提取以下URL全文",
+            "下载并提取以下 URL 全文",
+            "完成后重新运行验证批次以更新证据记录",
+            "重新运行验证批次",
+            "获取全文",
+        )
+        for phrase in boilerplate:
+            cleaned = cleaned.replace(phrase, " ")
+        cleaned = re.sub(r"[\s,，;；:：]+", " ", cleaned).strip(" -。.")
+
+        if len(cleaned) < 8 and urls:
+            domains = []
+            for url in urls:
+                domain = urlsplit(url).netloc.lower()
+                if domain and domain not in domains:
+                    domains.append(domain)
+            cleaned = " ".join(domains[:5]) + " independent source verification"
+
+        if len(cleaned) < 3:
+            cleaned = "independent source verification"
+
+        return cleaned[:MAX_SEARCH_QUERY_CHARS].rstrip()
 
     async def replan(
         self,
@@ -321,57 +388,119 @@ class GraphPlanner:
         Returns:
             更新后的 ResearchPlan p_{t+1}。
         """
-        executed_summary = "\n".join(
-            f"  {nid}: {n.title} — {'✓ Done' if n.executed else '☐ Pending'} — {n.result_summary or ''}"
-            for nid, n in sorted(plan.nodes.items())
-        )
+        completed = [
+            (nid, node)
+            for nid, node in sorted(plan.nodes.items())
+            if node.executed
+        ][-8:]
+        completed_summary = "\n".join(
+            f"  {nid}: {node.title}"
+            for nid, node in completed
+        ) or "  None"
 
-        frontier = plan.ready_frontier()
-        frontier_desc = "\n".join(
-            f"  {n.id}: [{n.subtask_type.value}] {n.title} (depth={n.depth})"
-            for n in frontier
-        )
+        pending_summary = "\n".join(
+            f"  {nid}: [{node.subtask_type.value}] {node.title} (depth={node.depth})"
+            for nid, node in sorted(plan.nodes.items())
+            if not node.executed
+        ) or "  None"
 
         rubric_text = ""
         if rubric:
             rubric_text = "\n".join(
-                f"- {c.name}: {c.guidance}" for c in rubric.active().criteria
+                f"- [{c.kind.value}/{c.status.value}] {c.name}: {c.guidance}"
+                for c in rubric.active().criteria[:8]
             )
 
-        prompt = f"""Current research plan state:
-                Nodes:
-                {executed_summary}
+        prompt = f"""Evaluate whether the current plan needs a small incremental update.
 
-                Ready frontier:
-                {frontier_desc}
+Completed nodes (most recent only):
+{completed_summary}
 
-                {"Active rubric:" + rubric_text if rubric_text else "No active rubric."}
+Pending nodes:
+{pending_summary}
 
-                Evaluate if the plan needs updating:
+{"Active rubric:" + rubric_text if rubric_text else "No active rubric."}
 
-                Replanning triggers:
-                1. Executed task failed or produced invalid results
-                2. Key chapters not yet covered
-                3. Collected information insufficient for chapter depth
-                4. Information conflicts requiring verification
-                5. New valuable information gaps discovered
-
-                If NO replanning is needed: return the plan unchanged.
-                If replanning IS needed: add new search/llm tasks, prune dead branches, adjust dependencies.
-
-                Output a ResearchPlan (the complete plan, including all existing and new nodes).
-                Preserve all executed nodes (executed=true).
+Return only a ReplanDecision delta, never the complete ResearchPlan.
+Rules:
+1. Reuse pending tasks when they already address the rubric.
+2. Add at most {MAX_REPLAN_NEW_NODES} concise nodes.
+3. Do not add a second report node.
+4. Search node descriptions must be short search topics, not URL lists or instructions
+   to download/crawl pages.
+5. Add edges only when needed to connect new nodes into the existing DAG.
+6. Set needs_replan=false when no new task is necessary.
         """
-        
-        response = await self.llm.generate(prompt, response_model=ResearchPlan, system_prompt=PLANNER_SYSTEM_PROMPT)
+        try:
+            decision = await self.llm.generate(
+                prompt,
+                response_model=ReplanDecision,
+                system_prompt=PLANNER_SYSTEM_PROMPT,
+                max_tokens=min(self.llm.default_output_tokens, 4096),
+            )
+        except Exception as exc:
+            logger.warning(
+                "Replan response failed; retaining current plan instead of aborting: %s",
+                exc,
+            )
+            return plan
 
-        # LLM 可能重写整个计划对象，因此这里显式恢复已有节点的执行状态和摘要。
-        for nid, node in response.nodes.items():
-            if nid in plan.nodes:
-                node.executed = plan.nodes[nid].executed
-                node.result_summary = plan.nodes[nid].result_summary
+        return self._apply_replan_decision(plan, decision)
 
-        return response
+    def _apply_replan_decision(
+        self,
+        plan: ResearchPlan,
+        decision: ReplanDecision,
+    ) -> ResearchPlan:
+        """把有限的重规划增量安全合并到当前 DAG。"""
+        if not decision.needs_replan:
+            return plan
+
+        updated = plan.model_copy(deep=True)
+        for node_id in decision.prune_node_ids[:MAX_REPLAN_NEW_NODES]:
+            node = updated.nodes.get(node_id)
+            if node is None or node.executed or node.subtask_type == SubtaskType.REPORT:
+                continue
+            if any(edge.source_id == node_id for edge in updated.edges):
+                continue
+            updated.prune_branch(node_id)
+
+        added_ids: set[str] = set()
+        for node in decision.new_nodes[:MAX_REPLAN_NEW_NODES]:
+            if len(updated.nodes) >= MAX_PLAN_NODES:
+                logger.warning(
+                    "Plan node cap reached (%s); ignoring additional replan nodes.",
+                    MAX_PLAN_NODES,
+                )
+                break
+            if node.id in updated.nodes or node.subtask_type == SubtaskType.REPORT:
+                continue
+            if node.subtask_type in {SubtaskType.SEARCH, SubtaskType.SEARCH_AGENT}:
+                node.description = self._sanitize_search_query(
+                    node.description or node.title,
+                    fallback=node.title,
+                )
+            node.executed = False
+            node.result_summary = None
+            updated.add_node(node)
+            added_ids.add(node.id)
+
+        existing_edges = {
+            (edge.source_id, edge.target_id)
+            for edge in updated.edges
+        }
+        for edge in decision.new_edges:
+            pair = (edge.source_id, edge.target_id)
+            if pair in existing_edges or edge.source_id == edge.target_id:
+                continue
+            if edge.source_id not in updated.nodes or edge.target_id not in updated.nodes:
+                continue
+            if edge.source_id not in added_ids and edge.target_id not in added_ids:
+                continue
+            updated.add_edge(edge.source_id, edge.target_id)
+            existing_edges.add(pair)
+
+        return updated
 
     def _parse_actions(self, raw_actions: List[Dict[str, Any]]) -> List[BaseAction]:
         """把 LLM 返回的原始 action 字典解析成强类型 Action 对象。"""
@@ -382,6 +511,8 @@ class GraphPlanner:
             try:
                 action_type = ActionType(atype if atype else stype)
             except ValueError:
+                continue
+            if action_type == ActionType.WRITER_REPORT:
                 continue
 
             # 先构建通用字段，再根据 action_type 派生为具体动作类型。

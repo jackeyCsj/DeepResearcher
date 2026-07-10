@@ -12,8 +12,9 @@
 from __future__ import annotations
 import asyncio
 import logging
-from typing import List
+from typing import List, Optional
 
+from deep_research.config import config
 from deep_research.models.actions import (
     BaseAction,
     ActionType,
@@ -23,6 +24,7 @@ from deep_research.models.actions import (
     ActionRecord,
 )
 from deep_research.models.evidence import EvidenceBundle, EvidenceRecord
+from deep_research.tools.base import ToolResult
 from deep_research.tools.registry import ToolRegistry
 from deep_research.utils.llm_client import LLMClient
 
@@ -32,9 +34,19 @@ logger = logging.getLogger(__name__)
 class ExecutionModule:
     """动作执行器：只负责调度和执行，不内置研究策略。"""
 
-    def __init__(self, tools: ToolRegistry, llm_client: LLMClient) -> None:
+    def __init__(
+        self,
+        tools: ToolRegistry,
+        llm_client: LLMClient,
+        max_parallel_tools: Optional[int] = None,
+    ) -> None:
         self.tools = tools
         self.llm = llm_client
+        self.max_parallel_tools = max(
+            1,
+            max_parallel_tools or config.max_parallel_tools,
+        )
+        self._semaphore = asyncio.Semaphore(self.max_parallel_tools)
 
     async def execute_parallel(
         self,
@@ -52,7 +64,7 @@ class ExecutionModule:
             return []
 
         # asyncio.gather 让同一批 frontier 节点并行执行
-        tasks = [self._execute_single(action) for action in actions]
+        tasks = [self._execute_with_limit(action) for action in actions]
         # bundles: List[EvidenceBundle | Exception] —— 每个 action 对应一个结果
         # return_exceptions=True 确保单个 action 失败不会中断整批并行任务
         bundles = await asyncio.gather(*tasks, return_exceptions=True)
@@ -79,6 +91,11 @@ class ExecutionModule:
 
         return results
 
+    async def _execute_with_limit(self, action: BaseAction) -> EvidenceBundle:
+        """限制同一 frontier 的工具并发，避免触发服务端限流。"""
+        async with self._semaphore:
+            return await self._execute_single(action)
+
     async def _execute_single(self, action: BaseAction) -> EvidenceBundle:
         """根据 ActionType 将单个动作路由到对应执行目标。"""
         if action.type == ActionType.TOOL_CALL:
@@ -98,15 +115,11 @@ class ExecutionModule:
                 query=action.tool_input,
                 **action.tool_params,
             )
-            records = [
-                EvidenceRecord(
-                    id=f"{action.subtask_id}-{i}",
-                    source_url=url,
-                    snippet=result.content[:300] if i == 0 else "",
-                    subtask_id=action.subtask_id,
-                )
-                for i, url in enumerate(result.source_urls[:10])
-            ]
+            records = self._records_from_tool_result(
+                action.subtask_id,
+                result,
+                id_prefix=action.subtask_id,
+            )
             return EvidenceBundle(
                 subtask_id=action.subtask_id,
                 records=records,
@@ -130,15 +143,11 @@ class ExecutionModule:
         try:
             tool = self.tools.get("web_search")
             result = await tool.arun(query=action.sub_query, max_results=5)
-            records = [
-                EvidenceRecord(
-                    id=f"{action.subtask_id}-sa-{i}",
-                    source_url=url,
-                    snippet="",
-                    subtask_id=action.subtask_id,
-                )
-                for i, url in enumerate(result.source_urls[:10])
-            ]
+            records = self._records_from_tool_result(
+                action.subtask_id,
+                result,
+                id_prefix=f"{action.subtask_id}-sa",
+            )
             return EvidenceBundle(
                 subtask_id=action.subtask_id,
                 records=records,
@@ -151,6 +160,49 @@ class ExecutionModule:
                 summary=f"Search Agent error: {e}",
                 completed=False,
             )
+
+    def _records_from_tool_result(
+        self,
+        subtask_id: str,
+        result: ToolResult,
+        id_prefix: str,
+    ) -> List[EvidenceRecord]:
+        """把每条搜索结果的标题和正文摘要写入原子证据。"""
+        records: List[EvidenceRecord] = []
+        structured = result.structured_data[:10]
+        if structured:
+            for index, item in enumerate(structured):
+                content = str(item.get("content") or "")
+                score = item.get("score")
+                records.append(
+                    EvidenceRecord(
+                        id=f"{id_prefix}-{index}",
+                        source_url=item.get("url") or None,
+                        title=str(item.get("title") or "") or None,
+                        snippet=content[:500],
+                        content=content[:2000] or None,
+                        subtask_id=subtask_id,
+                        relevance_score=score if isinstance(score, (int, float)) else None,
+                        metadata={
+                            key: value
+                            for key, value in item.items()
+                            if key not in {"url", "title", "content"}
+                        },
+                    )
+                )
+            return records
+
+        for index, url in enumerate(result.source_urls[:10]):
+            records.append(
+                EvidenceRecord(
+                    id=f"{id_prefix}-{index}",
+                    source_url=url,
+                    snippet=result.content[:500] if index == 0 else "",
+                    content=result.content[:2000] if index == 0 else None,
+                    subtask_id=subtask_id,
+                )
+            )
+        return records
 
     async def _execute_llm_reasoning(self, action: LLMReasoningAction) -> EvidenceBundle:
         """执行内部 LLM 推理动作，并将推理结果作为摘要型证据返回。"""

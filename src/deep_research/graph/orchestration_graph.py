@@ -2,7 +2,8 @@
 
 这是整个系统的主状态机，负责把 DuMate-DeepResearch 的外层编排层落成代码：
 1. Router → 粗粒度搜索 → 大纲生成 → 初始化计划 → 初始化 Rubric
-2. 循环：计算前沿任务 → 选择动作 → 反思质检 → 执行 → 更新证据 → 更新 Rubric → 重规划
+2. 循环：计算前沿任务 → 选择动作 → 反思质检 → 执行 → 整理证据
+   → 更新证据 → 更新 Rubric → 交叉验证 → 质量门 → 重规划
 3. 收尾：合成最终报告
 
 节点拓扑：
@@ -13,24 +14,31 @@
                                                               |
                                                               v
                                                     planner_actions
-                                                    /           \
-                                               stop?          actions
-                                                  |              |
-                                                  v              v
-                                          final_synthesis  reflection_gate
-                                                  |         /     |     \
-                                                 END    pass  revise  fail
+                                                              |
+                                                              v
+                                                     reflection_gate
+                                                        /  |  \
+                                                    pass revise fail
                                                            |     |       |
                                                            v     v       v
                                                     execute_parallel     |
                                                            |             |
                                                            v             |
-                                                    update_evidence      |
+                                                  consolidate_evidence   |
                                                            |             |
                                                            v             |
-                                                     update_rubric ------+
-                                                    /          \
-                                               stop?        continue
+                                                     update_evidence      |
+                                                           |             |
+                                                           v             |
+                                                      update_rubric ------+
+                                                           |
+                                                           v
+                                                cross_validate_evidence
+                                                           |
+                                                           v
+                                                     quality_gate
+                                                  /       |       \
+                                           follow_up   continue   stop
                                                   |              |
                                                   v              v
                                           final_synthesis    replan
@@ -41,27 +49,27 @@
 
 from __future__ import annotations
 import logging
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from deep_research.models.state import ResearchState
-from deep_research.models.actions import ActionType, BaseAction
 from deep_research.graph.nodes import create_nodes
 from deep_research.core.router import Router
 from deep_research.core.planner import GraphPlanner
 from deep_research.core.executor import ExecutionModule
 from deep_research.core.writer import Writer
 from deep_research.core.reflection import ReflectionGate
+from deep_research.core.evidence_validator import EvidenceQualityGate
 from deep_research.rubric.generator import RubricGenerator
 from deep_research.rubric.stopping import AdaptiveStopping
-from deep_research.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
 
 def decide_stop_or_continue(state: ResearchState) -> str:
-    """planner_actions 之后的路由：没有动作或 stop_flag 置位时进入最终写作。"""
+    """兼容旧状态；正常停止只允许由 quality_gate 产生。"""
     if state.stop_flag:
         return "stop"
     return "reflect"
@@ -84,13 +92,12 @@ def decide_reflection_pass_or_revise(state: ResearchState) -> str:
     return "fail_after_revisions"
 
 
-def decide_adaptive_stop(state: ResearchState) -> str:
-    """update_rubric 之后的路由：Rubric 无缺口或达到最大轮次时停止。"""
-    if state.stop_flag:
-        return "stop"
-    if state.iteration >= state.max_iterations:
-        return "stop"
-    return "continue"
+def decide_quality_gate(state: ResearchState) -> str:
+    """质量门之后的路由：补充验证、继续重规划或停止。"""
+    decision = getattr(state, "transient_quality_decision", "")
+    if decision in {"follow_up", "continue", "stop"}:
+        return decision
+    return "follow_up"
 
 
 def build_orchestration_graph(
@@ -101,7 +108,8 @@ def build_orchestration_graph(
     reflection_gate: ReflectionGate,
     rubric_generator: RubricGenerator,
     stopping: AdaptiveStopping,
-) -> StateGraph:
+    evidence_quality_gate: Optional[EvidenceQualityGate] = None,
+) -> CompiledStateGraph:
     """构建外层研究循环的 LangGraph StateGraph。
 
     Args:
@@ -112,12 +120,20 @@ def build_orchestration_graph(
         reflection_gate: 执行前质量门控。
         rubric_generator: 动态 Rubric 生成器。
         stopping: 自适应停止判定器。
+        evidence_quality_gate: frontier 证据整理与交叉验证组件。
 
     Returns:
         已编译、可直接执行的 StateGraph。
     """
     nodes = create_nodes(
-        router, planner, executor, writer, reflection_gate, rubric_generator, stopping
+        router,
+        planner,
+        executor,
+        writer,
+        reflection_gate,
+        rubric_generator,
+        stopping,
+        evidence_quality_gate,
     )
 
     workflow = StateGraph(ResearchState)
@@ -139,7 +155,7 @@ def build_orchestration_graph(
     # 主研究循环从计算 DAG 的 ready frontier 开始。
     workflow.add_edge("compute_frontier", "planner_actions")
 
-    # Planner 选不出可执行动作时，说明研究阶段结束，进入最终合成。
+    # Planner 本身不决定停止；即使当前没有动作，也让空批次继续经过质量门。
     workflow.add_conditional_edges(
         "planner_actions",
         decide_stop_or_continue,
@@ -160,16 +176,20 @@ def build_orchestration_graph(
         },
     )
 
-    # 执行结果先转成 EvidenceBundle，再合并到全局证据库。
-    workflow.add_edge("execute_parallel", "update_evidence")
+    # 执行结果先按 frontier 批次标准化和去重，再合并到全局证据库。
+    workflow.add_edge("execute_parallel", "consolidate_evidence")
+    workflow.add_edge("consolidate_evidence", "update_evidence")
     workflow.add_edge("update_evidence", "update_rubric")
+    workflow.add_edge("update_rubric", "cross_validate_evidence")
+    workflow.add_edge("cross_validate_evidence", "quality_gate")
 
-    # Rubric 更新后决定是否继续研究；这是论文里的自适应停止机制。
+    # 只有证据质量门通过后才允许停止；否则依据验证反馈进入重规划。
     workflow.add_conditional_edges(
-        "update_rubric",
-        decide_adaptive_stop,
+        "quality_gate",
+        decide_quality_gate,
         {
             "stop": "final_synthesis",
+            "follow_up": "replan",
             "continue": "replan",
         },
     )

@@ -4,12 +4,16 @@
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from deep_research.models.topic import TaskContext
 from deep_research.models.plan import ResearchPlan, PlanNode
-from deep_research.models.evidence import EvidenceBase, EvidenceBundle
+from deep_research.models.evidence import (
+    EvidenceBase,
+    EvidenceBundle,
+    EvidenceValidationResult,
+)
 from deep_research.models.rubric import Rubric
 from deep_research.models.actions import BaseAction, ActionRecord
 
@@ -40,12 +44,16 @@ class ResearchState(BaseModel):
 
     # 动作审计轨迹，便于追踪系统做过什么。
     action_history: List[ActionRecord] = Field(default_factory=list)
+    validation_history: List[EvidenceValidationResult] = Field(default_factory=list)
 
     # 图流转使用的临时字段；这些字段只在相邻节点之间传递中间结果。
     transient_frontier: List[PlanNode] = Field(default_factory=list)
     transient_actions: List[BaseAction] = Field(default_factory=list)
     transient_new_bundles: List[EvidenceBundle] = Field(default_factory=list)
+    transient_evidence_batch: List[EvidenceBundle] = Field(default_factory=list)
     transient_reflection_passed: bool = True
+    transient_validation_result: Optional[EvidenceValidationResult] = None
+    transient_quality_decision: str = ""
 
     # 最终输出报告。
     final_report: Optional[str] = None

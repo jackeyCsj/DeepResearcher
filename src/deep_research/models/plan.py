@@ -122,3 +122,5 @@ class ResearchPlan(BaseModel):
     def all_executed(self) -> bool:
         """检查计划中的所有节点是否都已执行。"""
         return all(n.executed for n in self.nodes.values())
+
+
