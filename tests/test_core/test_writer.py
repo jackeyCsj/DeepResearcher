@@ -16,7 +16,7 @@ class CapturingLLM:
 
     async def generate_long(self, prompt: str, **kwargs) -> str:
         self.prompt = prompt
-        return "report"
+        return "A supported claim [Iter-1, node9]."
 
 
 @pytest.mark.asyncio
@@ -52,7 +52,15 @@ async def test_writer_filters_and_labels_evidence_by_status() -> None:
         evidence,
     )
 
-    assert report == "report"
+    assert "[Iter-1, node9]" not in report
+    assert "## 参考来源" in report
+    assert "[S1: verified.example](https://verified.example/report)" in report
     assert "https://verified.example/report" in llm.prompt
-    assert "[disputed] https://disputed.example/report" in llm.prompt
+    assert (
+        "[disputed] [disputed.example](https://disputed.example/report)"
+        in llm.prompt
+    )
     assert "Use only the Verified evidence section" in llm.prompt
+    assert "batch-1" not in llm.prompt
+    assert "T-1" not in llm.prompt
+    assert "citation=[S1: verified.example](https://verified.example/report)" in llm.prompt
