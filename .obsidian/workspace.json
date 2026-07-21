@@ -11,14 +11,10 @@
             "id": "db34ee6e7a2596dd",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "reports/report3.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "report3"
+              "title": "新标签页"
             }
           }
         ]
@@ -94,7 +90,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "reports/report3.md",
                 "collapseAll": true,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +99,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "report3 的反向链接列表"
+              "title": "反向链接"
             }
           },
           {
@@ -113,12 +108,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "reports/report3.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "report3 的出链列表"
+              "title": "出链"
             }
           },
           {
@@ -185,6 +179,20 @@
   },
   "active": "fa6c7321d94ce88b",
   "lastOpenFiles": [
+    "README.md",
+    "client/tools/__pycache__/__init__.cpython-312.pyc",
+    "client/tools/__pycache__/tool_rag.cpython-312.pyc",
+    "client/tools/__pycache__/registry.cpython-312.pyc",
+    "client/tools/__pycache__/base_tool.cpython-312.pyc",
+    "client/rag/__pycache__/__init__.cpython-312.pyc",
+    "client/rag/__pycache__/vector_store.cpython-312.pyc",
+    "client/rag/__pycache__/pipeline.cpython-312.pyc",
+    "client/__pycache__/__init__.cpython-312.pyc",
+    "client/tools/__pycache__",
+    "client/tools/__init__.py",
+    "README.zh-CN.md",
+    "AGENTS.md",
+    "web/app/icon.svg",
     "reports/report1.md"
   ]
 }

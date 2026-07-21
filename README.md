@@ -1,215 +1,231 @@
-# DuMate-DeepResearch
+<div align="right">
 
-基于百度 DuMate-DeepResearch 论文架构的多智能体深度研究框架。  
-论文: [DuMate-DeepResearch: An Auditable Multi-Agent System with Recursive Search and Rubric-Grounded Reasoning](https://arxiv.org/abs/2606.07299) (Baidu AI Cloud)
+[English](README.md)
+
+</div>
+
+<div align="center">
+
+# SAGE Research
+
+**S**earch · **A**nalyze · **G**enerate · **E**valuate
+
+[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python)](https://www.python.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
+一个自主多 Agent 研究系统，将一个问题转化为带引用的结构化研究报告 -- 支持迭代质量审查、并行网络/学术搜索和本地知识库。
+
+</div>
+
+
+
+## 功能特性
+
+- **多 Agent 管线** -- Clarifier -> Supervisor -> Researcher xN -> Writer，以 LangGraph 状态图编排。Supervisor 将研究问题分解为并行子任务，并按 5 项基于证据的标准和严格决策树审查结果 -- 不达标的研究自动重试或重新规划，最多 3 轮。
+- **容错机制** -- 管线全链路多层错误恢复：搜索引擎在提供商之间回退（Brave -> Tavily）；失败的工具调用带退避重试；弱模型 tool_call 解析回退到从文本提取 JSON；MCP 传输错误（如 RefCell 竞争）被透明捕获和重试。故障表现为降级结果，而非崩溃。
+- **上下文工程** -- Token 计数、历史压缩和上下文预算管理使每个 Agent 在多轮 ReAct 循环中保持在上下文窗口内。按 Agent 调节温度，将结构化推理（0）与创意生成（0.3-0.6）分离。
+- **成本感知工具选择** -- Researcher 按成本分级分类工具（搜索摘要 vs. 全页抓取 vs. 论文阅读），仅在摘要缺少所需的具体数据时才升级调用，减少不必要的 API 开销。
+- **RAG 知识库** -- 上传 PDF、Markdown 文件或 arXiv 论文构建本地文献库。文档经分块、向量化后进入混合检索管线（BM25 + 稠密向量 + Cross-Encoder 重排序）。生成的报告自动回存至知识库，后续研究可在先前结果上递进。
+- **MCP 工具集成** -- 搜索引擎、学术 API 和文件转换器通过 Model Context Protocol 动态加载，每个 Agent 的工具白名单在配置中定义而非硬编码。
+- **流式 Web 界面** -- 通过 SSE 实时展示研究进度时间线，交互式报告支持引用导航和 PDF 导出。
+
+## 快速开始
+
+### 1. 克隆并配置
+
+```bash
+git clone git@github.com:qinyu8028/sage-research.git
+cd sage-research
+cp .env.example .env
+```
+
+### 2. 获取 API 密钥（均有免费额度）
+
+| 服务 | 注册地址 | `.env` 中的变量 |
+|------|---------|----------------|
+| **DeepSeek**（LLM） | [platform.deepseek.com](https://platform.deepseek.com) | `DEEPSEEK_API_KEY` |
+| **Brave Search** | [brave.com/search/api](https://brave.com/search/api/) | `BRAVE_API_KEY` |
+| **Tavily** | [tavily.com](https://tavily.com) | `TAVILY_API_KEY` |
+
+编辑 `.env` 填入上述三个密钥，即可运行。
+
+> **切换 LLM 提供商：** 将 `LLM_MODEL_ID` 设为你的模型名称。系统通过前缀自动识别提供商 -- `deepseek-*`、`glm-*`、`gemini-*`、`gpt-*`、`qwen-*` 分别路由到对应的 API 凭证。Claude 模型通过内置 Anthropic SDK 适配器支持。只需配置当前使用的提供商的密钥。
+
+### 3. 运行
+
+```bash
+./setup.sh
+```
+
+脚本会创建 conda 环境、安装 Python/Node 依赖，并启动后端（:8000）和前端（:3000）。打开 http://localhost:3000。
+
+### 手动启动
+
+```bash
+conda activate deep-research
+python server.py &        # 后端 -- FastAPI 运行在 :8000
+cd web && npm run dev      # 前端 -- Next.js 运行在 :3000
+```
+
+### CLI 模式
+
+```bash
+conda activate deep-research
+python main.py "你的研究问题"
+python main.py --model deepseek-v4-flash --max-rounds 2
+```
 
 ## 架构
 
-系统分为**三层**，对应论文图2的设计：
-
-### 1. 编排层 (Orchestration Layer)
-- **Router**: 任务理解与分析，提取核心研究主题
-- **GraphPlanner**: 基于 DAG 的动态规划（Algorithm 2），支持粗到细扩展、反思、重规划
-- **ExecutionModule**: 并行执行动作（工具调用 / Search Agent 派发）
-- **EvidenceQualityGate**: frontier 证据归纳、来源检查、按需交叉验证与质量门
-- **Writer**: 大纲生成 + 最终报告合成
-
-### 2. Rubric 测试时优化 (Rubric-Based Test-Time Optimization)
-- **持久规则 (Persistent Rubrics)** ρ_p: 稳定的话题级质量标准
-- **瞬时规则 (Ephemeral Rubrics)** ρ^e_t: 基于最新证据缺口动态刷新
-- **自适应停止**: 当信息缺口消失时自动终止
-
-### 3. 搜索层 (Search Layer)
-- **Search Agent A¹**: 内层独立搜索智能体，每子任务最多 10 轮检索
-- **渐进式特异性**: 从宽泛到具体，逐步聚焦
-
-
-
-![ChatGPT Image 2026年7月9日 23_10_10](%E9%99%84%E4%BB%B6/ChatGPT%20Image%202026%E5%B9%B47%E6%9C%889%E6%97%A5%2023_10_10.png)
-
-
-
-
-
-### 工作流程
-
 ```
-Query → Router → Coarse Search → Outline → Init Plan → Init Rubric
-  ↓
-Loop:
-  Compute Frontier → Select Actions → Reflect → Execute
-  → Consolidate Evidence → Update Evidence → Update Rubric
-  → Cross Validate Evidence → Quality Gate → Replan
-  ↓ (当无信息缺口或达最大迭代)
-Final Report Synthesis
-```
-
-## 安装
-
-```bash
-# 创建 conda 环境
-conda create -n deep_research python=3.10
-conda activate deep_research
-
-# 安装依赖
-pip install pydantic pydantic-settings langgraph langchain-core openai httpx tiktoken
-pip install beautifulsoup4 lxml tavily-python pyyaml python-dotenv rich
-pip install pytest pytest-asyncio
-
-# 安装本项目
-pip install -e .
-```
-
-## 配置
-
-复制 `.env.example` 为 `.env` 并填入 API 密钥。项目使用 OpenAI-compatible 客户端，默认可直接接入 DeepSeek:
-
-```env
-LLM_API_KEY=sk-...
-LLM_BASE_URL=https://api.deepseek.com
-LLM_MODEL=deepseek-chat
-
-TAVILY_API_KEY=tvly-...
-
-MAX_PLAN_ITERATIONS=15
-MAX_SEARCH_ROUNDS=10
-QUERIES_PER_ROUND=3
-```
-
-如果想继续使用 OpenAI，也可以改为：
-
-```env
-OPENAI_API_KEY=sk-...
-OPENAI_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4o
-```
-
-## 使用
-
-```bash
-# CLI 模式
-python -m deep_research.main --query "How do low-code/no-code platforms impact traditional software development?"
-
-# 指定模型和输出文件
-python -m deep_research.main --query "问题" --model gpt-4o --output report.md
-
-# 调试模式
-python -m deep_research.main --query "your question" --verbose
+            User Query
+                  |
+                  v
+            +───────────+   unclear    +─────────────────+
+            | Clarifier |────────────>|  User Feedback  |
+            +─────┬─────+              +────────┬────────+
+                  | clear                       |
+                  v                             v
+            research_brief <───────────────────+
+                  |
+                  v
++─────────────────────────────────────────────────────────────+
+|                      LangGraph Pipeline                     |
+|                                                             |
+|               +────────────────────+                        |
+|               |  Supervisor.plan() |                        |
+|               +─────────┬──────────+                        |
+|                         |                                   |
+|                 +───────┼──────+                            |
+|                 v       v      v                            |
+|               +────+ +────+ +────+                          |
+|               | R1 | | R2 | | R3 |  (parallel Researchers)  |
+|               +──┬─+ +──┬─+ +──┬─+                          |
+|                  +──────┼──────+                            |
+|                         v                                   |
+|                +─────────────────────+                      |
+|                | Supervisor.review() |                      |
+|                +─────────┬───────────+                      |
+|                          |                                  |
+|                   +──────┴──────+                           |
+|                   v             v                           |
+|               approved     retry/revise                     |
+|                   |             +──> back to plan (max 3)  |
+|                   v                                         |
+|               +────────+                                    |
+|               | Writer |                                    |
+|               +────┬───+                                    |
+|                    |                                        |
+|                    v                                        |
+|            Research Report ──> auto-index to RAG           |
++─────────────────────────────────────────────────────────────+
 ```
 
 ## 项目结构
 
 ```
-src/deep_research/
-├── __init__.py          # 包入口，导出所有公共 API
-├── config.py            # 配置管理 (pydantic-settings)
-├── main.py              # CLI 入口
-├── models/              # 核心数据模型
-│   ├── state.py         # ResearchState s_t = ⟨z, p_t, e_t, ρ_t⟩
-│   ├── plan.py          # DAG: ResearchPlan, PlanNode, ready_frontier()
-│   ├── evidence.py      # EvidenceRecord, EvidenceBundle
-│   ├── rubric.py        # Rubric, Criterion, has_outstanding_gap()
-│   ├── topic.py         # TopicSpec, Outline, Chapter
-│   └── actions.py       # ToolCall, SearchAgent, LLMReasoning
-├── core/                # 核心模块
-│   ├── router.py        # 任务理解
-│   ├── planner.py       # 图式动态规划 (Algorithm 2)
-│   ├── executor.py      # 并行执行器
-│   ├── evidence_validator.py # 证据归纳、交叉验证与质量门
-│   ├── writer.py        # 大纲+报告合成
-│   └── reflection.py    # 反思门控
-├── graph/               # LangGraph 图定义
-│   ├── orchestration_graph.py  # 主图拓扑
-│   ├── nodes.py         # 所有节点函数
-│   └── search_subgraph.py      # 内层 Search Agent
-├── rubric/              # Rubric 系统
-│   ├── generator.py     # 持久+瞬时规则生成
-│   └── stopping.py      # 自适应停止
-├── tools/               # 工具生态
-│   ├── base.py          # BaseTool ABC
-│   ├── registry.py      # 工具注册表
-│   ├── crawler.py       # 网页爬取
-│   └── search/          # 搜索引擎适配
-│       ├── tavily.py    # Tavily API
-│       └── factory.py   # 工厂模式
-└── utils/
-    └── llm_client.py    # OpenAI-compatible LLM 客户端
+sage_research/
+├── base/       — LLMClient, AgentBase, Message, Config, Logger
+├── agents/     — Clarifier, Supervisor, Researcher, Writer
+├── tools/      — BaseTool, ToolRegistry, RAGTool, PaperReaderTool
+├── search/     — SearchTool (Brave+Tavily fallback), Adapters
+├── mcp/        — MCPClient, MCPTool, register_mcp_tools
+├── context/    — TokenCounter, Truncator, HistoryCompactor, ContextBuilder
+├── rag/        — Chunker, Embedding, VectorStore, Reranker, MQE, Pipeline
+├── graph/      — LangGraph state graph (State + nodes + routing)
+├── library/    — Document converter, LibraryManager (ingest/list/delete)
+├── api/        — FastAPI app, Pydantic schemas, SSE event formatting
+└── orchestrator.py — Infrastructure setup, research runner, resource management
+
+web/            — Next.js frontend
+├── app/        — Page layout, global styles
+├── components/ — ClarifyPanel, ResearchProgress, ReportView,
+│                 LibraryDrawer, StreamingText, QueryInput
+└── lib/        — API client, mock SSE simulation
+
+configs/        — MCP server config, agent tool whitelists
+data/           — Runtime data (RAG index, downloads, library)
 ```
 
-## 验证
+## API 端点
 
-```bash
-# 运行所有测试
-pytest tests/ -v
+| Method | Path | 描述 |
+|--------|------|------|
+| POST | `/api/clarify` | 分析查询明确度，模糊时返回研究方向建议 |
+| POST | `/api/clarify/refine` | 将用户反馈整合为研究简述 |
+| POST | `/api/research` | 运行完整管线，通过 SSE 流式输出进度 |
+| GET | `/api/library` | 列出已索引的文献 |
+| POST | `/api/library/upload` | 上传文件（PDF/Markdown）到知识库 |
+| POST | `/api/library/save-report` | 将生成的报告保存到知识库 |
+| POST | `/api/library/ingest` | 通过 arXiv ID 或文件路径导入文献 |
+| DELETE | `/api/library/{title}` | 从知识库中删除文献 |
 
-# 运行模型测试
-pytest tests/test_models/ -v
-```
+## 环境变量
 
-## 引用
+系统通过模型名称前缀自动识别 LLM 提供商。只需配置当前使用的提供商。
 
-```bibtex
-@article{yan2026dumate,
-  title={DuMate-DeepResearch: An Auditable Multi-Agent System with Recursive Search and Rubric-Grounded Reasoning},
-  author={Lingyong Yan and Can Xu and Yukun Zhao and Wenxuan Li and Qingyang Chen and Jiulong Wu and Wenli Song and Xiangnan Li and Weixian Shi and Yiqun Chen and Xuchen Ma and Yuchen Li and Jiashu Zhao and Shuaiqiang Wang and Jianmin Wu and Dawei Yin},
-  journal={arXiv preprint arXiv:2606.07299},
-  year={2026}
-}
-```
+**LLM（选择一个提供商）：**
 
-## License
+| 提供商 | `LLM_MODEL_ID` | 所需环境变量 |
+|--------|----------------|-------------|
+| DeepSeek | `deepseek-v4-flash` | `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL` |
+| Zhipu GLM | `glm-4-flash` | `GLM_API_KEY`, `GLM_BASE_URL` |
+| Google Gemini | `gemini-2.5-flash` | `GOOGLE_API_KEY`, `GOOGLE_BASE_URL` |
+| OpenAI | `gpt-4o` | `OPENAI_API_KEY` |
+| Anthropic | `claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
+| Alibaba Qwen | `qwen-plus` | `QWEN_API_KEY`, `QWEN_BASE_URL` |
 
-MIT
+**Embedding：**
 
-## 更新日志
+| 变量 | 描述 |
+|------|------|
+| `EMBEDDING_MODEL_ID` | Embedding 模型，默认 `embedding-3`（智谱 embedding 模型） |
+| `EMBEDDING_BASE_URL` | Embedding API 端点 |
 
-### 2026-05-12
+**搜索（至少需要一个，强烈建议两个都配置）：**
 
-- 修复 LangGraph 主编排图运行入口兼容问题：将旧式 `graph.arun(...)` 调整为当前 `CompiledStateGraph` 支持的 `graph.ainvoke(...)`。
-- 增加 `ResearchState.model_validate(...)` 兼容处理，解决 `ainvoke()` 返回 `dict` 后下游仍按状态对象访问字段的问题。
-- 修复执行节点中的动作字段笔误，将 `state._actions` 更正为 `state.transient_actions`，避免执行阶段访问不存在字段。
+| 变量 | 描述 |
+|------|------|
+| `BRAVE_API_KEY` | Brave Search -- [免费额度](https://brave.com/search/api/) |
+| `TAVILY_API_KEY` | Tavily Search -- [免费额度](https://tavily.com) |
 
-### 2026-05-28
+**可选：**
 
-- 增强 OpenAI-compatible LLM 客户端对 DeepSeek 的结构化输出兼容性：DeepSeek 场景优先使用 `response_format={"type": "json_object"}`。
-- 保留 OpenAI JSON Schema 路径，并增加 `json_schema → json_object → prompt-only JSON` 的自动降级链路。
-- 使用 Pydantic `TypeAdapter.validate_json(...)` 统一解析结构化输出，兼容 `TopicSpec`、`Outline`、`ResearchPlan`、`Rubric` 与 `list[Criterion]` 等类型。
-- 增加对 `{"items": [...]}`、`{"criteria": [...]}` 等列表包装格式的自动拆包，解决 DeepSeek `json_object` 顶层对象限制带来的列表解析问题。
+| 变量 | 描述 |
+|------|------|
+| `REVIEW_MODEL_ID` | 使用不同模型进行质量审查（如 `qwen3.7-plus`），启用跨模型审查以减少自一致性偏差 |
+| `GITHUB_TOKEN` | GitHub API -- 启用代码/仓库搜索 |
+| `HF_TOKEN` | HuggingFace -- 加速 Cross-Encoder reranker 下载 |
+| `http_proxy` / `https_proxy` | 网络代理 |
 
-### 2026-06-11
+## 工具清单
 
-- 修复 `LLM_MAX_TOKENS` 配置未生效的问题：原先 `generate()` 实际默认仍使用 `4096`，导致较长 `ResearchPlan` JSON 容易被截断。
-- 新增 `default_output_tokens`，将常规结构化输出控制在合理范围内，同时避免把超大的上下文上限直接当作输出上限传给模型。
-- 为 Planner 初始化计划增加更紧凑的 DAG 输出约束，限制节点数量和描述长度，降低 JSON 截断概率。
-- 新增 `examples/debug_pipeline.py`，支持按 `Router → Outline → Planner → Ready Frontier → Actions` 顺序单步诊断并打印中间结果。
+Researcher 在每个 ReAct 步中从以下工具中选择，按成本分级：
 
-### 2026-06-24
+| 工具 | 来源 | 成本 | 描述 |
+|------|------|------|------|
+| `search` | 内置 | 低 | 网页搜索，Brave 优先 + Tavily 回退。返回排序摘要 |
+| `mcp__fetch__fetch` | MCP | 高 | 抓取完整网页内容。结果经 LLM 去噪 |
+| `mcp__paper-search__search_arxiv` | MCP | 低 | 按关键词搜索 arXiv 论文，返回标题、摘要和 ID |
+| `mcp__paper-search__search_google_scholar` | MCP | 低 | 搜索 Google Scholar，返回标题、摘要和链接 |
+| `read_arxiv_paper` | 内置 | 高 | 通过 pdfmux 下载并阅读 arXiv 论文 |
+| `mcp__github__search_repositories` | MCP | 低 | 按关键词搜索 GitHub 仓库 |
+| `mcp__github__search_code` | MCP | 低 | 跨仓库搜索 GitHub 代码 |
+| `rag_search` | 内置 | 免费 | 查询本地 RAG 知识库（BM25 + 向量 + 重排序） |
 
-- 修复 `select_actions()` 中动作选择结果解析不稳定的问题：由普通文本 `json.loads(...)` 改为结构化 `ActionList` 输出。
-- 为 DeepSeek 动作选择引入顶层对象格式：`{"actions": [...]}`，避免 JSON 顶层数组在 `json_object` 模式下不稳定。
-- 增加 `_fallback_actions_from_frontier(...)`，当 LLM 动作选择失败时按 `PlanNode.subtask_type` 生成确定性动作，避免误判为 `0 actions` 后提前进入最终报告。
-- 对搜索动作增加后处理，确保 `SearchAgentAction.sub_query` 与 `ToolCallAction.tool_input` 保留必要的时间和新鲜度关键词。
+工具白名单按 Agent 配置在 `configs/agents.json`，MCP 服务器定义在 `configs/mcp_servers.json`。
 
-### 2026-07-07
+## 技术栈
 
-- 为所有 LLM 调用统一注入运行时日期上下文，避免模型误解“当前、今年、至今、最近”等相对时间表达。
-- 明确将“2025年至今”解释为 `2025-01-01` 至当前运行日期，确保 Router、Outline、Planner 和最终报告都覆盖 2026 年进展。
-- 加强 Planner 搜索动作提示词：要求 `search_agent.sub_query` 显式包含 `2025`、`2026`、`2026年7月` 或 `最新` 等时间词。
-- 通过诊断脚本验证：`TopicSpec.scope`、报告大纲、DAG 节点与搜索动作均能正确保留 `2025-2026` 时间范围。
+**后端：** Python 3.14, LangGraph, FastAPI, OpenAI SDK, MCP
 
-### 2026-07-10
+**前端：** Next.js 16, React 19, Tailwind CSS 4
 
-- 新增 frontier 批次证据整理流程，在每轮并行执行后统一进行结果归纳、来源规范化、重复证据消除和失败结果检查。
-- 新增 Rubric 更新后的证据交叉验证与质量门，根据冲突、来源单一和覆盖缺口决定是否触发语义验证。
-- 为证据记录和证据包增加验证状态及审计信息，区分已验证、待验证、存在争议和无效证据。
-- 调整自适应停止路由：只有证据质量门通过后才允许进入最终报告，否则根据验证反馈重新规划补充任务。
-- 最终 Writer 默认仅使用已验证证据支撑确定性结论，并将未解决的争议证据列入报告限制说明。
-- 增加证据去重、交叉验证触发、质量门路由、验证器异常和最终写作过滤等单元测试与图集成测试。
-- 修复质量循环启用后重复重规划导致 DAG 持续膨胀的问题：重规划改为最多新增 3 个节点的增量决策，不再反复输出完整 `ResearchPlan`。
-- 修复 Replan 结构化 JSON 达到输出上限时直接终止研究的问题；解析或生成失败时保留当前计划并继续执行。
-- 搜索证据现在保留 Tavily 返回的标题、正文摘要和相关度，避免验证器因只有 URL、没有证据内容而持续要求补充全文。
-- 增加 Tavily 查询清理、350 字符长度保护和工具并发上限，并确保最终报告只能由证据质量门放行。
-- 修复 Rubric 结构化输出包含未转义引号时的初始化崩溃：解析失败会自动请求一次 JSON 格式修复。
-- Persistent 与 Ephemeral Rubric 增加确定性兜底标准，即使模型连续返回无效 JSON 也能继续研究流程。
-- 调整最终报告引用格式：不再暴露 iteration、bundle、action、subtask 或 node 等内部审计标识，事实结论改用可点击的 Markdown 来源链接。
-- 最终报告末尾自动追加去重后的“参考来源”目录，并清理模型偶尔生成的 `[Iter-1, node9]` 一类内部引用。
+**检索：** Sentence-Transformers, BM25 + 向量混合检索, Cross-Encoder 重排序
+
+**数据源：** Brave Search, Tavily, arXiv, Google Scholar, GitHub API
+
+## 前端预览
+
+![前端预览](assets/screenshot.png)
