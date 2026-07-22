@@ -49,10 +49,20 @@ def convert_to_markdown(
     dest = os.path.join(output_dir, f"{title}.md")
 
     if source_type == "arxiv":
+        if paper_tool is None:
+            raise RuntimeError(
+                "arXiv ingest requires the paper-search MCP server. "
+                "Install/configure paper_search_mcp before importing arXiv papers."
+            )
         text = paper_tool.run_tool({"paper_id": src})
         with open(dest, "w", encoding="utf-8") as f:
             f.write(text)
     elif source_type == "pdf":
+        if pdfmux_tool is None:
+            raise RuntimeError(
+                "PDF ingest requires the pdfmux MCP server. "
+                "Install/configure pdfmux-mcp before importing PDF files."
+            )
         text = pdfmux_tool.run_tool({"file_path": src})
         with open(dest, "w", encoding="utf-8") as f:
             f.write(text)

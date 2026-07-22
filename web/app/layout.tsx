@@ -19,7 +19,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SAGE Research",
+  title: "Deep Research",
   description: "自主多 Agent 学术研究系统",
 };
 

@@ -6,7 +6,7 @@ from typing import Literal
 from openai.types.chat import ChatCompletionMessage
 from pydantic import BaseModel, Field
 
-from ..base import AgentBase, llm_client, Message
+from ..base import AgentBase, LLMClient, Message
 from ..context import ContextBuilder
 from .prompts import (
     SUPERVISOR_SYSTEM,
@@ -61,13 +61,13 @@ class Supervisor(AgentBase):
 
     def __init__(
         self,
-        llm: llm_client,
+        llm: LLMClient,
         context_builder: ContextBuilder,
         max_steps: int,
         name: str = "supervisor",
         system_prompt: str = SUPERVISOR_SYSTEM,
         plan_user_prompt: str = SUPERVISOR_PLAN_USER,
-        review_llm: llm_client | None = None,
+        review_llm: LLMClient | None = None,
     ):
         super().__init__(name, llm, context_builder, system_prompt)
         self.max_steps = max_steps

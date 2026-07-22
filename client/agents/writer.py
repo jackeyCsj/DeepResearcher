@@ -1,6 +1,6 @@
 import logging, re
 
-from ..base import AgentBase, llm_client, Message
+from ..base import AgentBase, LLMClient, Message
 from ..context import ContextBuilder
 from .prompts import WRITER_SYSTEM_PROMPT, WRITER_USER_PROMPT
 
@@ -15,7 +15,7 @@ class Writer(AgentBase):
 
     def __init__(
         self,
-        llm: llm_client,
+        llm: LLMClient,
         context_builder: ContextBuilder,
         name: str = "writer",
         system_prompt: str = WRITER_SYSTEM_PROMPT,

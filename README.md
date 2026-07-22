@@ -125,7 +125,7 @@ python main.py --model deepseek-v4-flash --max-rounds 2
 ## 项目结构
 
 ```
-sage_research/
+client/
 ├── base/       — LLMClient, AgentBase, Message, Config, Logger
 ├── agents/     — Clarifier, Supervisor, Researcher, Writer
 ├── tools/      — BaseTool, ToolRegistry, RAGTool, PaperReaderTool
@@ -178,17 +178,18 @@ data/           — Runtime data (RAG index, downloads, library)
 
 **Embedding：**
 
-| 变量 | 描述 |
-|------|------|
+| 变量                   | 描述                                             |
+| -------------------- | ---------------------------------------------- |
 | `EMBEDDING_MODEL_ID` | Embedding 模型，默认 `embedding-3`（智谱 embedding 模型） |
-| `EMBEDDING_BASE_URL` | Embedding API 端点 |
+| `EMBEDDING_BASE_URL` | Embedding API 端点                               |
+|                      |                                                |
 
 **搜索（至少需要一个，强烈建议两个都配置）：**
 
-| 变量 | 描述 |
-|------|------|
-| `BRAVE_API_KEY` | Brave Search -- [免费额度](https://brave.com/search/api/) |
-| `TAVILY_API_KEY` | Tavily Search -- [免费额度](https://tavily.com) |
+| 变量               | 描述                                                    |
+| ---------------- | ----------------------------------------------------- |
+| `BRAVE_API_KEY`  | Brave Search -- [免费额度](https://brave.com/search/api/) |
+| `TAVILY_API_KEY` | Tavily Search -- [免费额度](https://tavily.com)           |
 
 **可选：**
 
@@ -203,16 +204,16 @@ data/           — Runtime data (RAG index, downloads, library)
 
 Researcher 在每个 ReAct 步中从以下工具中选择，按成本分级：
 
-| 工具 | 来源 | 成本 | 描述 |
-|------|------|------|------|
-| `search` | 内置 | 低 | 网页搜索，Brave 优先 + Tavily 回退。返回排序摘要 |
-| `mcp__fetch__fetch` | MCP | 高 | 抓取完整网页内容。结果经 LLM 去噪 |
-| `mcp__paper-search__search_arxiv` | MCP | 低 | 按关键词搜索 arXiv 论文，返回标题、摘要和 ID |
-| `mcp__paper-search__search_google_scholar` | MCP | 低 | 搜索 Google Scholar，返回标题、摘要和链接 |
-| `read_arxiv_paper` | 内置 | 高 | 通过 pdfmux 下载并阅读 arXiv 论文 |
-| `mcp__github__search_repositories` | MCP | 低 | 按关键词搜索 GitHub 仓库 |
-| `mcp__github__search_code` | MCP | 低 | 跨仓库搜索 GitHub 代码 |
-| `rag_search` | 内置 | 免费 | 查询本地 RAG 知识库（BM25 + 向量 + 重排序） |
+| 工具                                         | 来源  | 成本  | 描述                               |
+| ------------------------------------------ | --- | --- | -------------------------------- |
+| `search`                                   | 内置  | 低   | 网页搜索，Brave 优先 + Tavily 回退。返回排序摘要 |
+| `mcp__fetch__fetch`                        | MCP | 高   | 抓取完整网页内容。结果经 LLM 去噪              |
+| `mcp__paper-search__search_arxiv`          | MCP | 低   | 按关键词搜索 arXiv 论文，返回标题、摘要和 ID      |
+| `mcp__paper-search__search_google_scholar` | MCP | 低   | 搜索 Google Scholar，返回标题、摘要和链接     |
+| `read_arxiv_paper`                         | 内置  | 高   | 通过 pdfmux 下载并阅读 arXiv 论文         |
+| `mcp__github__search_repositories`         | MCP | 低   | 按关键词搜索 GitHub 仓库                 |
+| `mcp__github__search_code`                 | MCP | 低   | 跨仓库搜索 GitHub 代码                  |
+| `rag_search`                               | 内置  | 免费  | 查询本地 RAG 知识库（BM25 + 向量 + 重排序）    |
 
 工具白名单按 Agent 配置在 `configs/agents.json`，MCP 服务器定义在 `configs/mcp_servers.json`。
 

@@ -7,8 +7,8 @@ from client.config import Config
 from client.orchestrator import Orchestrator
 from client.display import stream_events
 
-logger = logging.getLogger("sage_research.main")
-display = logging.getLogger("sage_research.display")
+logger = logging.getLogger("client.main")
+display = logging.getLogger("client.display")
 
 
 def parse_args():

@@ -2,18 +2,22 @@ import json
 import logging
 import os
 import asyncio
+import shutil
 import time
 import threading
 from concurrent.futures import Future
 
+from dotenv import load_dotenv
 from typing import Any
 from mcp.types import CallToolResult, Tool
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp import ClientSession
-from ..tools import ToolCallError
+from ..tools.base_tool import ToolCallError
 
 logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 
 class MCPServerConfig(BaseModel):
@@ -21,6 +25,9 @@ class MCPServerConfig(BaseModel):
     command: str
     args: list[str]
     env: dict[str, str] | None = None
+    optional: bool = False
+    required_env: list[str] = Field(default_factory=list)
+    connect_timeout: float = 45.0
 
     def to_stdio_params(self) -> StdioServerParameters:
         env = {**os.environ, **self.env} if self.env else os.environ
@@ -34,8 +41,10 @@ class MCPServerConfig(BaseModel):
 
 class MCPClient:
     def __init__(self, config: MCPServerConfig) -> None:
+        self.config = config
         self.name = config.name
         self.server_config: StdioServerParameters = config.to_stdio_params()
+        self.connect_timeout = config.connect_timeout
         self._thread = None
         self._queue = None
         self._ready_event = None
@@ -50,7 +59,10 @@ class MCPClient:
         self._thread = threading.Thread(target=self._run_background, daemon=True)
         self._thread.start()
 
-        self._ready_event.wait()
+        if not self._ready_event.wait(timeout=self.connect_timeout):
+            raise TimeoutError(
+                f"MCP 服务连接超时: {self.name} ({self.connect_timeout:.0f}s)"
+            )
 
         if self._connect_error:
             logger.error("[MCP] 连接失败: %s - %s", self.name, self._connect_error)
@@ -130,25 +142,85 @@ class MCPClient:
         self._loop = None
 
 
-def create_mcp_clients(json_path: str) -> list[MCPClient]:
+def load_mcp_server_configs(json_path: str) -> list[MCPServerConfig]:
     with open(json_path, "r", encoding="utf-8") as f:
         configs: dict[str, dict] = json.load(f)
 
     server_configs: list[MCPServerConfig] = []
+    project_root = os.path.abspath(os.path.join(os.path.dirname(json_path), os.pardir))
+    npm_cache_dir = os.path.join(project_root, "data", "npm-cache")
     for name, config in configs.items():
-        env: dict[str, str] = config.get("env")
-        if env:
-            for key, value in env.items():
-                if value.startswith("${") and value.endswith("}"):
-                    env[key] = os.getenv(value[2:-1])
+        optional = config.get("optional", False)
+        required_env = config.get("required_env", [])
+        raw_env: dict[str, str] = config.get("env") or {}
+        env: dict[str, str] = {}
+        missing_required: list[str] = []
 
-        server_config = MCPServerConfig(name=name, command=config["command"], args=config["args"], env=env)
+        for key, value in raw_env.items():
+            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+                env_name = value[2:-1]
+                env_value = os.getenv(env_name)
+                if env_value is None:
+                    if env_name in required_env:
+                        missing_required.append(env_name)
+                    env[key] = ""
+                else:
+                    env[key] = env_value
+            else:
+                env[key] = "" if value is None else str(value)
+
+        if missing_required:
+            message = (
+                f"[MCP] 跳过 {name}: 缺少环境变量 "
+                f"{', '.join(missing_required)}"
+            )
+            if optional:
+                logger.warning(message)
+                continue
+            raise ValueError(message)
+
+        command = config["command"]
+        resolved_command = shutil.which(command)
+        if resolved_command is None:
+            message = f"[MCP] command not found for {name}: {command}"
+            if optional:
+                logger.warning("%s; skipping optional MCP server", message)
+                continue
+            raise FileNotFoundError(message)
+
+        command_basename = os.path.basename(resolved_command).lower()
+        if command_basename in {"npx", "npx.cmd", "npx.exe", "npm", "npm.cmd", "npm.exe"}:
+            os.makedirs(npm_cache_dir, exist_ok=True)
+            env.setdefault("npm_config_cache", npm_cache_dir)
+            env.setdefault("NPM_CONFIG_CACHE", npm_cache_dir)
+
+        server_config = MCPServerConfig(
+            name=name,
+            command=resolved_command,
+            args=config["args"],
+            env=env or None,
+            optional=optional,
+            required_env=required_env,
+            connect_timeout=config.get("connect_timeout", 45.0),
+        )
         server_configs.append(server_config)
+
+    return server_configs
+
+
+def create_mcp_clients(json_path: str) -> list[MCPClient]:
+    server_configs = load_mcp_server_configs(json_path)
 
     clients = []
     for config in server_configs:
         client = MCPClient(config)
-        client.connect()
+        try:
+            client.connect()
+        except Exception:
+            if config.optional:
+                logger.warning("[MCP] 跳过可选服务: %s", config.name, exc_info=True)
+                continue
+            raise
         clients.append(client)
 
     return clients

@@ -4,7 +4,7 @@ import re
 import uuid
 
 from client.tools.base_tool import BaseTool, ToolCallError
-from ..base import AgentBase, llm_client, Message
+from ..base import AgentBase, LLMClient, Message
 from ..context import ContextBuilder
 from .prompts import (
     RESEARCHER_SYSTEM_PROMPT,
@@ -30,7 +30,7 @@ class Researcher(AgentBase):
     def __init__(
         self,
         name: str,
-        llm: llm_client,
+        llm: LLMClient,
         context_builder: ContextBuilder,
         tool_list: list[BaseTool],
         max_steps: int = 3,

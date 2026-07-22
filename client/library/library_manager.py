@@ -15,8 +15,8 @@ class LibraryManager:
     def __init__(
         self,
         data_dir,
-        paper_tool: PaperReaderTool,
-        pdfmux_tool: MCPTool,
+        paper_tool: PaperReaderTool | None,
+        pdfmux_tool: MCPTool | None,
         pipeline: Pipeline
     ):
         self.paper_tool = paper_tool
@@ -76,6 +76,10 @@ class LibraryManager:
 
         if save_original:
             if arxiv_match:
+                if self.paper_tool is None:
+                    raise RuntimeError(
+                        "arXiv original saving requires the paper-search MCP server."
+                    )
                 pdf_src = os.path.join(self.paper_tool.download_dir, f"{src}.pdf")
                 if os.path.exists(pdf_src):
                     shutil.copy(pdf_src, self.originals_dir)

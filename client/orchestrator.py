@@ -29,29 +29,52 @@ class Orchestrator:
         tool_registry = ToolRegistry()
         register_mcp_tools(registry=tool_registry, clients=self.mcp_clients)
 
-        brave_tool = tool_registry.tools["mcp__brave-search__brave_web_search"]
-        tavily_tool = tool_registry.tools["mcp__tavily__tavily_search"]
-        search_tool = SearchTool(brave_tool=brave_tool, tavily_tool=tavily_tool)
+        tavily_tool = tool_registry.tools.get("mcp__tavily__tavily_search")
+        brave_tool = tool_registry.tools.get("mcp__brave-search__brave_web_search")
+        if not tavily_tool and not brave_tool:
+            raise ValueError(
+                "至少需要配置 TAVILY_API_KEY 或 BRAVE_API_KEY 才能启用 search 工具"
+            )
+        search_tool = SearchTool(tavily_tool=tavily_tool, brave_tool=brave_tool)
         
-        download_tool = tool_registry.tools["mcp__paper-search__download_arxiv"]
-        read_tool = tool_registry.tools["mcp__paper-search__read_arxiv_paper"]
-        paper_reader_tool = PaperReaderTool(download_tool=download_tool, read_tool=read_tool)
-        self.paper_reader = paper_reader_tool
+        download_tool = tool_registry.tools.get("mcp__paper-search__download_arxiv")
+        read_tool = tool_registry.tools.get("mcp__paper-search__read_arxiv_paper")
+        if download_tool and read_tool:
+            paper_reader_tool = PaperReaderTool(download_tool=download_tool, read_tool=read_tool)
+            self.paper_reader = paper_reader_tool
+        else:
+            paper_reader_tool = None
+            self.paper_reader = None
 
         rag_tool = RAGTool(pipeline=self.rag_pipeline)
         
-        pdfmux_tool = tool_registry.tools["mcp__pdfmux__convert_pdf"]
+        pdfmux_tool = tool_registry.tools.get("mcp__pdfmux__convert_pdf")
         self.pdfmux_tool = pdfmux_tool
 
         tool_registry.register_tool(search_tool)
-        tool_registry.register_tool(paper_reader_tool)
+        if paper_reader_tool:
+            tool_registry.register_tool(paper_reader_tool)
         tool_registry.register_tool(rag_tool)
 
         with open(os.path.join(self.config.config_dir, "agents.json")) as f:
             agent_configs = json.load(f)
 
         whitelist = agent_configs["researcher"]["allowed_tools"]
-        self.researcher_tools = tool_registry.get_tools(whitelist)
+        optional_tool_prefixes = (
+            "mcp__github__",
+            "mcp__fetch__",
+            "mcp__paper-search__",
+        )
+        optional_tools = {"read_arxiv_paper"}
+        available_whitelist = []
+        for name in whitelist:
+            if name in tool_registry.tools:
+                available_whitelist.append(name)
+            elif name.startswith(optional_tool_prefixes) or name in optional_tools:
+                continue
+            else:
+                available_whitelist.append(name)
+        self.researcher_tools = tool_registry.get_tools(available_whitelist)
         
     def run_research(self, brief: str):
         review_llm = LLMClient(model=self.config.llm.review_model, timeout=self.config.llm.timeout) if self.config.llm.review_model else None
@@ -84,7 +107,8 @@ class Orchestrator:
         return manager
 
     def close(self):
-        self.paper_reader.cleanup()
+        if self.paper_reader:
+            self.paper_reader.cleanup()
         for client in self.mcp_clients:
             client.disconnect()
 

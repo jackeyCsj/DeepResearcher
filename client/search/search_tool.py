@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 class SearchTool(BaseTool):
     def __init__(
         self,
-        brave_tool: MCPTool,
-        tavily_tool: MCPTool,
+        tavily_tool: MCPTool | None,
+        brave_tool: MCPTool | None = None,
     ):
         super().__init__(
             name="search",
@@ -57,8 +57,8 @@ class SearchTool(BaseTool):
                 ),
             ],
         )
-        self.brave_adapter = BraveAdapter(brave_tool)
-        self.tavily_adapter = TavilyAdapter(tavily_tool)
+        self.tavily_adapter = TavilyAdapter(tavily_tool) if tavily_tool else None
+        self.brave_adapter = BraveAdapter(brave_tool) if brave_tool else None
 
     @staticmethod
     def _format_results(result_list: list) -> str:
@@ -77,30 +77,44 @@ class SearchTool(BaseTool):
         if time_filter is not None:
             kwargs["time_filter"] = time_filter
 
-        brave_error = False
         tavily_error = False
+        brave_error = False
+        configured_services = 0
 
-        try:
-            result_list = self.brave_adapter.search(**kwargs)
-            if result_list:
-                logger.info("[SearchTool] Brave 返回 %d 条结果", len(result_list))
-                return self._format_results(result_list)
-            logger.info("[SearchTool] Brave 返回空结果，尝试 Tavily")
-        except Exception as e:
-            brave_error = True
-            logger.warning("[SearchTool] Brave 异常: %s，fallback 到 Tavily", e)
+        if self.tavily_adapter:
+            configured_services += 1
+            try:
+                result_list = self.tavily_adapter.search(**kwargs)
+                if result_list:
+                    logger.info("[SearchTool] Tavily 返回 %d 条结果", len(result_list))
+                    return self._format_results(result_list)
+                logger.info("[SearchTool] Tavily 返回空结果，尝试 Brave")
+            except Exception as e:
+                tavily_error = True
+                logger.warning("[SearchTool] Tavily 异常: %s，fallback 到 Brave", e)
 
-        try:
-            result_list = self.tavily_adapter.search(**kwargs)
-            if result_list:
-                logger.info("[SearchTool] Tavily 返回 %d 条结果", len(result_list))
-                return self._format_results(result_list)
-            logger.info("[SearchTool] Tavily 返回空结果")
-        except Exception as e:
-            tavily_error = True
-            logger.warning("[SearchTool] Tavily 异常: %s", e)
+        if self.brave_adapter:
+            configured_services += 1
+            try:
+                result_list = self.brave_adapter.search(**kwargs)
+                if result_list:
+                    logger.info("[SearchTool] Brave 返回 %d 条结果", len(result_list))
+                    return self._format_results(result_list)
+                logger.info("[SearchTool] Brave 返回空结果")
+            except Exception as e:
+                brave_error = True
+                logger.warning("[SearchTool] Brave 异常: %s", e)
 
-        if brave_error and tavily_error:
+        if configured_services == 0:
+            logger.error("[SearchTool] 未配置搜索源")
+            return (
+                "Error: no search services are configured. "
+                "Set TAVILY_API_KEY or BRAVE_API_KEY."
+            )
+
+        if (not self.tavily_adapter or tavily_error) and (
+            not self.brave_adapter or brave_error
+        ):
             logger.error("[SearchTool] 所有搜索源不可用")
             return (
                 "Error: all search services are currently unavailable. "

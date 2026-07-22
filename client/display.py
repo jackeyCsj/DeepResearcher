@@ -3,7 +3,7 @@
 import logging
 import time
 
-logger = logging.getLogger("sage_research.display")
+logger = logging.getLogger("client.display")
 
 
 def _log(msg: str):

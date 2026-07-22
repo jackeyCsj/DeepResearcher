@@ -124,7 +124,7 @@ function HeroSection({
     <div className={`flex flex-1 flex-col items-center w-full ${sending ? "hero-exit" : ""}`}>
       <div className="flex flex-1 flex-col items-center justify-center">
         <h1 className="text-4xl font-medium w-full text-center">
-          <StreamingText text="SAGE Research" mode="typewriter" speed="slow" pause={350} onComplete={() => setShowSubtitle(true)} />
+          <StreamingText text="Deep Research" mode="typewriter" speed="slow" pause={350} onComplete={() => setShowSubtitle(true)} />
         </h1>
         <div
           className={`w-full overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${

@@ -1,8 +1,8 @@
 from typing import Any
 
-from ..tools import BaseTool
 from .client import MCPClient
-from ..tools import ToolRegistry
+from ..tools.base_tool import BaseTool
+from ..tools.registry import ToolRegistry
 
 
 class MCPTool(BaseTool):
