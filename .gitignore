@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 AGENTS.md
 .requirements_hash
 __pycache__/
