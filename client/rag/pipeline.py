@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import uuid
 from datetime import datetime
 
 from .vector_store import VectorStore
@@ -64,7 +66,6 @@ ingest_schema = {
 
 class Pipeline:
     VECTOR_STORE_FILE = "vector_store.json"
-    DOCUMENTS_DIR = "documents"
     SEARCH_CACHE_DIR = "search_cache"
 
     def __init__(
@@ -77,7 +78,6 @@ class Pipeline:
         self.data_dir = data_dir
         self.mqe = mqe
 
-        os.makedirs(os.path.join(data_dir, self.DOCUMENTS_DIR), exist_ok=True)
         os.makedirs(os.path.join(data_dir, self.SEARCH_CACHE_DIR), exist_ok=True)
 
         store_path = os.path.join(data_dir, self.VECTOR_STORE_FILE)
@@ -89,6 +89,13 @@ class Pipeline:
 
     def add_document(self, file_path: str, save: bool = True):
         document = Document.read_file(file_path)
+        content_hash = VectorStore.content_hash(document.text)
+        if self.vector_store.has_content(content_hash):
+            self.vector_store.add_source(content_hash, file_path)
+            if save:
+                self.save()
+            return content_hash
+
         chunks = self.chunker.chunk(document)
         text_chunks = [chunk.content for chunk in chunks]
         embedding_list, tokens = self.embedding.invoke(text_chunks)
@@ -96,31 +103,62 @@ class Pipeline:
         for ebd, chunk in zip(embedding_list, chunks):
             chunk.embedding = ebd
 
-        self.vector_store.add_chunks(chunks)
+        self.vector_store.add_document(content_hash, chunks, file_path)
         if save:
             self.save()
+        return content_hash
 
-    def add_text(self, text: str, query: str):
+    @staticmethod
+    def _safe_path_part(value: str, default: str) -> str:
+        safe = re.sub(r"[^\w\-.\u4e00-\u9fff]+", "_", value.strip())
+        safe = safe.strip("._")
+        return safe[:120] or default
+
+    @staticmethod
+    def _extract_title(markdown: str, fallback: str) -> str:
+        for line in markdown.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("# "):
+                return stripped[2:].strip() or fallback
+        return fallback
+
+    def add_text(self, text: str, query: str, user_id: str = "default") -> dict[str, str]:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_query = "".join(c for c in query[:20] if c.isalnum() or c in "_ -")
-        file_name = f"{timestamp}_{safe_query}.md"
-        file_path = os.path.join(self.data_dir, self.SEARCH_CACHE_DIR, file_name)
+        safe_user_id = self._safe_path_part(user_id, "default")
+        title = self._extract_title(text, query)
+        safe_title = self._safe_path_part(title, "research_report")
+        file_id = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_title}.md"
+        user_dir = os.path.join(self.data_dir, self.SEARCH_CACHE_DIR, safe_user_id)
+        os.makedirs(user_dir, exist_ok=True)
+        file_path = os.path.join(user_dir, file_id)
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(text)
 
         self.add_document(file_path)
+        return {"file_path": file_path, "file_id": file_id, "title": title}
 
     def save(self):
         store_path = os.path.join(self.data_dir, self.VECTOR_STORE_FILE)
         self.vector_store.save_to_json(store_path)
 
-    def retrieve(self, query: str, top_k: int = 5) -> str:
+    def retrieve(self, query: str, top_k: int = 5, user_id: str | None = None) -> str:
+        allowed_path_prefix = None
+        if user_id:
+            safe_user_id = self._safe_path_part(user_id, "default")
+            allowed_path_prefix = [
+                os.path.join(self.data_dir, "converted"),
+                os.path.join(self.data_dir, self.SEARCH_CACHE_DIR, safe_user_id),
+            ]
+
         if not self.mqe:
             query_embedding, query_tokens = self.embedding.invoke(query)
 
             retrieved = self.vector_store.hybrid_search(
-                query=query, query_embedding=query_embedding, top_k=top_k * 4
+                query=query,
+                query_embedding=query_embedding,
+                top_k=top_k * 4,
+                allowed_path_prefix=allowed_path_prefix,
             )
 
             chunks = [chunk for chunk, score in retrieved]
@@ -140,7 +178,10 @@ class Pipeline:
                 query_embedding, query_tokens = self.embedding.invoke(sub_query)
 
                 retrieved = self.vector_store.hybrid_search(
-                    query=sub_query, query_embedding=query_embedding, top_k=top_k * 4
+                    query=sub_query,
+                    query_embedding=query_embedding,
+                    top_k=top_k * 4,
+                    allowed_path_prefix=allowed_path_prefix,
                 )
 
                 for chunk, score in retrieved:

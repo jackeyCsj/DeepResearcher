@@ -2,6 +2,7 @@ import json
 import os
 import re
 import shutil
+import tempfile
 from datetime import datetime
 
 from .converter import convert_to_markdown
@@ -32,7 +33,6 @@ class LibraryManager:
 
     def ingest(
         self, src: str, custom_title: str = None, overwrite: bool = True,
-        save_original: bool = True,
     ) -> IngestResult:
 
         entries = self.list_docs()
@@ -40,76 +40,82 @@ class LibraryManager:
         arxiv_match = re.match(r"^\d{4}\.\d{4,5}", src)
         if arxiv_match:
             for entry in entries:
-                if entry.get("arxiv_id") == arxiv_match.group():
+                if entry.get("original_path") and entry.get("arxiv_id") == arxiv_match.group():
                     return IngestResult(
                         title=src,
                         status="skipped"
                     )
 
-        metadata = convert_to_markdown(
-            src=src,
-            output_dir=self.converted_dir,
-            paper_tool=self.paper_tool,
-            pdfmux_tool=self.pdfmux_tool,
-            custom_title=custom_title,
-        )
+        staging_dir = tempfile.mkdtemp(prefix="library-ingest-", dir=self.data_dir)
+        staged_index_path = None
+        try:
+            metadata = convert_to_markdown(
+                src=src,
+                output_dir=staging_dir,
+                paper_tool=self.paper_tool,
+                pdfmux_tool=self.pdfmux_tool,
+                custom_title=custom_title,
+            )
 
-        # dedup
-        existing = None
-        for entry in entries:
-            if entry["title"] == metadata.title:
-                existing = entry
-                break
+            existing = next(
+                (
+                    entry
+                    for entry in entries
+                    if entry["title"] == metadata.title and entry.get("original_path")
+                ),
+                None,
+            )
+            if existing and not overwrite:
+                return IngestResult(title=metadata.title, status="skipped")
 
-        if existing:
-            if not overwrite:
-                return IngestResult(
-                    title=metadata.title,
-                    status="skipped"
-                )
+            if arxiv_match:
+                if self.paper_tool is None:
+                    raise RuntimeError("arXiv original saving requires the paper-search MCP server.")
+                original_src = os.path.join(self.paper_tool.download_dir, f"{src}.pdf")
+                original_path = os.path.join(self.originals_dir, f"{src}.pdf")
             else:
+                original_src = src
+                original_path = os.path.join(self.originals_dir, os.path.basename(src))
+            if not os.path.exists(original_src):
+                raise FileNotFoundError(f"Original document not found: {original_src}")
+
+            staged_original_dir = os.path.join(staging_dir, "original")
+            os.makedirs(staged_original_dir, exist_ok=True)
+            staged_original_path = os.path.join(staged_original_dir, os.path.basename(original_path))
+            shutil.copy2(original_src, staged_original_path)
+
+            content_hash = self.pipeline.add_document(metadata.output_path, save=False)
+            staged_index_path = metadata.output_path
+
+            status = "created"
+            if existing:
                 self._remove_files(existing)
                 entries.remove(existing)
                 status = "overwritten"
-        else:
-            status = "created"
 
-        if save_original:
-            if arxiv_match:
-                if self.paper_tool is None:
-                    raise RuntimeError(
-                        "arXiv original saving requires the paper-search MCP server."
-                    )
-                pdf_src = os.path.join(self.paper_tool.download_dir, f"{src}.pdf")
-                if os.path.exists(pdf_src):
-                    shutil.copy(pdf_src, self.originals_dir)
-            else:
-                shutil.copy(src, self.originals_dir)
+            converted_path = os.path.join(self.converted_dir, os.path.basename(metadata.output_path))
+            os.replace(metadata.output_path, converted_path)
+            os.replace(staged_original_path, original_path)
+            self.pipeline.vector_store.add_source(content_hash, converted_path)
+            self.pipeline.vector_store.remove_by_filepath(staged_index_path)
+            staged_index_path = None
 
-        self.pipeline.add_document(metadata.output_path, save=False)
-
-        index_entry_dict = {
-            "title": metadata.title,
-            "arxiv_id": metadata.arxiv_id,
-            "converted_path": metadata.output_path,
-            "source_type": metadata.source_type,
-            "added_at": datetime.now().isoformat()
-        }
-        if save_original:
-            if arxiv_match:
-                original_path = os.path.join(self.originals_dir, f"{src}.pdf")
-            else:
-                original_path = os.path.join(self.originals_dir, os.path.basename(src))
-            index_entry_dict["original_path"] = original_path
-        entries.append(index_entry_dict)
-
-        self._save_index(entries)
-        self.pipeline.save()
-
-        return IngestResult(
-            title=metadata.title,
-            status=status
-        )
+            entries.append({
+                "title": metadata.title,
+                "arxiv_id": metadata.arxiv_id,
+                "converted_path": converted_path,
+                "source_type": metadata.source_type,
+                "added_at": datetime.now().isoformat(),
+                "original_path": original_path,
+                "content_hash": content_hash,
+            })
+            self._save_index(entries)
+            self.pipeline.save()
+            return IngestResult(title=metadata.title, status=status)
+        finally:
+            if staged_index_path:
+                self.pipeline.vector_store.remove_by_filepath(staged_index_path)
+            shutil.rmtree(staging_dir, ignore_errors=True)
 
     def list_docs(self) -> list[dict]:
         if not os.path.exists(self.index_path):
@@ -119,15 +125,21 @@ class LibraryManager:
 
     def delete_doc(self, title: str):
         entries = self.list_docs()
+        deleted = False
 
         for entry in entries:
-            if entry["title"] == title:
+            if entry["title"] == title and entry.get("original_path"):
                 existing = entry
                 self._remove_files(existing)
                 entries.remove(existing)
+                deleted = True
+                break
 
+        if not deleted:
+            return False
         self._save_index(entries)
         self.pipeline.save()
+        return True
 
     def _save_index(self, entries: list[dict]):
         with open(self.index_path, "w", encoding="utf-8") as f:

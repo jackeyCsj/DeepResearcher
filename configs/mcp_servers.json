@@ -1,5 +1,6 @@
 {
   "brave-search": {
+    "enabled": false,
     "command": "npx",
     "args": ["-y", "@brave/brave-search-mcp-server"],
     "optional": true,

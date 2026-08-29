@@ -3,6 +3,9 @@ import logging
 import os
 import asyncio
 import shutil
+import sys
+import sysconfig
+import tempfile
 import time
 import threading
 from concurrent.futures import Future
@@ -18,6 +21,32 @@ from ..tools.base_tool import ToolCallError
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+
+def _resolve_command(command: str) -> str | None:
+    if os.path.basename(command).lower() in {"python", "python.exe"}:
+        return sys.executable
+
+    resolved_command = shutil.which(command)
+    if resolved_command is not None:
+        return resolved_command
+
+    scripts_dir = sysconfig.get_path("scripts")
+    if not scripts_dir:
+        return None
+
+    candidate_names = [command]
+    if os.name == "nt" and not os.path.splitext(command)[1]:
+        candidate_names.extend(
+            f"{command}{suffix}" for suffix in (".exe", ".cmd", ".bat")
+        )
+
+    for candidate_name in candidate_names:
+        candidate = os.path.join(scripts_dir, candidate_name)
+        if os.path.isfile(candidate):
+            return candidate
+
+    return None
 
 
 class MCPServerConfig(BaseModel):
@@ -149,7 +178,14 @@ def load_mcp_server_configs(json_path: str) -> list[MCPServerConfig]:
     server_configs: list[MCPServerConfig] = []
     project_root = os.path.abspath(os.path.join(os.path.dirname(json_path), os.pardir))
     npm_cache_dir = os.path.join(project_root, "data", "npm-cache")
+    uv_runtime_dir = os.path.join(tempfile.gettempdir(), "multiagentresearch-uv")
+    uv_cache_dir = os.path.join(uv_runtime_dir, "cache")
+    uv_tool_dir = os.path.join(uv_runtime_dir, "tools")
     for name, config in configs.items():
+        if not config.get("enabled", True):
+            logger.info("[MCP] 跳过已禁用服务: %s", name)
+            continue
+
         optional = config.get("optional", False)
         required_env = config.get("required_env", [])
         raw_env: dict[str, str] = config.get("env") or {}
@@ -180,7 +216,7 @@ def load_mcp_server_configs(json_path: str) -> list[MCPServerConfig]:
             raise ValueError(message)
 
         command = config["command"]
-        resolved_command = shutil.which(command)
+        resolved_command = _resolve_command(command)
         if resolved_command is None:
             message = f"[MCP] command not found for {name}: {command}"
             if optional:
@@ -193,6 +229,11 @@ def load_mcp_server_configs(json_path: str) -> list[MCPServerConfig]:
             os.makedirs(npm_cache_dir, exist_ok=True)
             env.setdefault("npm_config_cache", npm_cache_dir)
             env.setdefault("NPM_CONFIG_CACHE", npm_cache_dir)
+        elif command_basename in {"uv", "uv.exe", "uvx", "uvx.exe"}:
+            os.makedirs(uv_cache_dir, exist_ok=True)
+            os.makedirs(uv_tool_dir, exist_ok=True)
+            env.setdefault("UV_CACHE_DIR", uv_cache_dir)
+            env.setdefault("UV_TOOL_DIR", uv_tool_dir)
 
         server_config = MCPServerConfig(
             name=name,

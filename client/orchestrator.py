@@ -76,10 +76,16 @@ class Orchestrator:
                 available_whitelist.append(name)
         self.researcher_tools = tool_registry.get_tools(available_whitelist)
         
-    def run_research(self, brief: str):
+    def run_research(self, brief: str, user_id: str = "default"):
         review_llm = LLMClient(model=self.config.llm.review_model, timeout=self.config.llm.timeout) if self.config.llm.review_model else None
         supervisor = Supervisor(llm=self.llm_client, context_builder=self.context_builder, max_steps=self.config.max_steps, review_llm=review_llm)
         writer = Writer(llm=self.llm_client, context_builder=self.context_builder, temperature=self.config.llm.writer_temperature)
+        researcher_tools = [
+            RAGTool(pipeline=self.rag_pipeline, user_id=user_id)
+            if tool.name == "rag_search"
+            else tool
+            for tool in self.researcher_tools
+        ]
 
         # make sure that every researcher's history is independent
         def create_researcher(researcher_id: str = "R-?"):
@@ -87,13 +93,13 @@ class Orchestrator:
                 name=researcher_id,
                 llm=self.llm_client,
                 context_builder=self.context_builder,
-                tool_list=self.researcher_tools,
+                tool_list=researcher_tools,
                 max_steps=self.config.max_steps,
                 temperature=self.config.llm.research_temperature,
             )
 
         graph = build_graph(supervisor, create_researcher, writer, self.rag_pipeline, self.config.max_rounds)
-        graph_generator = graph.stream({"research_brief": brief})
+        graph_generator = graph.stream({"research_brief": brief, "user_id": user_id})
         for event in graph_generator:
             yield event
 

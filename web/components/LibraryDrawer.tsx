@@ -1,25 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { listDocs, deleteDoc, uploadFile, type LibraryDoc } from "@/lib/api";
+import { listDocs, deleteDoc, type LibraryDoc } from "@/lib/api";
 
-export default function LibraryDrawer() {
+export default function LibraryDrawer({ token }: { token: string }) {
   const [docs, setDocs] = useState<LibraryDoc[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  const [entering, setEntering] = useState<Set<string>>(new Set());
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    listDocs()
+    listDocs(token)
       .then(setDocs)
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   // Click outside confirming row dismisses it
   useEffect(() => {
@@ -41,7 +38,7 @@ export default function LibraryDrawer() {
   async function performDelete(title: string) {
     setDeleting(title);
     try {
-      await deleteDoc(title);
+      await deleteDoc(title, token);
       setConfirming(null);
       setRemoving(title);
       setTimeout(() => {
@@ -50,37 +47,6 @@ export default function LibraryDrawer() {
       }, 300);
     } finally {
       setDeleting(null);
-    }
-  }
-
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        const result = await uploadFile(file);
-        const key = result.title + "_" + Date.now();
-        const newDoc: LibraryDoc = {
-          title: result.title,
-          source_type: "upload",
-          added_at: new Date().toISOString(),
-        };
-        setEntering((prev) => new Set(prev).add(key));
-        setDocs((prev) => [{ ...newDoc, _key: key } as LibraryDoc & { _key: string }, ...prev]);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setEntering((prev) => {
-              const next = new Set(prev);
-              next.delete(key);
-              return next;
-            });
-          });
-        });
-      }
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -144,15 +110,14 @@ export default function LibraryDrawer() {
           {docs.map((doc) => {
             const key = (doc as LibraryDoc & { _key?: string })._key || doc.title;
             const isRemoving = removing === doc.title;
-            const isEntering = entering.has(key);
             const isConfirming = confirming === doc.title;
             return (
               <div
                 key={key}
                 className="transition-all duration-300 ease-out"
                 style={{
-                  opacity: isRemoving || isEntering ? 0 : 1,
-                  transform: isRemoving ? "translateX(-20px)" : isEntering ? "translateX(20px)" : "translateX(0)",
+                  opacity: isRemoving ? 0 : 1,
+                  transform: isRemoving ? "translateX(-20px)" : "translateX(0)",
                   maxHeight: isRemoving ? 0 : 120,
                   overflow: "hidden",
                 }}
@@ -211,31 +176,6 @@ export default function LibraryDrawer() {
             );
           })}
         </div>
-
-        {/* Upload area */}
-        <div className="px-4 pb-4 pt-2 border-t border-foreground/6">
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border border-dashed border-foreground/25 text-[13px] text-foreground/60 hover:text-foreground hover:border-foreground/40 hover:bg-background/50 active:scale-95 active:bg-background/80 transition-all duration-150"
-          >
-            {uploading ? (
-              <>
-                <span className="block w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
-                上传中...
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                </svg>
-                上传文件
-              </>
-            )}
-          </button>
-          <input ref={fileRef} type="file" className="hidden" accept=".pdf,.md,.txt" multiple onChange={handleUpload} />
-        </div>
       </div>
     </>
   );
@@ -245,7 +185,9 @@ function formatSourceType(type: string): string {
   switch (type) {
     case "arxiv": return "arXiv";
     case "upload": return "上传";
-    case "report": return "研究报告";
+    case "pdf": return "PDF";
+    case "markdown": return "Markdown";
+    case "text": return "文本";
     default: return type;
   }
 }

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes.md",
-                "mode": "preview",
+                "file": "README.md",
+                "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "notes"
+              "title": "README"
             }
           },
           {
@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "notes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "notes"
             }
           }
         ]
@@ -92,7 +92,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "right": {
     "id": "1d02ec6eb42d6e19",
@@ -108,7 +108,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes.md",
+                "file": "README.md",
                 "collapseAll": true,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,21 +118,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "notes 的反向链接列表"
-            }
-          },
-          {
-            "id": "27fc4c88ab9339f7",
-            "type": "leaf",
-            "state": {
-              "type": "outgoing-link",
-              "state": {
-                "file": "notes.md",
-                "linksCollapsed": false,
-                "unlinkedCollapsed": true
-              },
-              "icon": "links-going-out",
-              "title": "notes 的出链列表"
+              "title": "README 的反向链接列表"
             }
           },
           {
@@ -170,17 +156,31 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes.md",
+                "file": "README.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "notes 的大纲"
+              "title": "README 的大纲"
+            }
+          },
+          {
+            "id": "c57fccfe48cfafd6",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "README.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "README 的出链列表"
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -199,42 +199,51 @@
   },
   "active": "db34ee6e7a2596dd",
   "lastOpenFiles": [
-    "README.md",
+    "data/npm-cache/_npx/3a4829a0511b3281/concurrency.lock",
+    "data/npm-cache/_logs/2026-08-29T09_00_33_487Z-debug-0.log",
+    "data/npm-cache/_npx/0a7ff2e283c3e979/concurrency.lock",
+    "data/npm-cache/_logs/2026-08-29T09_00_22_933Z-debug-0.log",
+    "logs/client_20260829_170004.log",
     "notes.md",
-    "data/index.json",
-    "data/converted/隐私保护人脸识别技术：加密方案与匿名化方案的权衡综述（2020–2025）.md",
-    "data/tmp24miy1mf/隐私保护人脸识别技术：加密方案与匿名化方案的权衡综述（2020–2025）.md",
-    "data/tmp24miy1mf",
-    "data/vector_store.json",
-    "data/search_cache/20260721_194833_调研隐私保护人脸识别领域的主要学术文献.md",
-    "web/node_modules/@types/react-dom/static.node.d.ts",
-    "web/node_modules/@types/react-dom/static.edge.d.ts",
-    "web/node_modules/@types/react-dom/static.browser.d.ts",
-    "web/node_modules/@types/react-dom/server.node.d.ts",
-    "web/node_modules/@types/react-dom/server.edge.d.ts",
-    "web/node_modules/@types/react-dom/server.bun.d.ts",
-    "web/node_modules/@types/react-dom/server.browser.d.ts",
-    "web/node_modules/supports-color/readme.md",
-    "web/node_modules/micromark-factory-title/readme.md",
-    "web/node_modules/micromark-factory-whitespace/readme.md",
-    "web/node_modules/micromark-util-html-tag-name/readme.md",
-    "web/node_modules/hast-util-parse-selector/readme.md",
-    "web/node_modules/micromark-util-sanitize-uri/readme.md",
-    "web/node_modules/hast-util-from-parse5/readme.md",
-    "web/node_modules/hast-util-whitespace/readme.md",
-    "web/node_modules/comma-separated-tokens/readme.md",
-    "web/node_modules/hast-util-to-parse5/readme.md",
-    "web/node_modules/hast-util-to-text/readme.md",
-    "web/node_modules/lightningcss-win32-x64-msvc/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/type-is/node_modules/content-type/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/form-data/node_modules/mime-types/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/form-data/node_modules/mime-types/HISTORY.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/form-data/node_modules/mime-db/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/form-data/node_modules/mime-db/HISTORY.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/axios/lib/helpers/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/axios/lib/env/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/axios/lib/core/README.md",
-    "data/npm-cache/_npx/3a4829a0511b3281/node_modules/axios/lib/adapters/README.md",
-    "web/app/icon.svg"
+    "README.md",
+    "test.py",
+    "data/npm-cache/_logs/2026-08-19T03_28_54_773Z-debug-0.log",
+    "data/npm-cache/_logs/2026-08-19T03_28_53_953Z-debug-0.log",
+    "logs/client_20260819_112852.log",
+    "data/npm-cache/_logs/2026-08-19T03_20_10_358Z-debug-0.log",
+    "data/npm-cache/_logs/2026-08-19T03_20_06_881Z-debug-0.log",
+    "data/search_cache/e2d10d0f-aab0-4b3c-9577-ea63eef84914/20260818_212113_08364c5a_隐私保护人脸识别_技术路线_数据集与评测基准综述_2015_2025.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32comext/axscript/demos/client/ie/pycom_blowing.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/www_icon.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/pythoncom.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/pycom_blowing.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_PrevPage.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_NextPage.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_ManualTop.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_HomePage.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/blank.gif",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32/test/win32rcparser/python.bmp",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32comext/mapi/NOTICE.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/uvicorn-0.51.0.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/starlette-1.3.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/soupsieve-2.9.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/idna-3.18.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/1UjXTg3QMbP6sLeu/win32comext/mapi/NOTICE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/win32comext/mapi/NOTICE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/uvicorn-0.51.0.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/starlette-1.3.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/soupsieve-2.9.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/idna-3.18.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/rf1BujDd899YJm_U/httpx-0.28.1.dist-info/licenses/LICENSE.md",
+    "data/uv-cache/archive-v0/lDZj9aevm7irwHPz/idna-3.18.dist-info/licenses/LICENSE.md",
+    "web/node_modules/node-releases/README.md",
+    "web/node_modules/strip-bom/readme.md",
+    "web/node_modules/natural-compare/README.md",
+    "web/node_modules/gensync/README.md",
+    "web/node_modules/hasown/README.md"
   ]
 }

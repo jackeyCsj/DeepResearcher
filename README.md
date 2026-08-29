@@ -6,7 +6,7 @@
 
 <div align="center">
 
-# SAGE Research
+# Deep Research
 
 **S**earch · **A**nalyze · **G**enerate · **E**valuate
 
@@ -58,13 +58,13 @@ cp .env.example .env
 ./setup.sh
 ```
 
-脚本会创建 conda 环境、安装 Python/Node 依赖，并启动后端（:8000）和前端（:3000）。打开 http://localhost:3000。
+脚本会创建 conda 环境、安装 Python/Node 依赖，并启动后端（:8001）和前端（:3000）。打开 http://localhost:3000
 
 ### 手动启动
 
 ```bash
 conda activate deep-research
-python server.py &        # 后端 -- FastAPI 运行在 :8000
+python server.py &        # 后端 -- FastAPI 运行在 :8001
 cd web && npm run dev      # 前端 -- Next.js 运行在 :3000
 ```
 
@@ -145,7 +145,7 @@ web/            — Next.js frontend
 └── lib/        — API client, mock SSE simulation
 
 configs/        — MCP server config, agent tool whitelists
-data/           — Runtime data (RAG index, downloads, library)
+data/           — Runtime data (RAG index, library, and research cache)
 ```
 
 ## API 端点
@@ -157,7 +157,6 @@ data/           — Runtime data (RAG index, downloads, library)
 | POST | `/api/research` | 运行完整管线，通过 SSE 流式输出进度 |
 | GET | `/api/library` | 列出已索引的文献 |
 | POST | `/api/library/upload` | 上传文件（PDF/Markdown）到知识库 |
-| POST | `/api/library/save-report` | 将生成的报告保存到知识库 |
 | POST | `/api/library/ingest` | 通过 arXiv ID 或文件路径导入文献 |
 | DELETE | `/api/library/{title}` | 从知识库中删除文献 |
 

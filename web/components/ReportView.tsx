@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import { saveReport } from "@/lib/api";
 
 interface ReportViewProps {
   report: string;
   stats: { total_calls: number; total_tokens: number } | null;
+  reportFileId: string | null;
 }
 
 interface SourceItem {
@@ -27,7 +27,7 @@ interface ProcessedReport {
 
 function sanitizeMathDollars(text: string): string {
   // 单行 $$...$$ 拆成三行，remark-math 才识别为 display math
-  let out = text.replace(/^\$\$(.+)\$\$$/gm, "$$$$\n$1\n$$$$");
+  const out = text.replace(/^\$\$(.+)\$\$$/gm, "$$$$\n$1\n$$$$");
   // 先保护真正的 LaTeX 对（$$...$$ 和 $...$），再转义剩余的独立 $数字（货币）
   const saved: string[] = [];
   const masked = out
@@ -90,54 +90,63 @@ function extractTitle(md: string): string {
   return m ? m[1].trim() : "research-report";
 }
 
-export default function ReportView({ report, stats }: ReportViewProps) {
+function downloadBlob(fileName: string, content: BlobPart, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export default function ReportView({ report, stats, reportFileId }: ReportViewProps) {
   const { body, sourcesHeading, sources } = processReport(report);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const articleRef = useRef<HTMLElement>(null);
+  const title = extractTitle(report);
+  const baseName = (reportFileId || title).replace(/\.md$/i, "");
 
   function handlePrint() {
     const prev = document.title;
-    document.title = extractTitle(report);
+    document.title = title;
     window.print();
     setTimeout(() => { document.title = prev; }, 100);
   }
 
-  async function handleSave() {
-    if (saveState !== "idle") return;
-    setSaveState("saving");
-    try {
-      await saveReport(extractTitle(report), report);
-      setSaveState("saved");
-    } catch {
-      setSaveState("idle");
-    }
+  function handleExportMarkdown() {
+    downloadBlob(`${baseName}.md`, report, "text/markdown;charset=utf-8");
+  }
+
+  function handleExportWord() {
+    const html = articleRef.current?.innerHTML || `<pre>${escapeHtml(report)}</pre>`;
+    const doc = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body>${html}</body></html>`;
+    downloadBlob(`${baseName}.doc`, doc, "application/msword;charset=utf-8");
   }
 
   return (
     <div className="px-10 pt-5 pb-20">
       <div className="print-hide flex justify-end gap-2 mb-5">
         <button
-          onClick={handleSave}
-          disabled={saveState !== "idle"}
-          className={`inline-flex items-center gap-1.5 text-[13px] rounded-lg px-3 py-1.5 active:scale-95 transition-all duration-200 ${
-            saveState === "saved"
-              ? "text-approved bg-approved/10 border border-approved/20"
-              : "text-foreground/70 bg-surface border border-foreground/10 hover:text-muted-foreground hover:bg-transparent hover:border-border"
-          } ${saveState === "saving" ? "opacity-60 cursor-wait" : ""}`}
+          onClick={handleExportMarkdown}
+          className="inline-flex items-center gap-1.5 text-[13px] text-foreground/70 bg-surface border border-foreground/10 rounded-lg px-3 py-1.5 hover:text-muted-foreground hover:bg-transparent hover:border-border active:scale-95 transition-all duration-200"
         >
-          {saveState === "saved" ? (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-          )}
-          {saveState === "saved" ? "已保存" : saveState === "saving" ? "保存中..." : "保存到文献库"}
+          导出 MD
+        </button>
+        <button
+          onClick={handleExportWord}
+          className="inline-flex items-center gap-1.5 text-[13px] text-foreground/70 bg-surface border border-foreground/10 rounded-lg px-3 py-1.5 hover:text-muted-foreground hover:bg-transparent hover:border-border active:scale-95 transition-all duration-200"
+        >
+          导出 Word
         </button>
         <button
           onClick={handlePrint}
@@ -148,10 +157,10 @@ export default function ReportView({ report, stats }: ReportViewProps) {
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v6M5 10h14a2 2 0 0 1 2 2v3H3v-3a2 2 0 0 1 2-2z" />
             <circle cx="12" cy="15" r="1" />
           </svg>
-          打印 PDF
+          导出 PDF
         </button>
       </div>
-      <article className="report-prose" onClick={handleCitationClick}>
+      <article ref={articleRef} className="report-prose" onClick={handleCitationClick}>
         <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
           {body}
         </ReactMarkdown>

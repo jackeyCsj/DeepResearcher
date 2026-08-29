@@ -51,20 +51,30 @@ export interface ResearchStats {
 
 export default function ResearchProgress({
   brief,
+  token,
+  sessionId,
   onReport,
 }: {
   brief: string;
-  onReport: (report: string, stats: ResearchStats | null) => void;
+  token: string;
+  sessionId: string | null;
+  onReport: (report: string, stats: ResearchStats | null, reportFileId: string | null) => void;
 }) {
   const [nodes, setNodes] = useState<TimelineNode[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
   const [expandedSubs, setExpandedSubs] = useState<Set<string>>(new Set());
   const reportRef = useRef<string | null>(null);
+  const reportFileIdRef = useRef<string | null>(null);
   const statsRef = useRef<ResearchStats | null>(null);
+  const onReportRef = useRef(onReport);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollParentRef = useRef<HTMLElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
+
+  useEffect(() => {
+    onReportRef.current = onReport;
+  }, [onReport]);
 
   useEffect(() => {
     const abort = startResearch(brief, (event: ResearchEvent) => {
@@ -185,6 +195,8 @@ export default function ResearchProgress({
 
         case "write":
           reportRef.current = event.report;
+          reportFileIdRef.current = event.report_file_id || null;
+          onReportRef.current(event.report, statsRef.current, reportFileIdRef.current);
           setNodes((prev) => {
             const next = [...prev];
             const writeIdx = next.findIndex((n) => n.kind === "write");
@@ -205,7 +217,7 @@ export default function ResearchProgress({
             total_tokens: event.total_tokens,
           };
           if (reportRef.current) {
-            onReport(reportRef.current, statsRef.current);
+            onReportRef.current(reportRef.current, statsRef.current, reportFileIdRef.current);
           }
           break;
 
@@ -213,10 +225,10 @@ export default function ResearchProgress({
           setError(event.message);
           break;
       }
-    });
+    }, sessionId, token);
 
     return abort;
-  }, [brief]);
+  }, [brief, sessionId, token]);
 
   useEffect(() => {
     const container = bottomRef.current?.closest("[data-scroll-container]") as HTMLElement | null;

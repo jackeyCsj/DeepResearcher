@@ -5,7 +5,7 @@ from ..rag import Pipeline
 
 
 class RAGTool(BaseTool):
-    def __init__(self, pipeline: Pipeline):
+    def __init__(self, pipeline: Pipeline, user_id: str | None = None):
         super().__init__(
             name="rag_search",
             description=(
@@ -21,10 +21,11 @@ class RAGTool(BaseTool):
             )]
         )
         self.pipeline = pipeline
+        self.user_id = user_id
 
     def run_tool(self, parameters: dict[str, Any]) -> str:
         query = parameters["query"]
-        result = self.pipeline.retrieve(query)
+        result = self.pipeline.retrieve(query, user_id=self.user_id)
         
         if not result.strip():
             return "本地知识库中未找到相关内容"

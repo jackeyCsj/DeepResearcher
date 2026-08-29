@@ -1,7 +1,7 @@
 // Mock SSE events — simulate full research pipeline without backend.
 // Enable via NEXT_PUBLIC_MOCK=true env var, or `npm run dev:mock`.
 
-import type { ClarifyResult, RefineResult, ResearchEvent, LibraryDoc, SaveReportResult } from "./api";
+import type { ClarifyResult, RefineResult, ResearchEvent, LibraryDoc, IngestResult } from "./api";
 
 const MOCK_BRIEF = "对比 Transformer、Mamba 和 RWKV 三种架构在长文本建模任务上的效率与性能";
 
@@ -66,6 +66,7 @@ export function mockClarify(_query: string): Promise<ClarifyResult> {
           "调查各架构在生产环境中的实际部署情况和生态成熟度",
         ],
         message: "这是个很好的研究方向！我有几个建议方向供你参考，你也可以输入自己的具体关注点：",
+        session_id: "mock-session",
       });
     }, 1200);
   });
@@ -74,7 +75,7 @@ export function mockClarify(_query: string): Promise<ClarifyResult> {
 export function mockRefine(_query: string, _response: string): Promise<RefineResult> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({ brief: MOCK_BRIEF });
+      resolve({ brief: MOCK_BRIEF, session_id: "mock-session" });
     }, 2000);
   });
 }
@@ -204,7 +205,7 @@ export function startMockResearch(
 
   // 4. Write — report after review settles
   schedule(20000, () => {
-    onEvent({ type: "write", report: MOCK_REPORT });
+    onEvent({ type: "write", report: MOCK_REPORT, report_file_id: "mock-report.md" });
   });
 
   // 5. Stats
@@ -246,16 +247,7 @@ export function mockDeleteDoc(title: string): Promise<void> {
   });
 }
 
-export function mockSaveReport(title: string): Promise<SaveReportResult> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      _mockDocs.unshift({ title, source_type: "report", added_at: new Date().toISOString() });
-      resolve({ title, status: "created" });
-    }, 500);
-  });
-}
-
-export function mockUploadFile(file: File): Promise<SaveReportResult> {
+export function mockUploadFile(file: File): Promise<IngestResult> {
   return new Promise((resolve) => {
     setTimeout(() => {
       const title = file.name.replace(/\.[^.]+$/, "");

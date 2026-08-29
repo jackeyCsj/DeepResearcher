@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { clarify, refine, type ClarifyResult } from "@/lib/api";
+import { clarify, refine } from "@/lib/api";
 import StreamingText from "@/components/StreamingText";
 
 type ChatMsg =
@@ -20,6 +20,7 @@ let _clarifyCache: {
   query: string;
   messages: (ChatMsg & { id: number })[];
   settled: boolean;
+  sessionId: string | null;
 } | null = null;
 
 export function resetClarifyCache() {
@@ -28,12 +29,15 @@ export function resetClarifyCache() {
 
 export default function ClarifyPanel({
   query,
+  token,
   onBriefReady,
 }: {
   query: string;
-  onBriefReady: (brief: string) => void;
+  token: string;
+  onBriefReady: (brief: string, sessionId: string | null) => void;
 }) {
   const hit = _clarifyCache?.query === query ? _clarifyCache : null;
+  const hasCacheHit = hit !== null;
 
   const [messages, setMessages] = useState<(ChatMsg & { id: number })[]>(
     () =>
@@ -42,6 +46,7 @@ export default function ClarifyPanel({
         { id: nextId(), role: "assistant-loading", content: "正在分析问题" },
       ],
   );
+  const [sessionId, setSessionId] = useState<string | null>(() => hit?.sessionId ?? null);
   const [customInput, setCustomInput] = useState("");
   const [settled, setSettled] = useState(() => hit?.settled ?? false);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
@@ -52,15 +57,16 @@ export default function ClarifyPanel({
   const pendingBriefRef = useRef<string | null>(null);
 
   useEffect(() => {
-    _clarifyCache = { query, messages, settled };
-  });
+    _clarifyCache = { query, messages, settled, sessionId };
+  }, [messages, query, sessionId, settled]);
 
   useEffect(() => {
-    if (hit) return;
+    if (hasCacheHit) return;
 
     let cancelled = false;
-    clarify(query).then((data) => {
+    clarify(query, token).then((data) => {
       if (cancelled) return;
+      setSessionId(data.session_id);
       if (data.is_clear && data.brief) {
         const brief = data.brief;
         pendingBriefRef.current = brief;
@@ -83,7 +89,7 @@ export default function ClarifyPanel({
     return () => {
       cancelled = true;
     };
-  }, [query]);
+  }, [hasCacheHit, query, token]);
 
   function handleCardClick(direction: string) {
     const el = textareaRef.current;
@@ -122,7 +128,9 @@ export default function ClarifyPanel({
       { id: userMsgId, role: "user", content: trimmed },
       { id: loadingMsgId, role: "assistant-loading", content: "收到，正在整理研究方案..." },
     ]);
-    refine(query, trimmed).then((data) => {
+    refine(query, trimmed, sessionId, token).then((data) => {
+      const nextSessionId = data.session_id || sessionId;
+      setSessionId(nextSessionId);
       pendingBriefRef.current = data.brief;
       setMessages((prev) => [
         ...prev.slice(0, -1),
@@ -261,7 +269,7 @@ export default function ClarifyPanel({
                     mode="typewriter"
                     onComplete={() => {
                       if (pendingBriefRef.current) {
-                        onBriefReady(pendingBriefRef.current);
+                        onBriefReady(pendingBriefRef.current, sessionId);
                         pendingBriefRef.current = null;
                       }
                     }}

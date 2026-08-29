@@ -25,12 +25,14 @@ def merge_dicts(a: dict, b: dict) -> dict:
 
 class State(TypedDict):
     research_brief: str
+    user_id: str
     sub_questions: list[SubQuestion]
     review_result: dict
     approved_pairs: Annotated[list[tuple[str, str]], operator.add]
     pending_review_pairs: Annotated[list[tuple[str, str]], pending_review_reducer]
     refine_round: int
     final_report: str
+    report_file_id: str
     retry_items: list[dict]
     review_summary: list[dict]
     missing_dimensions: str
@@ -39,10 +41,12 @@ class State(TypedDict):
 
 class InputSchema(TypedDict):
     research_brief: str
+    user_id: str
 
 
 class OutputSchema(TypedDict):
     final_report: str
+    report_file_id: str
 
     
 def build_graph(
@@ -176,8 +180,12 @@ def build_graph(
             research_brief=state["research_brief"],
             notes=[note for _, note in state["approved_pairs"]],
         )
-        pipeline.add_text(text=result, query=state["research_brief"])
-        return {"final_report": result}
+        report_meta = pipeline.add_text(
+            text=result,
+            query=state["research_brief"],
+            user_id=state.get("user_id", "default"),
+        )
+        return {"final_report": result, "report_file_id": report_meta["file_id"]}
 
     # add node
     builder.add_node("plan_node", plan_node)

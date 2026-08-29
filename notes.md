@@ -40,7 +40,6 @@ D:\MultiAgentResearch
 │   └── mcp_servers.json       # MCP 服务配置
 ├── data/                      # 运行时数据目录，不应提交生成内容
 │   ├── vector_store.json      # RAG 向量/分块索引持久化文件，运行后生成
-│   ├── documents/             # Pipeline 需要的文档目录
 │   ├── search_cache/          # 报告或搜索摘要回存后的 Markdown
 │   ├── originals/             # 原始上传文件或 arXiv PDF
 │   ├── converted/             # 转换后的 Markdown 文献
@@ -101,7 +100,7 @@ D:\MultiAgentResearch
 `server.py` 只负责：
 
 ```python
-uvicorn.run("client.api.app:app", host="0.0.0.0", port=8000, reload=True)
+uvicorn.run("client.api.app:app", host="0.0.0.0", port=8001, reload=True)
 ```
 
 真正的 API 在 `client/api/app.py`：
@@ -111,7 +110,6 @@ uvicorn.run("client.api.app:app", host="0.0.0.0", port=8000, reload=True)
 - `/api/research`：运行完整研究流水线，并以 `text/event-stream` 返回 SSE。
 - `/api/library`：列出本地文献库。
 - `/api/library/upload`：上传 PDF / Markdown / TXT 并导入知识库。
-- `/api/library/save-report`：把最终报告保存为 Markdown 并导入知识库。
 - `/api/library/ingest`：按路径或 arXiv ID 导入文献。
 - `/api/library/{title}`：删除文献及其索引。
 
@@ -297,7 +295,6 @@ Researcher 的核心逻辑在 `Researcher.run()`：
   - 保存转换后的 Markdown 文献。
 - `data/search_cache/`
   - 保存自动回存的报告或搜索摘要 Markdown。
-- `data/documents/`
   - RAG Pipeline 初始化时保证存在的文档目录。
 
 因此这里的“数据库”可以理解为轻量级 JSON + 文件目录存储。优点是简单、方便本地运行；缺点是并发写入、超大规模索引和复杂查询能力有限。
@@ -465,7 +462,7 @@ report
 - `QueryInput.tsx`：首页输入框。
 - `ClarifyPanel.tsx`：调用 clarify/refine API，展示建议方向，并把 brief 交给研究进度组件。
 - `ResearchProgress.tsx`：调用 `startResearch()`，消费 SSE 事件，渲染 plan / research / review / write 时间线。
-- `ReportView.tsx`：渲染最终 Markdown 报告、引用跳转、打印 PDF、保存到文献库。
+- `ReportView.tsx`：渲染最终 Markdown 报告、引用跳转，以及 MD、Word、PDF 导出。
 - `LibraryDrawer.tsx`：列出、上传、删除本地文献。
 - `StreamingText.tsx`：打字机和 dots 动画效果。
 
@@ -474,7 +471,6 @@ API client 在 `web/lib/api.ts`：
 - `clarify()`
 - `refine()`
 - `startResearch()`
-- `saveReport()`
 - `listDocs()`
 - `uploadFile()`
 - `deleteDoc()`
@@ -571,7 +567,7 @@ cd web && npm run build
 ## 16. 需要注意的实现细节
 
 - 当前 README 在某些终端编码下可能显示乱码，但源码文件本身按 UTF-8 读取正常。
-- 当前仓库没有独立测试目录；如果后续添加共享 pytest 测试，需要同步调整 `.gitignore` 中对 `tests/` 的忽略规则。
+- 共享 pytest 回归测试位于 `tests/`。
 - RAG 的 `VectorStore` 是纯 Python 内存列表 + JSON 持久化；数据量很大时应考虑替换为专门向量数据库。
 - `ContextBuilder` 预留了 MemoryManager 接口，但当前没有实际 memory 模块；不要误以为已经有独立的长期记忆数据库。
 - `Reranker` 初始化会加载 `cross-encoder/ms-marco-MiniLM-L-6-v2`，首次运行可能需要下载模型。
