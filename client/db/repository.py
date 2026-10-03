@@ -52,6 +52,15 @@ class ChatRepository:
             )
         )
 
+    def delete_session(self, session_id: str, user_id: str) -> bool:
+        # ChatSession.messages / .steps 都配了 cascade="all, delete-orphan"，
+        # 删会话会级联删掉聊天消息与研究步骤。
+        session = self.get_user_session(session_id, user_id)
+        if not session:
+            return False
+        self.db.delete(session)
+        return True
+
     def create_session(self, user_id: str, raw_query: str) -> ChatSession:
         self.ensure_user(user_id)
         title = raw_query.strip()[:80] or "Untitled research"

@@ -67,17 +67,30 @@
     -webkit-print-color-adjust: exact;
   }
 
-  /* Hide everything */
+  /* Keep only the application shell and its open report panel. */
   body > * {
     display: none !important;
   }
-  /* But show the flex container that holds the report panel */
   body > div:has([data-report-panel]) {
     display: block !important;
     overflow: visible !important;
   }
-  /* Hide spacer and chat panel within it */
-  body > div:has([data-report-panel]) > :not([data-report-panel]) {
+  body > div:has([data-report-panel]) > :not(.app-shell) {
+    display: none !important;
+  }
+  .app-shell {
+    display: block !important;
+    overflow: visible !important;
+  }
+  .app-shell > :not(.workspace-split) {
+    display: none !important;
+  }
+  .workspace-split {
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  .workspace-split > :not([data-report-panel]) {
     display: none !important;
   }
   /* Report panel full width */

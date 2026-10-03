@@ -9,6 +9,7 @@ export default function ChatSidebar({
   mode,
   onNewChat,
   onSelectSession,
+  onDeleteSession,
   onOpenLibrary,
 }: {
   sessions: ChatSessionSummary[];
@@ -16,6 +17,7 @@ export default function ChatSidebar({
   mode: "chat" | "library";
   onNewChat: () => void;
   onSelectSession: (sessionId: string) => void;
+  onDeleteSession: (sessionId: string) => void;
   onOpenLibrary: () => void;
 }) {
   const [width, setWidth] = useState(276);
@@ -58,18 +60,51 @@ export default function ChatSidebar({
         {sessions.map((session) => {
           const active = mode === "chat" && selectedSessionId === session.id;
           return (
-            <button
-              key={session.id}
-              onClick={() => onSelectSession(session.id)}
-              className={`mb-1.5 w-full rounded-xl px-3 py-2.5 text-left transition-colors ${
-                active ? "bg-foreground text-surface" : "hover:bg-background/70"
-              }`}
-            >
-              <p className="truncate text-[14px] font-medium">{session.title}</p>
-              <p className={`mt-1 truncate text-[12px] ${active ? "text-surface/65" : "text-muted-foreground"}`}>
-                {session.status === "report_ready" ? "报告已生成" : session.status}
-              </p>
-            </button>
+            <div key={session.id} className="group relative mb-1.5">
+              <button
+                onClick={() => onSelectSession(session.id)}
+                className={`w-full rounded-xl px-3 py-2.5 pr-9 text-left transition-colors ${
+                  active ? "bg-foreground text-surface" : "hover:bg-background/70"
+                }`}
+              >
+                <p className="truncate text-[14px] font-medium">{session.title}</p>
+                <p className={`mt-1 truncate text-[12px] ${active ? "text-surface/65" : "text-muted-foreground"}`}>
+                  {session.status === "report_ready" ? "报告已生成" : session.status}
+                </p>
+              </button>
+              <button
+                type="button"
+                title="删除这个对话"
+                aria-label={`删除对话：${session.title}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteSession(session.id);
+                }}
+                className={`absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100 ${
+                  active
+                    ? "text-surface/70 hover:bg-surface/15 hover:text-surface"
+                    : "text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+                }`}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v5" />
+                  <path d="M14 11v5" />
+                </svg>
+              </button>
+            </div>
           );
         })}
       </div>

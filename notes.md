@@ -313,6 +313,11 @@ Researcher 的核心逻辑在 `Researcher.run()`：
 
 `ContextBuilder` 每次构造 LLM 消息时都会把 `_history` 加进去，并按 token 预算触发压缩。
 
+
+
+
+
+
 ### 长期记忆
 
 当前实际可用的长期记忆主要是 RAG 知识库：

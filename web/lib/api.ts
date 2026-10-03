@@ -224,6 +224,14 @@ export async function getSession(sessionId: string, token: string): Promise<Chat
   return res.json();
 }
 
+export async function deleteSession(sessionId: string, token: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw await readError(res, "删除对话失败");
+}
+
 export function startResearch(
   brief: string,
   onEvent: (event: ResearchEvent) => void,

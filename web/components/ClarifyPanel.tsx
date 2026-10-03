@@ -85,6 +85,19 @@ export default function ClarifyPanel({
           },
         ]);
       }
+    }).catch((err: unknown) => {
+      // 缺少 catch 时，网络层失败会变成 unhandled rejection，
+      // 被 dev overlay 捕获后显示成 "Runtime TypeError: Failed to fetch"。
+      if (cancelled) return;
+      const reason = err instanceof Error ? err.message : "请求失败";
+      setMessages((prev) => [
+        prev[0],
+        {
+          id: nextId(),
+          role: "assistant",
+          content: `分析问题失败：${reason}。请确认后端（默认 http://localhost:8001）已启动，然后重新发起提问。`,
+        },
+      ]);
     });
     return () => {
       cancelled = true;

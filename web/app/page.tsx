@@ -13,6 +13,7 @@ import {
   getMe,
   getSession,
   deleteDoc,
+  deleteSession,
   listDocs,
   listSessions,
   uploadFile,
@@ -39,6 +40,32 @@ export default function Home() {
   const [report, setReport] = useState("");
   const [reportFileId, setReportFileId] = useState<string | null>(null);
   const [stats, setStats] = useState<{ total_calls: number; total_tokens: number } | null>(null);
+  const [reportWidth, setReportWidth] = useState(45);
+  const [isResizingReport, setIsResizingReport] = useState(false);
+  const splitRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isResizingReport) return;
+
+    function handlePointerMove(event: PointerEvent) {
+      const split = splitRef.current;
+      if (!split) return;
+      const bounds = split.getBoundingClientRect();
+      const nextWidth = ((bounds.right - event.clientX) / bounds.width) * 100;
+      setReportWidth(Math.min(65, Math.max(28, nextWidth)));
+    }
+
+    function stopResizing() {
+      setIsResizingReport(false);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResizing);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResizing);
+    };
+  }, [isResizingReport]);
 
   useEffect(() => {
     const savedToken = window.localStorage.getItem("sage_token");
@@ -97,6 +124,23 @@ export default function Home() {
     resetWorkspace();
   }
 
+  async function handleDeleteSession(id: string) {
+    if (!token) return;
+    if (!window.confirm("确定删除这个对话吗？聊天记录与研究报告将一并删除，且无法恢复。")) return;
+    try {
+      await deleteSession(id, token);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "删除失败");
+      return;
+    }
+    // 删掉的是当前打开的会话时回到初始态，
+    // 进行中的研究会随 ResearchProgress 卸载而 abort。
+    if (sessionId === id || selectedDetail?.id === id) {
+      resetWorkspace();
+    }
+    await refreshSessions();
+  }
+
   function handleQuerySubmit(q: string) {
     setSelectedDetail(null);
     setMode("chat");
@@ -118,6 +162,9 @@ export default function Home() {
 
   async function handleSelectSession(id: string, openReport = false) {
     if (!token) return;
+    // 切换会话时丢弃上一个对话的澄清缓存，否则模块级单例会跨对话残留，
+    // 导致切回/新开对话时命中错误的 query 状态。
+    resetClarifyCache();
     const detail = await getSession(id, token);
     setMode("chat");
     setSelectedDetail(detail);
@@ -141,6 +188,22 @@ export default function Home() {
     refreshSessions();
   }
 
+  function handleCloseReport() {
+    setReport("");
+    setReportFileId(null);
+    setStats(null);
+  }
+
+  function handleReportResizeKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setReportWidth((width) => Math.min(65, width + 4));
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setReportWidth((width) => Math.max(28, width - 4));
+    }
+  }
+
   const authenticated = Boolean(token && user);
   const reportReady = Boolean(report);
 
@@ -148,60 +211,93 @@ export default function Home() {
     <>
       {authenticated && user && (
         <>
-          <UserMenu user={user} onLogout={handleLogout} />
-          <div className="flex h-screen w-full overflow-hidden">
+          <div className="app-shell flex h-screen w-full overflow-hidden">
             <ChatSidebar
               sessions={sessions}
               selectedSessionId={sessionId}
               mode={mode}
               onNewChat={handleNewChat}
               onSelectSession={(id) => handleSelectSession(id)}
+              onDeleteSession={(id) => void handleDeleteSession(id)}
               onOpenLibrary={handleOpenLibrary}
             />
 
-            {mode === "library" ? (
-              <LibraryMain token={token!} />
-            ) : selectedDetail ? (
-              <HistoryMain
-                detail={selectedDetail}
-                reportReady={reportReady}
-                onOpenReport={() => {
-                  if (selectedDetail.report) {
-                    setReport(selectedDetail.report.content);
-                    setReportFileId(selectedDetail.report.report_file_id);
-                  }
-                }}
-              />
-            ) : (
-              <LiveResearchMain
-                stage={stage}
-                query={query}
-                brief={brief}
-                token={token!}
-                sessionId={sessionId}
-                reportReady={reportReady}
-                onSubmit={handleQuerySubmit}
-                onBriefReady={handleBriefReady}
-                onReport={(r, s, fileId) => {
-                  setReport(r);
-                  if (fileId) setReportFileId(fileId);
-                  if (s) setStats({ total_calls: s.total_calls, total_tokens: s.total_tokens });
-                  setStage("report");
-                  refreshSessions();
-                }}
-              />
-            )}
-
             <div
-              data-report-panel
-              className={[
-                "min-w-0 min-h-0 thin-scroll transition-all duration-500 ease-out",
-                reportReady
-                  ? "flex-1 overflow-y-auto opacity-100 border-l border-foreground/8 bg-surface/40"
-                  : "w-0 flex-none overflow-hidden opacity-0 pointer-events-none",
-              ].join(" ")}
+              ref={splitRef}
+              className={["workspace-split relative flex min-w-0 flex-1 overflow-hidden", isResizingReport ? "select-none" : ""].join(" ")}
             >
-              {reportReady && <ReportView report={report} stats={stats} reportFileId={reportFileId} />}
+              <UserMenu user={user} onLogout={handleLogout} />
+              <div
+                className="min-w-0 shrink-0 overflow-hidden"
+                style={{ width: reportReady ? `${100 - reportWidth}%` : "100%" }}
+              >
+                {mode === "library" ? (
+                  <LibraryMain token={token!} />
+                ) : selectedDetail ? (
+                  <HistoryMain
+                    detail={selectedDetail}
+                    reportReady={reportReady}
+                    onOpenReport={() => {
+                      if (selectedDetail.report) {
+                        setReport(selectedDetail.report.content);
+                        setReportFileId(selectedDetail.report.report_file_id);
+                      }
+                    }}
+                  />
+                ) : (
+                  <LiveResearchMain
+                    stage={stage}
+                    query={query}
+                    brief={brief}
+                    token={token!}
+                    sessionId={sessionId}
+                    reportReady={reportReady}
+                    onSubmit={handleQuerySubmit}
+                    onBriefReady={handleBriefReady}
+                    onReport={(r, s, fileId) => {
+                      setReport(r);
+                      if (fileId) setReportFileId(fileId);
+                      if (s) setStats({ total_calls: s.total_calls, total_tokens: s.total_tokens });
+                      setStage("report");
+                      refreshSessions();
+                    }}
+                  />
+                )}
+              </div>
+
+              {reportReady && (
+                <>
+                  <div
+                    role="separator"
+                    aria-label="调整对话与文档宽度"
+                    aria-orientation="vertical"
+                    aria-valuemin={28}
+                    aria-valuemax={65}
+                    aria-valuenow={Math.round(reportWidth)}
+                    tabIndex={0}
+                    title="拖动调整对话与文档宽度"
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      setIsResizingReport(true);
+                    }}
+                    onKeyDown={handleReportResizeKeyDown}
+                    className="group flex w-2 shrink-0 cursor-col-resize touch-none items-center justify-center bg-transparent outline-none hover:bg-accent/10 focus-visible:bg-accent/10"
+                  >
+                    <span className="h-14 w-px bg-foreground/15 transition-colors group-hover:bg-accent/65 group-focus-visible:bg-accent/65" />
+                  </div>
+                  <div
+                    data-report-panel
+                    className="min-h-0 min-w-0 flex-1 overflow-y-auto border-l border-foreground/8 bg-surface/40 thin-scroll"
+                  >
+                    <ReportView
+                      report={report}
+                      stats={stats}
+                      reportFileId={reportFileId}
+                      onClose={handleCloseReport}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>
@@ -235,15 +331,15 @@ function LiveResearchMain({
 }) {
   if (stage === "input" || stage === "sending") {
     return (
-      <main className="flex flex-1 flex-col items-center px-4">
+      <main className="flex h-full w-full flex-1 flex-col items-center px-4">
         <HeroSection onSubmit={onSubmit} sending={stage === "sending"} />
       </main>
     );
   }
 
   return (
-    <main className="w-full max-w-3xl shrink-0 overflow-y-auto min-h-0 px-4 thin-scroll" data-scroll-container>
-      <div className="pb-8 pt-16 gap-4 flex flex-col items-center">
+    <main className="h-full w-full overflow-y-auto px-4 thin-scroll" data-scroll-container>
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 pb-8 pt-16">
         <ClarifyPanel query={query} token={token} onBriefReady={onBriefReady} />
         {(stage === "researching" || reportReady) && (
           <ResearchProgress
@@ -268,8 +364,8 @@ function HistoryMain({
   onOpenReport: () => void;
 }) {
   return (
-    <main className="w-full max-w-3xl shrink-0 overflow-y-auto min-h-0 px-6 pt-16 pb-10 thin-scroll">
-      <div className="flex flex-col gap-4">
+    <main className="h-full w-full overflow-y-auto px-6 pb-10 pt-16 thin-scroll">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
         {detail.messages.map((message, idx) => (
           <div key={idx} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
             <div

@@ -123,7 +123,7 @@ class LLMClient:
         temperature: float = 0,
         tools=None,
         tool_choice=None,
-        max_tokens: int = 4096,
+        max_tokens: int = 8192,
         tag: str = "",
     ) -> ChatCompletionMessage:
         if self._is_claude:

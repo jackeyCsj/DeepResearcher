@@ -224,6 +224,14 @@ def list_sessions(current_user: User = Depends(get_current_user)) -> list[ChatSe
         return [_session_summary(session) for session in sessions]
 
 
+@app.delete("/api/sessions/{session_id}")
+def delete_session(session_id: str, current_user: User = Depends(get_current_user)):
+    with session_scope() as db:
+        if not ChatRepository(db).delete_session(session_id, current_user.id):
+            raise HTTPException(status_code=404, detail="Session not found")
+    return {"message": "deleted"}
+
+
 @app.get("/api/sessions/{session_id}")
 def get_session_detail(session_id: str, request: Request, current_user: User = Depends(get_current_user)) -> ChatSessionDetail:
     with session_scope() as db:

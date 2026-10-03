@@ -4,7 +4,7 @@ import type { UserInfo } from "@/lib/api";
 
 export default function UserMenu({ user, onLogout }: { user: UserInfo; onLogout: () => void }) {
   return (
-    <div className="fixed right-8 top-5 z-40 flex items-center gap-3 rounded-2xl bg-surface/90 border border-foreground/10 px-3 py-2 shadow-sm backdrop-blur-sm">
+    <div className="absolute left-7 top-7 z-40 flex items-center gap-3 rounded-2xl border border-foreground/10 bg-surface/90 px-3 py-2 shadow-sm backdrop-blur-sm">
       <div className="text-right">
         <p className="text-[13px] font-medium leading-none">{user.display_name}</p>
         <p className="mt-1 text-[11px] text-muted-foreground leading-none">@{user.username}</p>

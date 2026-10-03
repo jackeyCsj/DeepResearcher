@@ -12,6 +12,7 @@ interface ReportViewProps {
   report: string;
   stats: { total_calls: number; total_tokens: number } | null;
   reportFileId: string | null;
+  onClose: () => void;
 }
 
 interface SourceItem {
@@ -110,7 +111,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export default function ReportView({ report, stats, reportFileId }: ReportViewProps) {
+export default function ReportView({ report, stats, reportFileId, onClose }: ReportViewProps) {
   const { body, sourcesHeading, sources } = processReport(report);
   const articleRef = useRef<HTMLElement>(null);
   const title = extractTitle(report);
@@ -135,29 +136,43 @@ export default function ReportView({ report, stats, reportFileId }: ReportViewPr
 
   return (
     <div className="px-10 pt-5 pb-20">
-      <div className="print-hide flex justify-end gap-2 mb-5">
+      <div className="print-hide mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportMarkdown}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-surface px-3 py-1.5 text-[13px] text-foreground/70 transition-all duration-200 hover:border-border hover:bg-transparent hover:text-muted-foreground active:scale-95"
+          >
+            导出 MD
+          </button>
+          <button
+            onClick={handleExportWord}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-surface px-3 py-1.5 text-[13px] text-foreground/70 transition-all duration-200 hover:border-border hover:bg-transparent hover:text-muted-foreground active:scale-95"
+          >
+            导出 Word
+          </button>
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-surface px-3 py-1.5 text-[13px] text-foreground/70 transition-all duration-200 hover:border-border hover:bg-transparent hover:text-muted-foreground active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v6M5 10h14a2 2 0 0 1 2 2v3H3v-3a2 2 0 0 1 2-2z" />
+              <circle cx="12" cy="15" r="1" />
+            </svg>
+            导出 PDF
+          </button>
+        </div>
         <button
-          onClick={handleExportMarkdown}
-          className="inline-flex items-center gap-1.5 text-[13px] text-foreground/70 bg-surface border border-foreground/10 rounded-lg px-3 py-1.5 hover:text-muted-foreground hover:bg-transparent hover:border-border active:scale-95 transition-all duration-200"
-        >
-          导出 MD
-        </button>
-        <button
-          onClick={handleExportWord}
-          className="inline-flex items-center gap-1.5 text-[13px] text-foreground/70 bg-surface border border-foreground/10 rounded-lg px-3 py-1.5 hover:text-muted-foreground hover:bg-transparent hover:border-border active:scale-95 transition-all duration-200"
-        >
-          导出 Word
-        </button>
-        <button
-          onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 text-[13px] text-foreground/70 bg-surface border border-foreground/10 rounded-lg px-3 py-1.5 hover:text-muted-foreground hover:bg-transparent hover:border-border active:scale-95 transition-all duration-200"
+          type="button"
+          onClick={onClose}
+          title="关闭文档"
+          aria-label="关闭文档"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-surface text-foreground/55 transition-colors hover:border-error/30 hover:text-error"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v6M5 10h14a2 2 0 0 1 2 2v3H3v-3a2 2 0 0 1 2-2z" />
-            <circle cx="12" cy="15" r="1" />
+            strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
           </svg>
-          导出 PDF
         </button>
       </div>
       <article ref={articleRef} className="report-prose" onClick={handleCitationClick}>

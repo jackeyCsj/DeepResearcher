@@ -8,21 +8,21 @@
         "type": "tabs",
         "children": [
           {
-            "id": "db34ee6e7a2596dd",
+            "id": "f15ed9b9d1bf247d",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "问题汇总.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "问题汇总"
             }
           },
           {
-            "id": "f15ed9b9d1bf247d",
+            "id": "f9b667605d1a9f2c",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -34,8 +34,23 @@
               "icon": "lucide-file",
               "title": "notes"
             }
+          },
+          {
+            "id": "4a5219b4cbd22d37",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "README.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "README"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -156,13 +171,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "README.md",
+                "file": "notes.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "README 的大纲"
+              "title": "notes 的大纲"
             }
           },
           {
@@ -197,21 +212,27 @@
       "bases:新建数据库": false
     }
   },
-  "active": "db34ee6e7a2596dd",
+  "active": "f9b667605d1a9f2c",
   "lastOpenFiles": [
     "data/npm-cache/_npx/3a4829a0511b3281/concurrency.lock",
-    "data/npm-cache/_logs/2026-08-29T09_00_33_487Z-debug-0.log",
+    "data/npm-cache/_logs/2026-10-03T16_07_55_522Z-debug-0.log",
     "data/npm-cache/_npx/0a7ff2e283c3e979/concurrency.lock",
-    "data/npm-cache/_logs/2026-08-29T09_00_22_933Z-debug-0.log",
-    "logs/client_20260829_170004.log",
-    "notes.md",
+    "data/npm-cache/_logs/2026-10-03T16_07_51_963Z-debug-0.log",
+    "logs/client_20261004_000704.log",
+    "data/npm-cache/_logs/2026-10-03T16_06_54_090Z-debug-0.log",
+    "data/npm-cache/_logs/2026-10-03T16_06_48_111Z-debug-0.log",
+    "logs/client_20261004_000600.log",
+    "logs/client_20261004_000329.log",
+    "问题汇总.md",
+    "20260929_140815_34cb8276_隐私保护人脸识别中的频域方法_研究现状综述_2022_2025.md",
+    "data/vector_store.json",
+    "data/search_cache/e2d10d0f-aab0-4b3c-9577-ea63eef84914/20260929_140815_34cb8276_隐私保护人脸识别中的频域方法_研究现状综述_2022_2025.md",
+    "data/search_cache/e2d10d0f-aab0-4b3c-9577-ea63eef84914",
     "README.md",
-    "test.py",
-    "data/npm-cache/_logs/2026-08-19T03_28_54_773Z-debug-0.log",
-    "data/npm-cache/_logs/2026-08-19T03_28_53_953Z-debug-0.log",
-    "logs/client_20260819_112852.log",
-    "data/npm-cache/_logs/2026-08-19T03_20_10_358Z-debug-0.log",
-    "data/npm-cache/_logs/2026-08-19T03_20_06_881Z-debug-0.log",
+    "notes.md",
+    "长期记忆：RAG_知识库回存闭环.png",
+    "短期记忆：ReAct_历史压缩流程.png",
+    "AGENTS.md",
     "data/search_cache/e2d10d0f-aab0-4b3c-9577-ea63eef84914/20260818_212113_08364c5a_隐私保护人脸识别_技术路线_数据集与评测基准综述_2015_2025.md",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32comext/axscript/demos/client/ie/pycom_blowing.gif",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/www_icon.gif",
@@ -221,8 +242,6 @@
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_NextPage.gif",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_ManualTop.gif",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/BTN_HomePage.gif",
-    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32com/HTML/image/blank.gif",
-    "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32/test/win32rcparser/python.bmp",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/win32comext/mapi/NOTICE.md",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/uvicorn-0.51.0.dist-info/licenses/LICENSE.md",
     "data/uv-cache/archive-v0/DU7YiVgkNapY-mMM/Lib/site-packages/starlette-1.3.1.dist-info/licenses/LICENSE.md",
@@ -240,10 +259,6 @@
     "data/uv-cache/archive-v0/kN-0JXhqUZQAaW8D/Lib/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md",
     "data/uv-cache/archive-v0/rf1BujDd899YJm_U/httpx-0.28.1.dist-info/licenses/LICENSE.md",
     "data/uv-cache/archive-v0/lDZj9aevm7irwHPz/idna-3.18.dist-info/licenses/LICENSE.md",
-    "web/node_modules/node-releases/README.md",
-    "web/node_modules/strip-bom/readme.md",
-    "web/node_modules/natural-compare/README.md",
-    "web/node_modules/gensync/README.md",
-    "web/node_modules/hasown/README.md"
+    "web/node_modules/node-releases/README.md"
   ]
 }
