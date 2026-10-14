@@ -2,6 +2,7 @@ import logging
 import operator
 
 from typing import Annotated, Callable, TypedDict
+from typing_extensions import NotRequired
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Send
 
@@ -23,9 +24,40 @@ def merge_dicts(a: dict, b: dict) -> dict:
     return {**(a or {}), **(b or {})}
 
 
+def _build_research_feedback(review_result: dict | None) -> str:
+    if not review_result:
+        return ""
+
+    feedback = []
+    for item in review_result.get("note_reviews", []):
+        if item.get("verdict") == "revise":
+            details = "; ".join(
+                f"{criterion}: {item[criterion]}"
+                for criterion in ("relevance", "depth", "citations", "sources", "completeness")
+                if item.get(criterion)
+            )
+            if details:
+                feedback.append(f"相关子问题的评审意见：{details}")
+
+    missing_dimensions = review_result.get("missing_dimensions", "").strip()
+    if missing_dimensions:
+        feedback.append(f"整体研究仍未覆盖的维度：{missing_dimensions}")
+
+    return "\n".join(feedback)
+
+
 class State(TypedDict):
     research_brief: str
+    base_research_brief: str
     user_id: str
+    task_id: str
+    run_id: str
+    intent: str
+    parent_version_id: str
+    previous_report: str
+    planning_context: str
+    research_feedback: str
+    prior_notes: list[tuple[str, str]]
     sub_questions: list[SubQuestion]
     review_result: dict
     approved_pairs: Annotated[list[tuple[str, str]], operator.add]
@@ -42,11 +74,25 @@ class State(TypedDict):
 class InputSchema(TypedDict):
     research_brief: str
     user_id: str
+    base_research_brief: NotRequired[str]
+    task_id: NotRequired[str]
+    run_id: NotRequired[str]
+    intent: NotRequired[str]
+    parent_version_id: NotRequired[str]
+    previous_report: NotRequired[str]
+    planning_context: NotRequired[str]
+    research_feedback: NotRequired[str]
+    prior_notes: NotRequired[list[tuple[str, str]]]
 
 
 class OutputSchema(TypedDict):
     final_report: str
     report_file_id: str
+    approved_pairs: NotRequired[list[tuple[str, str]]]
+    prior_notes: NotRequired[list[tuple[str, str]]]
+    sub_questions: NotRequired[list[SubQuestion]]
+    review_result: NotRequired[dict]
+    missing_dimensions: NotRequired[str]
 
     
 def build_graph(
@@ -60,14 +106,20 @@ def build_graph(
         State, input_schema=InputSchema, output_schema=OutputSchema
     )
 
-    def hand_out_subquestion(state: State) -> Send:
+    def hand_out_subquestion(state: State) -> list[Send]:
         total = len(state["sub_questions"])
+        note_feedback = "\n".join(
+            part for part in (
+                state.get("research_feedback", ""),
+                _build_research_feedback(state.get("review_result")),
+            ) if part
+        )
         return [
             Send(
                 "research_node",
                 {
                     "sub_question": sq.question,
-                    "note_feedback": "",
+                    "note_feedback": note_feedback,
                     "researcher_id": f"R-{i+1}/{total}",
                 }
             )
@@ -98,11 +150,21 @@ def build_graph(
     def plan_node(state: State) -> dict[str, SubQuestion]:
         review_dict = state.get("review_result")
         review = ReviewResult(**review_dict) if review_dict else None
+        prior_notes = state.get("prior_notes", [])
+        approved_pairs = prior_notes + state.get("approved_pairs", [])
+        if review is None and state.get("intent") in {"supplementary_research", "deepening"}:
+            review = ReviewResult(
+                note_reviews=[],
+                missing_dimensions=state.get("research_feedback", ""),
+            )
         result = supervisor.plan(
             research_brief=state["research_brief"],
-            approved_pairs=state.get("approved_pairs"),
+            approved_pairs=approved_pairs,
             review_result=review,
+            planning_context=state.get("planning_context", ""),
         )
+        if not result:
+            raise ValueError("Supervisor generated an empty research plan")
         return {"sub_questions": result}
 
     def research_node(state: dict) -> dict:
@@ -177,15 +239,24 @@ def build_graph(
 
     def write_node(state: State) -> dict:
         result = writer.run(
-            research_brief=state["research_brief"],
-            notes=[note for _, note in state["approved_pairs"]],
+            research_brief=state.get("base_research_brief") or state["research_brief"],
+            notes=[note for _, note in (state.get("prior_notes", []) + state["approved_pairs"])],
+            previous_report=state.get("previous_report", ""),
         )
         report_meta = pipeline.add_text(
             text=result,
             query=state["research_brief"],
             user_id=state.get("user_id", "default"),
         )
-        return {"final_report": result, "report_file_id": report_meta["file_id"]}
+        return {
+            "final_report": result,
+            "report_file_id": report_meta["file_id"],
+            "approved_pairs": state.get("approved_pairs", []),
+            "prior_notes": state.get("prior_notes", []),
+            "sub_questions": state.get("sub_questions", []),
+            "review_result": state.get("review_result", {}),
+            "missing_dimensions": state.get("missing_dimensions", ""),
+        }
 
     # add node
     builder.add_node("plan_node", plan_node)

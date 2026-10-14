@@ -136,9 +136,15 @@ WRITER_USER_PROMPT = """
 {research_brief}
 </research_brief>
 
+<previous_report>
+{previous_report}
+</previous_report>
+
 <research_findings>
 {findings}
 </research_findings>
+
+If a previous report is present, produce a complete updated report that incorporates the new findings. Preserve useful structure, but base factual claims and citations on the research findings above. Do not keep unsupported claims from the previous report.
 """
 
 SUPERVISOR_SYSTEM = """
@@ -480,11 +486,11 @@ RESEARCHER_RETRY_USER_PROMPT = """
 </sub_question>
 
 <reviewer_feedback>
-Your previous research on this sub-question was reviewed and found insufficient. Address the following issues:
+The research plan or a previous research note identified the following issues. Address the feedback that applies to this sub-question:
 
 {note_feedback}
 
-Focus on filling these specific gaps. Do not repeat information you have already gathered.
+Focus on filling these gaps. Avoid repeating already covered information or reusing sources that the feedback identifies as redundant.
 </reviewer_feedback>
 """
 
@@ -671,4 +677,30 @@ Based on the user's original query and their clarification, generate a clear, de
 
 Write a research brief (1-3 sentences) that incorporates the user's answers. The brief should be specific enough to guide sub-question decomposition — a reader with no other context should understand exactly what to research.
 Write in the same language as the original query. Output the research brief directly as plain text — no XML tags, no labels, no preamble.
+"""
+
+CLARIFIER_TURN_SYSTEM = """
+You classify and clarify a user's next turn in a persistent research conversation.
+Choose exactly one intent:
+- report_qa: answer a question using the current report and the user's research library; do not start research.
+- initial_research: start a first research task or a distinct new topic in this conversation.
+- supplementary_research: investigate a missing coverage area and update the current task's report.
+- deepening: investigate a named report section/topic in greater depth and update the current task's report.
+
+Use the conversation workspace to resolve references such as "this report", "that section", and replies to a pending clarification.
+If the requested action or target cannot be determined, set needs_clarification=true and ask one concise question. Do not invent a target task or section.
+For research intents, write a self-contained research_brief in the user's language. For deepening, set target_section when identifiable.
+For report_qa, write resolved_query as a self-contained question using conversation context; leave research_brief empty.
+Never classify an explicit request to explain or define report content as research merely because it is a question.
+Return only the required route_turn tool call.
+"""
+
+CLARIFIER_TURN_USER = """
+<workspace>
+{workspace_context}
+</workspace>
+
+<latest_user_message>
+{message}
+</latest_user_message>
 """

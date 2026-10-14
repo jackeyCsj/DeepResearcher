@@ -3,11 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import AuthOverlay from "@/components/AuthOverlay";
 import ChatSidebar from "@/components/ChatSidebar";
-import QueryInput from "@/components/QueryInput";
-import ClarifyPanel, { resetClarifyCache } from "@/components/ClarifyPanel";
-import ResearchProgress from "@/components/ResearchProgress";
+import ChatWorkspace from "@/components/ChatWorkspace";
 import ReportView from "@/components/ReportView";
-import StreamingText from "@/components/StreamingText";
 import UserMenu from "@/components/UserMenu";
 import {
   getMe,
@@ -22,9 +19,17 @@ import {
   type LibraryDoc,
   type UserInfo,
 } from "@/lib/api";
+import type { ResearchStats } from "@/components/ResearchProgress";
 
-type Stage = "input" | "sending" | "clarify" | "researching" | "report";
 type MainMode = "chat" | "library";
+
+interface SelectedReport {
+  taskId: string | null;
+  versionId: string | null;
+  reportFileId: string | null;
+  title: string;
+  content: string;
+}
 
 export default function Home() {
   const [token, setToken] = useState<string | null>(null);
@@ -33,16 +38,21 @@ export default function Home() {
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [mode, setMode] = useState<MainMode>("chat");
   const [selectedDetail, setSelectedDetail] = useState<ChatSessionDetail | null>(null);
-  const [stage, setStage] = useState<Stage>("input");
-  const [query, setQuery] = useState("");
-  const [brief, setBrief] = useState("");
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [report, setReport] = useState("");
-  const [reportFileId, setReportFileId] = useState<string | null>(null);
-  const [stats, setStats] = useState<{ total_calls: number; total_tokens: number } | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [workspaceGeneration, setWorkspaceGeneration] = useState(0);
+  const [selectedReport, setSelectedReport] = useState<SelectedReport | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [stats, setStats] = useState<ResearchStats | null>(null);
   const [reportWidth, setReportWidth] = useState(45);
   const [isResizingReport, setIsResizingReport] = useState(false);
   const splitRef = useRef<HTMLDivElement>(null);
+  const sessionLoadRef = useRef(0);
+  const currentSessionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    currentSessionRef.current = currentSessionId;
+  }, [currentSessionId]);
 
   useEffect(() => {
     if (!isResizingReport) return;
@@ -87,8 +97,12 @@ export default function Home() {
 
   async function refreshSessions(nextToken = token) {
     if (!nextToken) return;
-    const items = await listSessions(nextToken);
-    setSessions(items);
+    try {
+      const items = await listSessions(nextToken);
+      setSessions(items);
+    } catch {
+      // Keep the current workspace usable when refreshing the sidebar fails.
+    }
   }
 
   function handleAuthenticated(nextToken: string, nextUser: UserInfo) {
@@ -99,14 +113,15 @@ export default function Home() {
   }
 
   function resetWorkspace() {
-    resetClarifyCache();
+    sessionLoadRef.current += 1;
+    setSessionLoading(false);
     setMode("chat");
-    setStage("input");
-    setQuery("");
-    setBrief("");
-    setSessionId(null);
-    setReport("");
-    setReportFileId(null);
+    setCurrentSessionId(null);
+    currentSessionRef.current = null;
+    setSelectedDetail(null);
+    setWorkspaceGeneration((value) => value + 1);
+    setSelectedReport(null);
+    setReportOpen(false);
     setStats(null);
   }
 
@@ -115,12 +130,10 @@ export default function Home() {
     setToken(null);
     setUser(null);
     setSessions([]);
-    setSelectedDetail(null);
     resetWorkspace();
   }
 
   function handleNewChat() {
-    setSelectedDetail(null);
     resetWorkspace();
   }
 
@@ -135,63 +148,98 @@ export default function Home() {
     }
     // 删掉的是当前打开的会话时回到初始态，
     // 进行中的研究会随 ResearchProgress 卸载而 abort。
-    if (sessionId === id || selectedDetail?.id === id) {
+    if (currentSessionId === id || selectedDetail?.id === id) {
       resetWorkspace();
     }
     await refreshSessions();
   }
 
-  function handleQuerySubmit(q: string) {
-    setSelectedDetail(null);
-    setMode("chat");
-    setQuery(q);
-    setSessionId(null);
-    setReportFileId(null);
-    setReport("");
-    setStats(null);
-    setStage("sending");
-    setTimeout(() => setStage("clarify"), 400);
-  }
-
-  function handleBriefReady(b: string, sid: string | null) {
-    setBrief(b);
-    setSessionId(sid);
-    setStage("researching");
-    refreshSessions();
-  }
-
   async function handleSelectSession(id: string, openReport = false) {
     if (!token) return;
-    // 切换会话时丢弃上一个对话的澄清缓存，否则模块级单例会跨对话残留，
-    // 导致切回/新开对话时命中错误的 query 状态。
-    resetClarifyCache();
-    const detail = await getSession(id, token);
+    setWorkspaceGeneration((value) => value + 1);
+    const loadId = ++sessionLoadRef.current;
+    setSessionLoading(true);
+    let detail: ChatSessionDetail;
+    try {
+      detail = await getSession(id, token);
+    } catch (cause) {
+      if (loadId === sessionLoadRef.current) setSessionLoading(false);
+      if (loadId !== sessionLoadRef.current) return;
+      window.alert(cause instanceof Error ? cause.message : "读取聊天详情失败");
+      return;
+    }
+    if (loadId !== sessionLoadRef.current) return;
+    setSessionLoading(false);
     setMode("chat");
     setSelectedDetail(detail);
-    setSessionId(detail.id);
-    setStage("input");
+    setCurrentSessionId(detail.id);
+    currentSessionRef.current = detail.id;
     setStats(null);
-    if (openReport && detail.report) {
-      setReport(detail.report.content);
-      setReportFileId(detail.report.report_file_id);
-    } else {
-      setReport("");
-      setReportFileId(detail.report_file_id);
+    const latest = latestReport(detail);
+    if (latest) setSelectedReport(latest);
+    else setSelectedReport(null);
+    if (openReport && latest) {
+      setReportOpen(true);
     }
   }
 
   function handleOpenLibrary() {
+    sessionLoadRef.current += 1;
+    setSessionLoading(false);
     setMode("library");
-    setSelectedDetail(null);
-    setReport("");
-    setStats(null);
     refreshSessions();
   }
 
   function handleCloseReport() {
-    setReport("");
-    setReportFileId(null);
-    setStats(null);
+    setReportOpen(false);
+  }
+
+  function handleReportReady(event: { task_id?: string; version_id?: string; report_version_id?: string; report_file_id?: string; title?: string; report: string }) {
+    const title = event.title || reportTitle(event.report);
+    setSelectedReport({
+      taskId: event.task_id || null,
+      versionId: event.report_version_id || event.version_id || null,
+      reportFileId: event.report_file_id || null,
+      title,
+      content: event.report,
+    });
+    setReportOpen(true);
+  }
+
+  function handleTurnComplete(id: string | null) {
+    if (!id || !token) return;
+    void refreshSessions();
+    getSession(id, token).then((detail) => {
+      if (currentSessionRef.current !== id) return;
+      setSelectedDetail(detail);
+      const latest = latestReport(detail);
+      setSelectedReport((current) => current || latest);
+    }).catch(() => undefined);
+  }
+
+  function selectTask(taskId: string) {
+    const task = selectedDetail?.tasks?.find((item) => item.id === taskId);
+    if (!task) return;
+    const version = task.versions.find((item) => item.id === task.current_version_id) || task.versions.at(-1);
+    if (version) setSelectedReport({
+      taskId: task.id,
+      versionId: version.id,
+      reportFileId: version.report_file_id,
+      title: version.title || task.title,
+      content: version.content,
+    });
+  }
+
+  function selectVersion(versionId: string) {
+    const task = selectedDetail?.tasks?.find((item) => item.id === selectedReport?.taskId);
+    const version = task?.versions.find((item) => item.id === versionId);
+    if (task && version) setSelectedReport({
+      taskId: task.id,
+      versionId: version.id,
+      reportFileId: version.report_file_id,
+      title: version.title || task.title,
+      content: version.content,
+    });
   }
 
   function handleReportResizeKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -205,7 +253,9 @@ export default function Home() {
   }
 
   const authenticated = Boolean(token && user);
-  const reportReady = Boolean(report);
+  const reportReady = reportOpen && Boolean(selectedReport?.content);
+  const tasks = selectedDetail?.tasks || [];
+  const selectedTask = tasks.find((task) => task.id === selectedReport?.taskId);
 
   return (
     <>
@@ -214,7 +264,7 @@ export default function Home() {
           <div className="app-shell flex h-screen w-full overflow-hidden">
             <ChatSidebar
               sessions={sessions}
-              selectedSessionId={sessionId}
+              selectedSessionId={currentSessionId}
               mode={mode}
               onNewChat={handleNewChat}
               onSelectSession={(id) => handleSelectSession(id)}
@@ -233,39 +283,30 @@ export default function Home() {
               >
                 {mode === "library" ? (
                   <LibraryMain token={token!} />
-                ) : selectedDetail ? (
-                  <HistoryMain
-                    detail={selectedDetail}
-                    reportReady={reportReady}
-                    onOpenReport={() => {
-                      if (selectedDetail.report) {
-                        setReport(selectedDetail.report.content);
-                        setReportFileId(selectedDetail.report.report_file_id);
-                      }
-                    }}
-                  />
+                ) : sessionLoading ? (
+                  <div className="flex h-full items-center justify-center text-[14px] text-foreground/55">正在读取对话...</div>
                 ) : (
-                  <LiveResearchMain
-                    stage={stage}
-                    query={query}
-                    brief={brief}
+                  <ChatWorkspace
+                    key={`${selectedDetail?.id || "new"}-${workspaceGeneration}`}
+                    detail={selectedDetail}
                     token={token!}
-                    sessionId={sessionId}
-                    reportReady={reportReady}
-                    onSubmit={handleQuerySubmit}
-                    onBriefReady={handleBriefReady}
-                    onReport={(r, s, fileId) => {
-                      setReport(r);
-                      if (fileId) setReportFileId(fileId);
-                      if (s) setStats({ total_calls: s.total_calls, total_tokens: s.total_tokens });
-                      setStage("report");
-                      refreshSessions();
+                    hasReport={Boolean(selectedReport || selectedDetail?.report || selectedDetail?.report_file_id)}
+                    selectedTaskId={selectedReport?.taskId || selectedDetail?.active_task_id || null}
+                    selectedReportVersionId={selectedReport?.versionId || null}
+                    onSession={(id) => {
+                      setCurrentSessionId(id);
+                      currentSessionRef.current = id;
+                      void refreshSessions();
                     }}
+                    onReport={handleReportReady}
+                    onStats={setStats}
+                    onTurnComplete={handleTurnComplete}
+                    onOpenReport={() => setReportOpen(true)}
                   />
                 )}
               </div>
 
-              {reportReady && (
+              {reportReady && selectedReport && (
                 <>
                   <div
                     role="separator"
@@ -289,10 +330,42 @@ export default function Home() {
                     data-report-panel
                     className="min-h-0 min-w-0 flex-1 overflow-y-auto border-l border-foreground/8 bg-surface/40 thin-scroll"
                   >
+                    <div className="border-b border-foreground/8 bg-surface px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        {tasks.length > 0 && (
+                          <label className="min-w-0 flex-1">
+                            <span className="sr-only">研究任务</span>
+                            <select
+                              value={selectedTask?.id || ""}
+                              onChange={(event) => selectTask(event.target.value)}
+                              className="w-full rounded-md border border-foreground/12 bg-background px-2.5 py-2 text-[12px] outline-none focus:border-accent/45"
+                            >
+                              {tasks.map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}
+                            </select>
+                          </label>
+                        )}
+                        {selectedTask && selectedTask.versions.length > 0 && (
+                          <label className="w-28 shrink-0">
+                            <span className="sr-only">报告版本</span>
+                            <select
+                              value={selectedReport.versionId || selectedTask.current_version_id || ""}
+                              onChange={(event) => selectVersion(event.target.value)}
+                              className="w-full rounded-md border border-foreground/12 bg-background px-2.5 py-2 text-[12px] outline-none focus:border-accent/45"
+                            >
+                              {selectedTask.versions.map((version, index) => (
+                                <option key={version.id} value={version.id}>
+                                  {`V${version.version_number || index + 1} · ${version.title || selectedTask.title}`}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                    </div>
                     <ReportView
-                      report={report}
+                      report={selectedReport.content}
                       stats={stats}
-                      reportFileId={reportFileId}
+                      reportFileId={selectedReport.reportFileId}
                       onClose={handleCloseReport}
                     />
                   </div>
@@ -308,110 +381,6 @@ export default function Home() {
   );
 }
 
-function LiveResearchMain({
-  stage,
-  query,
-  brief,
-  token,
-  sessionId,
-  reportReady,
-  onSubmit,
-  onBriefReady,
-  onReport,
-}: {
-  stage: Stage;
-  query: string;
-  brief: string;
-  token: string;
-  sessionId: string | null;
-  reportReady: boolean;
-  onSubmit: (q: string) => void;
-  onBriefReady: (brief: string, sessionId: string | null) => void;
-  onReport: (report: string, stats: { total_calls: number; total_tokens: number } | null, reportFileId: string | null) => void;
-}) {
-  if (stage === "input" || stage === "sending") {
-    return (
-      <main className="flex h-full w-full flex-1 flex-col items-center px-4">
-        <HeroSection onSubmit={onSubmit} sending={stage === "sending"} />
-      </main>
-    );
-  }
-
-  return (
-    <main className="h-full w-full overflow-y-auto px-4 thin-scroll" data-scroll-container>
-      <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 pb-8 pt-16">
-        <ClarifyPanel query={query} token={token} onBriefReady={onBriefReady} />
-        {(stage === "researching" || reportReady) && (
-          <ResearchProgress
-            brief={brief}
-            token={token}
-            sessionId={sessionId}
-            onReport={onReport}
-          />
-        )}
-      </div>
-    </main>
-  );
-}
-
-function HistoryMain({
-  detail,
-  reportReady,
-  onOpenReport,
-}: {
-  detail: ChatSessionDetail;
-  reportReady: boolean;
-  onOpenReport: () => void;
-}) {
-  return (
-    <main className="h-full w-full overflow-y-auto px-6 pb-10 pt-16 thin-scroll">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-        {detail.messages.map((message, idx) => (
-          <div key={idx} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
-            <div
-              className={[
-                "max-w-[84%] rounded-2xl px-4 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap",
-                message.role === "user"
-                  ? "bg-foreground/85 text-surface rounded-br-sm"
-                  : "bg-surface text-foreground rounded-bl-sm",
-              ].join(" ")}
-            >
-              {message.content}
-            </div>
-          </div>
-        ))}
-
-        {detail.steps.length > 0 && (
-          <div className="mt-2 rounded-2xl bg-surface/80 p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">处理步骤</p>
-            <ul className="space-y-2">
-              {detail.steps.map((step) => {
-                const isReportStep = step.step_type === "write" && detail.report;
-                let className = "w-full text-left rounded-xl px-3 py-2 text-[14px] ";
-                if (isReportStep) {
-                  className += reportReady
-                    ? "bg-approved/15 text-approved"
-                    : "bg-background hover:bg-approved/10 text-approved";
-                } else {
-                  className += "bg-background text-foreground/70";
-                }
-                return (
-                  <li key={step.sequence}>
-                    <button onClick={isReportStep ? onOpenReport : undefined} className={className}>
-                      <span className="mr-2 text-muted-foreground">{step.sequence}.</span>
-                      {step.title}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </div>
-    </main>
-  );
-}
-
 function LibraryMain({ token }: { token: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [docs, setDocs] = useState<LibraryDoc[]>([]);
@@ -422,7 +391,6 @@ function LibraryMain({ token }: { token: string }) {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     listDocs(token)
       .then((items) => {
         if (active) setDocs(items);
@@ -533,36 +501,32 @@ function formatLibrarySource(sourceType: string) {
   return labels[sourceType] || sourceType;
 }
 
-function HeroSection({
-  onSubmit,
-  sending,
-}: {
-  onSubmit: (q: string) => void;
-  sending?: boolean;
-}) {
-  const [showSubtitle, setShowSubtitle] = useState(false);
-  const className = ["flex flex-1 flex-col items-center w-full", sending ? "hero-exit" : ""].join(" ");
+function latestReport(detail: ChatSessionDetail): SelectedReport | null {
+  const tasks = detail.tasks || [];
+  const activeTask = tasks.find((task) => task.id === detail.active_task_id);
+  const orderedTasks = activeTask
+    ? [activeTask, ...tasks.filter((task) => task.id !== activeTask.id)]
+    : [...tasks].reverse();
+  for (const task of orderedTasks) {
+    const version = task.versions.find((item) => item.id === task.current_version_id) || task.versions.at(-1);
+    if (version) return {
+      taskId: task.id,
+      versionId: version.id,
+      reportFileId: version.report_file_id,
+      title: version.title || task.title,
+      content: version.content,
+    };
+  }
+  if (detail.report) return {
+    taskId: null,
+    versionId: null,
+    reportFileId: detail.report.report_file_id,
+    title: detail.report.title,
+    content: detail.report.content,
+  };
+  return null;
+}
 
-  return (
-    <div className={className}>
-      <div className="flex flex-1 flex-col items-center justify-center">
-        <h1 className="text-4xl font-medium w-full text-center">
-          <StreamingText text="Deep Research" mode="typewriter" speed="slow" pause={350} onComplete={() => setShowSubtitle(true)} />
-        </h1>
-        <div
-          className={[
-            "w-full overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
-            showSubtitle ? "max-h-16 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0",
-          ].join(" ")}
-        >
-          <p className="text-lg text-foreground/65 tracking-wide text-center pl-[1.1em]">
-            输入一个研究问题，开始探索。
-          </p>
-        </div>
-      </div>
-      <div className="w-full flex justify-center pb-8">
-        <QueryInput onSubmit={onSubmit} disabled={sending} />
-      </div>
-    </div>
-  );
+function reportTitle(report: string) {
+  return report.match(/^#\s+(.+)$/m)?.[1]?.trim() || "研究报告";
 }

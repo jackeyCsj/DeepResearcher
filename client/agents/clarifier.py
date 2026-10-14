@@ -1,9 +1,18 @@
 import json
 import logging
+from typing import Literal
+
+from pydantic import BaseModel
 
 from ..api.schemas import ClarifyResult
 from ..base.llm_client import LLMClient as llm_client
-from .prompts import CLARIFIER_SYSTEM, CLARIFIER_USER, CLARIFIER_REFINE_USER
+from .prompts import (
+    CLARIFIER_SYSTEM,
+    CLARIFIER_USER,
+    CLARIFIER_REFINE_USER,
+    CLARIFIER_TURN_SYSTEM,
+    CLARIFIER_TURN_USER,
+)
 
 logger = logging.getLogger(__name__)
 display = logging.getLogger("client.display")
@@ -39,6 +48,40 @@ analyze_schema = {
         },
     },
 }
+
+turn_schema = {
+    "type": "function",
+    "function": {
+        "name": "route_turn",
+        "description": "Classify a conversation turn and clarify it when its intent or target is ambiguous.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "intent": {
+                    "type": "string",
+                    "enum": ["report_qa", "initial_research", "supplementary_research", "deepening"],
+                },
+                "needs_clarification": {"type": "boolean"},
+                "message": {"type": "string"},
+                "directions": {"type": "array", "items": {"type": "string"}},
+                "research_brief": {"type": "string"},
+                "resolved_query": {"type": "string"},
+                "target_section": {"type": "string"},
+            },
+            "required": ["intent", "needs_clarification", "message", "directions", "research_brief", "resolved_query", "target_section"],
+        },
+    },
+}
+
+
+class TurnDecision(BaseModel):
+    intent: Literal["report_qa", "initial_research", "supplementary_research", "deepening"]
+    needs_clarification: bool = False
+    message: str = ""
+    directions: list[str] = []
+    research_brief: str = ""
+    resolved_query: str = ""
+    target_section: str = ""
 
 
 class Clarifier:
@@ -121,3 +164,30 @@ class Clarifier:
         logger.info("[Clarifier] 生成 research_brief 完成")
 
         return refine_response.content
+
+    def route_turn(self, message: str, workspace_context: dict) -> TurnDecision:
+        context = json.dumps(workspace_context, ensure_ascii=False, default=str)
+        response = self.llm.invoke(
+            messages=[
+                {"role": "system", "content": CLARIFIER_TURN_SYSTEM},
+                {"role": "user", "content": CLARIFIER_TURN_USER.format(
+                    workspace_context=context,
+                    message=message,
+                )},
+            ],
+            tools=[turn_schema],
+            tool_choice={"type": "function", "function": {"name": "route_turn"}},
+            temperature=0,
+            tag="clarifier:route_turn",
+        )
+
+        try:
+            raw = response.tool_calls[0].function.arguments if response.tool_calls else response.content
+            return TurnDecision.model_validate_json(raw)
+        except Exception as exc:
+            logger.warning("[Clarifier] turn routing failed; asking for clarification: %s", exc)
+            return TurnDecision(
+                intent="report_qa",
+                needs_clarification=True,
+                message="我没能确定你希望我解释现有资料，还是继续开展/补充调研。你想做哪一种？",
+            )

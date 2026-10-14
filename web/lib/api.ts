@@ -183,12 +183,22 @@ export async function uploadFile(file: File, token: string): Promise<IngestResul
 // --- SSE Research Events ---
 
 export type ResearchEvent =
-  | { type: "plan"; sub_questions: { label: string; question: string }[] }
-  | { type: "research"; question: string; preview: string; tool_call_counts: Record<string, number> }
-  | { type: "review"; round: number; review_summary: { question: string; verdict: string; failed: Record<string, boolean>; evidence?: Record<string, string> }[]; missing_dimensions?: string }
-  | { type: "write"; report: string; report_file_id?: string }
-  | { type: "stats"; total_calls: number; prompt_tokens: number; completion_tokens: number; total_tokens: number }
-  | { type: "error"; message: string };
+  | { type: "session"; session_id: string }
+  | { type: "route"; intent: "report_qa" | "initial_research" | "supplementary_research" | "deepening"; task_id?: string; run_id?: string; report_version_id?: string }
+  | { type: "clarification"; message: string; directions?: string[] }
+  | { type: "answer"; content: string; sources: { title: string; file_id?: string; excerpt?: string }[] }
+  | ({ type: "plan"; sub_questions: { label: string; question: string }[] } & StreamMeta)
+  | ({ type: "research"; question: string; preview: string; tool_call_counts: Record<string, number> } & StreamMeta)
+  | ({ type: "review"; round: number; review_summary: { question: string; verdict: string; failed: Record<string, boolean>; evidence?: Record<string, string> }[]; missing_dimensions?: string } & StreamMeta)
+  | ({ type: "write"; report: string; report_file_id?: string; version_id?: string; report_version_id?: string; title?: string } & StreamMeta)
+  | ({ type: "stats"; total_calls: number; prompt_tokens: number; completion_tokens: number; total_tokens: number } & StreamMeta)
+  | { type: "error"; message: string; task_id?: string; run_id?: string };
+
+interface StreamMeta {
+  task_id?: string;
+  run_id?: string;
+  version_id?: string;
+}
 
 export interface ChatSessionSummary {
   id: string;
@@ -202,13 +212,35 @@ export interface ChatSessionSummary {
 }
 
 export interface ChatSessionDetail extends ChatSessionSummary {
+  active_task_id?: string | null;
   messages: { role: string; message_type: string; content: string; created_at: string; extra?: Record<string, unknown> | null }[];
   steps: { sequence: number; step_type: string; title: string; content: string | null; report_file_id: string | null; created_at: string; extra?: Record<string, unknown> | null }[];
   report: { report_file_id: string; title: string; content: string } | null;
+  tasks?: {
+    id: string;
+    title: string;
+    intent: string;
+    scope?: string | null;
+    status?: string;
+    current_version_id: string | null;
+    versions: {
+      id: string;
+      run_id: string;
+      version_number?: number;
+      parent_version_id?: string | null;
+      report_file_id: string;
+      title: string;
+      content: string;
+      created_at: string;
+    }[];
+  }[];
 }
 
 export async function listSessions(token: string): Promise<ChatSessionSummary[]> {
-  if (MOCK) return [];
+  if (MOCK) {
+    const { mockListSessions } = await import("./mock");
+    return mockListSessions();
+  }
   const res = await fetch(`${API_BASE}/api/sessions`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -217,6 +249,10 @@ export async function listSessions(token: string): Promise<ChatSessionSummary[]>
 }
 
 export async function getSession(sessionId: string, token: string): Promise<ChatSessionDetail> {
+  if (MOCK) {
+    const { mockGetSession } = await import("./mock");
+    return mockGetSession(sessionId);
+  }
   const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(sessionId)}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -224,7 +260,89 @@ export async function getSession(sessionId: string, token: string): Promise<Chat
   return res.json();
 }
 
+export function startChatTurn(
+  message: string,
+  sessionId: string | null,
+  onEvent: (event: ResearchEvent) => void,
+  token: string,
+  options: { taskId?: string | null; reportVersionId?: string | null } = {},
+  onComplete?: () => void,
+): () => void {
+  if (MOCK) {
+    let cancelled = false;
+    let mockAbort: (() => void) | null = null;
+    import("./mock").then(({ startMockTurn }) => {
+      if (!cancelled) mockAbort = startMockTurn(message, sessionId, onEvent, onComplete, options);
+    });
+    return () => {
+      cancelled = true;
+      mockAbort?.();
+    };
+  }
+
+  const controller = new AbortController();
+  let active = true;
+  fetch(`${API_BASE}/api/chat/turns`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({
+      message,
+      session_id: sessionId,
+      ...(options.taskId ? { task_id: options.taskId } : {}),
+      ...(options.reportVersionId ? { report_version_id: options.reportVersionId } : {}),
+    }),
+    signal: controller.signal,
+  })
+    .then(async (res) => {
+      if (!res.ok || !res.body) throw await readError(res, "发送消息失败");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      function dispatch(block: string) {
+        let eventType = "";
+        const dataLines: string[] = [];
+        for (const line of block.split(/\r?\n/)) {
+          if (line.startsWith("event:")) eventType = line.slice(6).trim();
+          else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
+        }
+        if (!active || !eventType || dataLines.length === 0) return;
+        try {
+          onEvent({ type: eventType, ...JSON.parse(dataLines.join("\n")) } as ResearchEvent);
+        } catch {
+          onEvent({ type: "error", message: "服务器返回了无法解析的研究事件" });
+        }
+      }
+
+      while (active) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split(/\r?\n\r?\n/);
+        buffer = blocks.pop() || "";
+        blocks.forEach(dispatch);
+      }
+      buffer += decoder.decode();
+      if (buffer.trim()) dispatch(buffer);
+      if (active) onComplete?.();
+    })
+    .catch((cause: unknown) => {
+      if (!active || (cause instanceof Error && cause.name === "AbortError")) return;
+      onEvent({ type: "error", message: cause instanceof Error ? cause.message : "发送消息失败" });
+      onComplete?.();
+    });
+
+  return () => {
+    active = false;
+    controller.abort();
+  };
+}
+
 export async function deleteSession(sessionId: string, token: string): Promise<void> {
+  if (MOCK) {
+    const { mockDeleteSession } = await import("./mock");
+    return mockDeleteSession(sessionId);
+  }
   const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(sessionId)}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },

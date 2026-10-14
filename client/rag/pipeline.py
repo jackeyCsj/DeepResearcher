@@ -143,64 +143,74 @@ class Pipeline:
         self.vector_store.save_to_json(store_path)
 
     def retrieve(self, query: str, top_k: int = 5, user_id: str | None = None) -> str:
+        sources = self.retrieve_with_sources(query=query, top_k=top_k, user_id=user_id)
+        return "".join(f"[{i}] {item['excerpt']}\n" for i, item in enumerate(sources, 1))
+
+    def retrieve_with_sources(
+        self,
+        query: str,
+        top_k: int = 5,
+        user_id: str | None = None,
+        preferred_file_id: str | None = None,
+    ) -> list[dict[str, str]]:
         allowed_path_prefix = None
         if user_id:
             safe_user_id = self._safe_path_part(user_id, "default")
             allowed_path_prefix = [
-                os.path.join(self.data_dir, "converted"),
+                os.path.join(self.data_dir, "user_libraries", safe_user_id),
                 os.path.join(self.data_dir, self.SEARCH_CACHE_DIR, safe_user_id),
             ]
+            if user_id == "default":
+                allowed_path_prefix.append(os.path.join(self.data_dir, "converted"))
 
-        if not self.mqe:
-            query_embedding, query_tokens = self.embedding.invoke(query)
-
+        result: dict[tuple[str, int], tuple[Chunk, float]] = {}
+        query_list = self.mqe.generate_multiple_query(query) if self.mqe else [query]
+        for sub_query in query_list:
+            query_embedding, _ = self.embedding.invoke(sub_query)
             retrieved = self.vector_store.hybrid_search(
-                query=query,
+                query=sub_query,
                 query_embedding=query_embedding,
                 top_k=top_k * 4,
                 allowed_path_prefix=allowed_path_prefix,
             )
+            for chunk, score in retrieved:
+                key = (chunk.file_path, chunk.chunk_idx)
+                old_score = result.get(key, (chunk, 0.0))[1]
+                result[key] = (chunk, old_score + score)
 
-            chunks = [chunk for chunk, score in retrieved]
+        if preferred_file_id:
+            safe_user_id = self._safe_path_part(user_id or "default", "default")
+            preferred_path = os.path.join(
+                self.data_dir, self.SEARCH_CACHE_DIR, safe_user_id, os.path.basename(preferred_file_id)
+            )
+            query_embedding, _ = self.embedding.invoke(query)
+            for chunk, score in self.vector_store.hybrid_search(
+                query=query,
+                query_embedding=query_embedding,
+                top_k=top_k * 2,
+                allowed_path_prefix=preferred_path,
+            ):
+                key = (chunk.file_path, chunk.chunk_idx)
+                old_score = result.get(key, (chunk, 0.0))[1]
+                result[key] = (chunk, old_score + score + 1.0)
 
-            rerank_results = self.reranker.rerank(query=query, chunks=chunks, top_k=top_k)
-            text = ""
-            for i, (chunk, score) in enumerate(rerank_results):
-                text += f"[{i+1}] {chunk.content}\n"
-
-            return text
-        
-        else:
-            query_list = self.mqe.generate_multiple_query(query)
-            result: dict[tuple[str, int], tuple[Chunk, float]] = {}
-
-            for sub_query in query_list:
-                query_embedding, query_tokens = self.embedding.invoke(sub_query)
-
-                retrieved = self.vector_store.hybrid_search(
-                    query=sub_query,
-                    query_embedding=query_embedding,
-                    top_k=top_k * 4,
-                    allowed_path_prefix=allowed_path_prefix,
-                )
-
-                for chunk, score in retrieved:
-                    if (chunk.file_path, chunk.chunk_idx) not in result:
-                        result[(chunk.file_path, chunk.chunk_idx)] = (chunk, score)
-                    else:
-                        result[(chunk.file_path, chunk.chunk_idx)] = (
-                            chunk, 
-                            result[(chunk.file_path, chunk.chunk_idx)][1] + score
-                        )
-            
-            sorted_results = sorted(result.values(), key=lambda x: x[1], reverse=True)[:top_k * 4]
-            candidate_chunks = [chunk for chunk, score in sorted_results]
-            rerank_results = self.reranker.rerank(query=query, chunks=candidate_chunks, top_k=top_k)
-            text = ""
-            for i, (chunk, score) in enumerate(rerank_results):
-                text += f"[{i+1}] {chunk.content}\n"
-
-            return text
+        candidates = [chunk for chunk, _ in sorted(result.values(), key=lambda item: item[1], reverse=True)[:top_k * 8]]
+        ranked = self.reranker.rerank(query=query, chunks=candidates, top_k=top_k)
+        sources = []
+        for chunk, _ in ranked:
+            file_id = os.path.basename(chunk.file_path)
+            title = os.path.splitext(file_id)[0]
+            try:
+                with open(chunk.file_path, "r", encoding="utf-8") as source_file:
+                    title = self._extract_title(source_file.read(4000), title)
+            except OSError:
+                pass
+            sources.append({
+                "title": title,
+                "file_id": file_id,
+                "excerpt": chunk.content,
+            })
+        return sources
 
     def ingest_search_results(self, query: str, search_content: str):
         if self.llm_client is None:

@@ -175,6 +175,7 @@ class Supervisor(AgentBase):
         research_brief: str,
         approved_pairs: list[tuple[str, str]] | None = None,
         review_result: ReviewResult | None = None,
+        planning_context: str = "",
     ) -> list[SubQuestion]:
         """
         将研究简报拆分为可独立执行的子问题，通过 function calling 输出结构化结果。
@@ -204,6 +205,9 @@ class Supervisor(AgentBase):
                 revision_points=revision_str,
                 max_steps=self.max_steps,
             )
+
+        if planning_context:
+            prompt += f"\n\n<existing_research_context>\n{planning_context}\n</existing_research_context>"
 
         brief_msg = Message(content=prompt, role="user")
         self._history.append(brief_msg)

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { startResearch, type ResearchEvent } from "@/lib/api";
+import type { ResearchEvent } from "@/lib/api";
 import StreamingText from "@/components/StreamingText";
 
 type Verdict = "approved" | "retry" | "revise";
@@ -50,14 +50,10 @@ export interface ResearchStats {
 }
 
 export default function ResearchProgress({
-  brief,
-  token,
-  sessionId,
+  events,
   onReport,
 }: {
-  brief: string;
-  token: string;
-  sessionId: string | null;
+  events: ResearchEvent[];
   onReport: (report: string, stats: ResearchStats | null, reportFileId: string | null) => void;
 }) {
   const [nodes, setNodes] = useState<TimelineNode[]>([]);
@@ -71,14 +67,23 @@ export default function ResearchProgress({
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollParentRef = useRef<HTMLElement | null>(null);
   const shouldAutoScrollRef = useRef(true);
+  const processedEventsRef = useRef(0);
 
   useEffect(() => {
     onReportRef.current = onReport;
   }, [onReport]);
 
   useEffect(() => {
-    const abort = startResearch(brief, (event: ResearchEvent) => {
+    const pending = events.slice(processedEventsRef.current);
+    processedEventsRef.current = events.length;
+    for (const event of pending) {
       switch (event.type) {
+        case "session":
+        case "route":
+        case "clarification":
+        case "answer":
+          break;
+
         case "plan": {
           const subs = event.sub_questions;
           setNodes((prev) => [...prev, { kind: "plan", sub_questions: subs }]);
@@ -225,10 +230,8 @@ export default function ResearchProgress({
           setError(event.message);
           break;
       }
-    }, sessionId, token);
-
-    return abort;
-  }, [brief, sessionId, token]);
+    }
+  }, [events]);
 
   useEffect(() => {
     const container = bottomRef.current?.closest("[data-scroll-container]") as HTMLElement | null;

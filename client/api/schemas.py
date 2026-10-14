@@ -1,5 +1,5 @@
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AuthRequest(BaseModel):
@@ -51,6 +51,13 @@ class ResearchRequest(BaseModel):
     session_id: str | None = None
 
 
+class TurnRequest(BaseModel):
+    message: str = Field(min_length=1)
+    session_id: str | None = None
+    task_id: str | None = None
+    report_version_id: str | None = None
+
+
 class IngestRequest(BaseModel):
     src: str
     custom_title: str | None = None
@@ -97,7 +104,30 @@ class ChatSessionSummary(BaseModel):
     updated_at: str
 
 
+class ReportVersionOut(BaseModel):
+    id: str
+    run_id: str
+    report_file_id: str
+    title: str
+    version_number: int
+    parent_version_id: str | None = None
+    created_at: str
+    content: str
+
+
+class ResearchTaskOut(BaseModel):
+    id: str
+    title: str
+    scope: str
+    status: str
+    intent: str | None = None
+    current_version_id: str | None = None
+    versions: list[ReportVersionOut] = []
+
+
 class ChatSessionDetail(ChatSessionSummary):
     messages: list[ChatMessageOut]
     steps: list[ResearchStepOut]
     report: ReportContent | None = None
+    tasks: list[ResearchTaskOut] = []
+    active_task_id: str | None = None

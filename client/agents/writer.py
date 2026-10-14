@@ -24,7 +24,7 @@ class Writer(AgentBase):
         super().__init__(name, llm, context_builder, system_prompt)
         self.temperature = temperature
 
-    def run(self, research_brief: str, notes: list[str]) -> str:
+    def run(self, research_brief: str, notes: list[str], previous_report: str = "") -> str:
         """接收研究简报和已审查通过的研究笔记，单次 LLM 调用生成最终报告。"""
 
         clean_notes = self._renumber_citations(notes=notes)
@@ -34,6 +34,7 @@ class Writer(AgentBase):
         )
         prompt = WRITER_USER_PROMPT.format(
             research_brief=research_brief,
+            previous_report=previous_report,
             findings=findings
         )
         user_msg = Message(content=prompt, role="user")

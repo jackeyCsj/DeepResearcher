@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .models import ChatMessage, ChatSession, ResearchStep, User
+from .models import (
+    ChatMessage,
+    ChatSession,
+    ReportVersion,
+    ResearchRun,
+    ResearchStep,
+    ResearchTask,
+    SessionWorkspace,
+    User,
+)
+
+
+_UNSET = object()
 
 
 class ChatRepository:
@@ -144,3 +157,240 @@ class ChatRepository:
         self.db.add(step)
         self.db.flush()
         return step
+
+    def create_workspace(
+        self,
+        session_id: str,
+        *,
+        summary: str = "",
+        pending_clarification: dict | None = None,
+        active_task_id: str | None = None,
+    ) -> SessionWorkspace:
+        if not self.get_session(session_id):
+            raise ValueError(f"Unknown session: {session_id}")
+        if active_task_id is not None:
+            self._get_task_for_session(active_task_id, session_id)
+        workspace = SessionWorkspace(
+            session_id=session_id,
+            summary=summary,
+            pending_clarification=pending_clarification,
+            active_task_id=active_task_id,
+        )
+        self.db.add(workspace)
+        self.db.flush()
+        return workspace
+
+    def get_workspace(self, session_id: str) -> SessionWorkspace | None:
+        return self.db.get(SessionWorkspace, session_id)
+
+    def get_or_create_workspace(self, session_id: str) -> SessionWorkspace:
+        return self.get_workspace(session_id) or self.create_workspace(session_id)
+
+    def update_workspace(
+        self,
+        session_id: str,
+        *,
+        summary: str | None = None,
+        pending_clarification: dict | None | Any = _UNSET,
+        active_task_id: str | None | Any = _UNSET,
+    ) -> SessionWorkspace | None:
+        workspace = self.get_workspace(session_id)
+        if not workspace:
+            return None
+        if summary is not None:
+            workspace.summary = summary
+        if pending_clarification is not _UNSET:
+            workspace.pending_clarification = pending_clarification
+        if active_task_id is not _UNSET:
+            if active_task_id is not None:
+                self._get_task_for_session(active_task_id, session_id)
+            workspace.active_task_id = active_task_id
+        self.db.flush()
+        return workspace
+
+    def create_research_task(
+        self,
+        session_id: str,
+        title: str,
+        scope: str,
+        *,
+        workspace: dict | None = None,
+        status: str = "active",
+    ) -> ResearchTask:
+        if not self.get_session(session_id):
+            raise ValueError(f"Unknown session: {session_id}")
+        task = ResearchTask(
+            session_id=session_id,
+            title=title,
+            scope=scope,
+            workspace=workspace or {},
+            status=status,
+        )
+        self.db.add(task)
+        self.db.flush()
+        return task
+
+    def get_research_task(self, task_id: str) -> ResearchTask | None:
+        return self.db.get(ResearchTask, task_id)
+
+    def get_session_research_task(self, task_id: str, session_id: str) -> ResearchTask | None:
+        return self.db.scalar(
+            select(ResearchTask).where(
+                ResearchTask.id == task_id,
+                ResearchTask.session_id == session_id,
+            )
+        )
+
+    def list_research_tasks(self, session_id: str) -> list[ResearchTask]:
+        return list(
+            self.db.scalars(
+                select(ResearchTask)
+                .where(ResearchTask.session_id == session_id)
+                .order_by(ResearchTask.created_at, ResearchTask.id)
+            )
+        )
+
+    def update_research_task(
+        self,
+        task_id: str,
+        *,
+        title: str | None = None,
+        scope: str | None = None,
+        workspace: dict | None = None,
+        status: str | None = None,
+    ) -> ResearchTask | None:
+        task = self.get_research_task(task_id)
+        if not task:
+            return None
+        if title is not None:
+            task.title = title
+        if scope is not None:
+            task.scope = scope
+        if workspace is not None:
+            task.workspace = workspace
+        if status is not None:
+            task.status = status
+        self.db.flush()
+        return task
+
+    def create_research_run(
+        self,
+        task_id: str,
+        intent: str,
+        user_message: str,
+        *,
+        status: str = "queued",
+        parent_version_id: str | None = None,
+    ) -> ResearchRun:
+        task = self.get_research_task(task_id)
+        if not task:
+            raise ValueError(f"Unknown research task: {task_id}")
+        if parent_version_id is not None:
+            self._get_version_for_task(parent_version_id, task_id)
+        run = ResearchRun(
+            task_id=task_id,
+            intent=intent,
+            user_message=user_message,
+            status=status,
+            parent_version_id=parent_version_id,
+        )
+        self.db.add(run)
+        self.db.flush()
+        return run
+
+    def get_research_run(self, run_id: str) -> ResearchRun | None:
+        return self.db.get(ResearchRun, run_id)
+
+    def list_research_runs(self, task_id: str) -> list[ResearchRun]:
+        return list(
+            self.db.scalars(
+                select(ResearchRun)
+                .where(ResearchRun.task_id == task_id)
+                .order_by(ResearchRun.created_at, ResearchRun.id)
+            )
+        )
+
+    def update_research_run(
+        self,
+        run_id: str,
+        *,
+        status: str | None = None,
+        error: str | None | Any = _UNSET,
+        parent_version_id: str | None | Any = _UNSET,
+    ) -> ResearchRun | None:
+        run = self.get_research_run(run_id)
+        if not run:
+            return None
+        if status is not None:
+            run.status = status
+        if error is not _UNSET:
+            run.error = error
+        if parent_version_id is not _UNSET:
+            if parent_version_id is not None:
+                self._get_version_for_task(parent_version_id, run.task_id)
+            run.parent_version_id = parent_version_id
+        self.db.flush()
+        return run
+
+    def create_report_version(
+        self,
+        task_id: str,
+        run_id: str,
+        report_file_id: str,
+        title: str,
+        *,
+        parent_version_id: str | None = None,
+    ) -> ReportVersion:
+        run = self.get_research_run(run_id)
+        if not run or run.task_id != task_id:
+            raise ValueError("Research run does not belong to the given task")
+        if parent_version_id is not None:
+            self._get_version_for_task(parent_version_id, task_id)
+        version_number = self.db.scalar(
+            select(func.coalesce(func.max(ReportVersion.version_number), 0)).where(
+                ReportVersion.task_id == task_id
+            )
+        ) + 1
+        version = ReportVersion(
+            task_id=task_id,
+            run_id=run_id,
+            version_number=version_number,
+            parent_version_id=parent_version_id,
+            report_file_id=report_file_id,
+            title=title,
+        )
+        self.db.add(version)
+        self.db.flush()
+        return version
+
+    def get_report_version(self, version_id: str) -> ReportVersion | None:
+        return self.db.get(ReportVersion, version_id)
+
+    def list_report_versions(self, task_id: str) -> list[ReportVersion]:
+        return list(
+            self.db.scalars(
+                select(ReportVersion)
+                .where(ReportVersion.task_id == task_id)
+                .order_by(ReportVersion.version_number)
+            )
+        )
+
+    def get_latest_report_version(self, task_id: str) -> ReportVersion | None:
+        return self.db.scalar(
+            select(ReportVersion)
+            .where(ReportVersion.task_id == task_id)
+            .order_by(ReportVersion.version_number.desc())
+            .limit(1)
+        )
+
+    def _get_task_for_session(self, task_id: str, session_id: str) -> ResearchTask:
+        task = self.get_session_research_task(task_id, session_id)
+        if not task:
+            raise ValueError("Research task does not belong to the given session")
+        return task
+
+    def _get_version_for_task(self, version_id: str, task_id: str) -> ReportVersion:
+        version = self.get_report_version(version_id)
+        if not version or version.task_id != task_id:
+            raise ValueError("Report version does not belong to the given task")
+        return version

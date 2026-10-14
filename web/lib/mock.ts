@@ -1,7 +1,15 @@
 // Mock SSE events — simulate full research pipeline without backend.
 // Enable via NEXT_PUBLIC_MOCK=true env var, or `npm run dev:mock`.
 
-import type { ClarifyResult, RefineResult, ResearchEvent, LibraryDoc, IngestResult } from "./api";
+import type {
+  ChatSessionDetail,
+  ChatSessionSummary,
+  ClarifyResult,
+  RefineResult,
+  ResearchEvent,
+  LibraryDoc,
+  IngestResult,
+} from "./api";
 
 const MOCK_BRIEF = "对比 Transformer、Mamba 和 RWKV 三种架构在长文本建模任务上的效率与性能";
 
@@ -78,6 +86,144 @@ export function mockRefine(_query: string, _response: string): Promise<RefineRes
       resolve({ brief: MOCK_BRIEF, session_id: "mock-session" });
     }, 2000);
   });
+}
+
+const mockSessions: ChatSessionDetail[] = [];
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+export function mockListSessions(): ChatSessionSummary[] {
+  return mockSessions.map((session) => ({
+    id: session.id,
+    title: session.title,
+    raw_query: session.raw_query,
+    research_brief: session.research_brief,
+    report_file_id: session.report_file_id,
+    status: session.status,
+    created_at: session.created_at,
+    updated_at: session.updated_at,
+  }));
+}
+
+export function mockGetSession(sessionId: string): Promise<ChatSessionDetail> {
+  const session = mockSessions.find((item) => item.id === sessionId);
+  if (!session) return Promise.reject(new Error("聊天记录不存在"));
+  return Promise.resolve(clone(session));
+}
+
+export function mockDeleteSession(sessionId: string): Promise<void> {
+  const index = mockSessions.findIndex((item) => item.id === sessionId);
+  if (index >= 0) mockSessions.splice(index, 1);
+  return Promise.resolve();
+}
+
+function newMockSession(sessionId: string, firstMessage: string): ChatSessionDetail {
+  const now = new Date().toISOString();
+  return {
+    id: sessionId,
+    title: firstMessage.slice(0, 48),
+    raw_query: firstMessage,
+    research_brief: null,
+    report_file_id: null,
+    status: "active",
+    created_at: now,
+    updated_at: now,
+    messages: [],
+    steps: [],
+    report: null,
+    tasks: [],
+  };
+}
+
+export function startMockTurn(
+  message: string,
+  existingSessionId: string | null,
+  onEvent: (event: ResearchEvent) => void,
+  onComplete?: () => void,
+  options: { taskId?: string | null; reportVersionId?: string | null } = {},
+): () => void {
+  let cancelled = false;
+  let researchAbort: (() => void) | null = null;
+  let answerTimer: ReturnType<typeof setTimeout> | null = null;
+  const sessionId = existingSessionId || `mock-${crypto.randomUUID()}`;
+  let session = mockSessions.find((item) => item.id === sessionId);
+  if (!session) {
+    session = newMockSession(sessionId, message);
+    mockSessions.unshift(session);
+  }
+  session.messages.push({ role: "user", message_type: "chat", content: message, created_at: new Date().toISOString() });
+  session.updated_at = new Date().toISOString();
+
+  const hasReport = Boolean(session.tasks?.some((task) => task.versions.length > 0) || session.report);
+  const lower = message.toLowerCase();
+  const isAmbiguous = /不够好|不太好|不满意|有问题/.test(message);
+  const intent = /补充|遗漏|缺失|没有调研到|修订|修改报告/.test(message)
+    ? "supplementary_research"
+    : /详细|深入|展开|多讲一些/.test(message)
+      ? "deepening"
+      : hasReport && /什么意思|是什么|解释|为什么|怎么理解/.test(message)
+        ? "report_qa"
+        : hasReport && !/另外研究|新主题|研究一下/.test(message)
+          ? "report_qa"
+          : "initial_research";
+  onEvent({ type: "session", session_id: sessionId });
+
+  if (isAmbiguous) {
+    onEvent({ type: "clarification", message: "你希望我重点补充哪个部分，还是解释报告中的某个结论？", directions: ["检查报告有哪些重要缺口", "补充实验对比部分", "解释报告中的核心结论"] });
+    session.messages.push({ role: "assistant", message_type: "clarification", content: "你希望我重点补充哪个部分，还是解释报告中的某个结论？", created_at: new Date().toISOString() });
+    answerTimer = setTimeout(() => { if (!cancelled) onComplete?.(); }, 150);
+  } else if (intent === "report_qa") {
+    onEvent({ type: "route", intent, task_id: options.taskId || undefined, report_version_id: options.reportVersionId || undefined });
+    answerTimer = setTimeout(() => {
+      if (cancelled) return;
+      const content = lower.includes("频域")
+        ? "频域方法把信号表示成不同频率成分，便于观察模型如何处理长距离依赖。当前模拟报告没有相关章节，因此这里不能从报告中确认更具体的结论。"
+        : "报告认为 Mamba 和 RWKV 以线性复杂度降低了长序列的计算开销；具体比较见报告的架构分析与对比章节。";
+      const sources = [{ title: "当前研究报告", file_id: session?.report_file_id || undefined, excerpt: "长文本建模架构对比与复杂度分析" }];
+      onEvent({ type: "answer", content, sources });
+      session?.messages.push({ role: "assistant", message_type: "answer", content, created_at: new Date().toISOString() });
+      onComplete?.();
+    }, 500);
+  } else {
+    const taskId = intent === "initial_research" ? `task-${crypto.randomUUID()}` : options.taskId || session.tasks?.at(-1)?.id || `task-${crypto.randomUUID()}`;
+    const runId = `run-${crypto.randomUUID()}`;
+    onEvent({ type: "route", intent, task_id: taskId, run_id: runId });
+    const task = session.tasks?.find((item) => item.id === taskId);
+    const targetTask = task || {
+      id: taskId,
+      title: intent === "initial_research" ? message.slice(0, 48) : session.title,
+      intent,
+      current_version_id: null,
+      versions: [],
+    };
+    if (!task) session.tasks?.push(targetTask);
+    researchAbort = startMockResearch(message, (rawEvent) => {
+      if (cancelled) return;
+      let event = { ...rawEvent, task_id: taskId, run_id: runId } as ResearchEvent;
+      if (rawEvent.type === "write") {
+        const versionId = `version-${crypto.randomUUID()}`;
+        const title = rawEvent.report.match(/^#\s+(.+)$/m)?.[1] || targetTask.title;
+        event = { ...rawEvent, task_id: taskId, run_id: runId, version_id: versionId, report_version_id: versionId, title };
+        targetTask.versions.push({ id: versionId, run_id: runId, version_number: targetTask.versions.length + 1, parent_version_id: targetTask.current_version_id, report_file_id: rawEvent.report_file_id || "mock-report.md", title, content: rawEvent.report, created_at: new Date().toISOString() });
+        targetTask.current_version_id = versionId;
+        session!.report_file_id = rawEvent.report_file_id || "mock-report.md";
+        session!.report = { report_file_id: session!.report_file_id, title: targetTask.title, content: rawEvent.report };
+        session!.status = "report_ready";
+        session!.messages.push({ role: "assistant", message_type: "report", content: "报告已生成，右侧已切换到最新版本。", created_at: new Date().toISOString() });
+      }
+      session!.updated_at = new Date().toISOString();
+      onEvent(event);
+      if (rawEvent.type === "stats") onComplete?.();
+    });
+  }
+
+  return () => {
+    cancelled = true;
+    if (answerTimer) clearTimeout(answerTimer);
+    researchAbort?.();
+  };
 }
 
 let _mockRunning = false;
@@ -217,6 +363,7 @@ export function startMockResearch(
       completion_tokens: 8200,
       total_tokens: 46700,
     });
+    _mockRunning = false;
   });
 
   return () => {
