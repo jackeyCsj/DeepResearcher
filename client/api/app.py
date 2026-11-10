@@ -173,6 +173,8 @@ def chat_turn(body: TurnRequest, request: Request, current_user: User = Depends(
                 raise HTTPException(status_code=404, detail="Session not found")
         else:
             session = repo.create_session(current_user.id, message)
+            if body.turn_id and session.messages:
+                session.messages[-1].extra = {"client_turn_id": body.turn_id}
 
         workspace = repo.get_or_create_workspace(session.id)
         tasks = repo.list_research_tasks(session.id)
@@ -200,7 +202,18 @@ def chat_turn(body: TurnRequest, request: Request, current_user: User = Depends(
         if body.task_id and task:
             repo.update_workspace(session.id, active_task_id=task.id)
         if body.session_id:
-            repo.add_message(session.id, "user", message, "turn")
+            existing_turn = next((
+                item for item in session.messages
+                if item.role == "user" and item.extra and item.extra.get("client_turn_id") == body.turn_id
+            ), None) if body.turn_id else None
+            if not existing_turn:
+                repo.add_message(
+                    session.id,
+                    "user",
+                    message,
+                    "turn",
+                    {"client_turn_id": body.turn_id} if body.turn_id else None,
+                )
 
         history = [
             {"role": item.role, "content": item.content}
@@ -221,12 +234,23 @@ def chat_turn(body: TurnRequest, request: Request, current_user: User = Depends(
         session_id = session.id
         pending = dict(workspace.pending_clarification or {})
         legacy_report_file_id = session.report_file_id
+        active_task_id = task.id if task else None
+        active_report_file_id = version.report_file_id if version else None
 
     clarifier: Clarifier = request.app.state.clarifier
     pending_intent = pending.get("intent")
     if pending_intent:
         workspace_context["clarification_original_message"] = pending.get("original_message", "")
-    decision = clarifier.route_turn(message, workspace_context)
+    try:
+        decision = clarifier.route_turn(message, workspace_context)
+    except Exception:
+        logger.exception("[ChatTurn] route classification failed for session=%s", session_id)
+        return _turn_error_response(
+            session_id,
+            pending_intent or "unknown",
+            body.turn_id,
+            "请求分析失败，请检查 LLM 服务连接后重试。",
+        )
     if pending_intent:
         decision.intent = pending_intent
         decision.research_brief = decision.research_brief or pending.get("research_brief", "")
@@ -278,13 +302,21 @@ def chat_turn(body: TurnRequest, request: Request, current_user: User = Depends(
 
     if decision.intent == "report_qa":
         orchestrator: Orchestrator = request.app.state.orchestrator
-        source_file_id = version.report_file_id if version else legacy_report_file_id
-        sources = orchestrator.rag_pipeline.retrieve_with_sources(
-            query=decision.resolved_query or message,
-            user_id=current_user.id,
-            preferred_file_id=source_file_id,
-        )
-        answer = answer_report_question(orchestrator.llm_client, decision.resolved_query or message, sources)
+        try:
+            sources = orchestrator.rag_pipeline.retrieve_with_sources(
+                query=decision.resolved_query or message,
+                user_id=current_user.id,
+                preferred_file_id=active_report_file_id or legacy_report_file_id,
+            )
+            answer = answer_report_question(orchestrator.llm_client, decision.resolved_query or message, sources)
+        except Exception:
+            logger.exception("[ChatTurn] report QA failed for session=%s", session_id)
+            return _turn_error_response(
+                session_id,
+                decision.intent,
+                body.turn_id,
+                "报告问答暂时失败，请检查 Embedding 与模型服务配置后重试。",
+            )
         with session_scope() as db:
             repo = ChatRepository(db)
             repo.add_message(
@@ -292,13 +324,13 @@ def chat_turn(body: TurnRequest, request: Request, current_user: User = Depends(
                 "assistant",
                 answer,
                 "answer",
-                {"sources": sources, "task_id": task.id if task else None, "resolved_query": decision.resolved_query or message},
+                {"sources": sources, "task_id": active_task_id, "resolved_query": decision.resolved_query or message},
             )
             _update_session_summary(repo, session_id, message, answer, llm_client=orchestrator.llm_client)
 
         def answer_stream():
-            yield _sse("session", {"session_id": session_id, "task_id": task.id if task else None})
-            yield _sse("route", {"intent": decision.intent, "task_id": task.id if task else None})
+            yield _sse("session", {"session_id": session_id, "task_id": active_task_id})
+            yield _sse("route", {"intent": decision.intent, "task_id": active_task_id})
             yield _sse("answer", {"content": answer, "sources": sources})
 
         return StreamingResponse(answer_stream(), media_type="text/event-stream")
@@ -625,7 +657,18 @@ def format_sse_events(
                     if run_id:
                         data["run_id"] = run_id
                         data["note"] = note
-                    _record_step(session_id, "research", "资料收集完成", content=question, extra=data)
+                    trace = next((
+                        item.get("trace", [])
+                        for item in output.get("research_traces", [])
+                        if item.get("question") == question
+                    ), [])
+                    _record_step(
+                        session_id,
+                        "research",
+                        "资料收集完成",
+                        content=question,
+                        extra={**data, "research_trace": trace},
+                    )
 
                 elif node_name == "review_node":
                     event_type = "review"
@@ -710,7 +753,13 @@ def format_sse_events(
                             "write",
                             "报告已生成",
                             report_file_id=report_file_id,
-                            extra={"report_file_id": report_file_id},
+                            extra={
+                                "report_file_id": report_file_id,
+                                "task_id": task_id,
+                                "run_id": run_id,
+                                "report_version_id": version.id if version else None,
+                                "version_number": version.version_number if version else None,
+                            },
                         )
                         repo.add_message(
                             session_id,
@@ -722,6 +771,7 @@ def format_sse_events(
                                 "task_id": task_id,
                                 "run_id": run_id,
                                 "report_version_id": version.id if version else None,
+                                "version_number": version.version_number if version else None,
                             },
                         )
                         if run_id:
@@ -791,6 +841,24 @@ def _extract_title_from_markdown(content: str, fallback: str) -> str:
 
 def _sse(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _turn_error_response(session_id: str, intent: str, turn_id: str | None, message: str):
+    with session_scope() as db:
+        ChatRepository(db).add_message(
+            session_id,
+            "assistant",
+            message,
+            "error",
+            {"client_turn_id": turn_id} if turn_id else None,
+        )
+
+    def events():
+        yield _sse("session", {"session_id": session_id})
+        yield _sse("route", {"intent": intent})
+        yield _sse("error", {"message": message})
+
+    return StreamingResponse(events(), media_type="text/event-stream")
 
 
 def _turn_workspace_context(

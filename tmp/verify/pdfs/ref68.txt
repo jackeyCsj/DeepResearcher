@@ -1,0 +1,2023 @@
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Minh-Ha Le
+Linköping University Linköping, Sweden
+
+Niklas Carlsson
+Linköping University Linköping, Sweden
+
+Abstract
+The widespread use of facial recognition (FR) technology has heightened concerns about personal privacy. With surveillance systems becoming ubiquitous, the demand for effective privacy-enhancing technologies is growing urgent. In response to this challenge, we introduce DiffPrivate, a versatile technique designed to protect individuals from FR systems (FRS) through two distinct approaches: a Perturb-based and an Edit-based approach. The Perturb-based mode generates robust adversarial samples by manipulating the diffusion process of a latent diffusion model to alter identity-specific features, ensuring the preservation of visual fidelity to the original images. On the other hand, the Edit-based approach employs an additional DDPM model for fine-grain editing of attributes, allowing for more precise control over the appearance while subtly shifting the identity features to evade FRS. By leveraging the strengths of both modes, DiffPrivate effectively shields an individual's identity against advanced defense mechanisms like DiffPure, maintaining high image quality. Our experiments demonstrate that DiffPrivate achieves competitive attack performance in terms of success rates and transferability while producing more natural-looking adversarial images than state-of-the-art methods. Overall, DiffPrivate represents a significant step towards balancing personal privacy and image naturalness in the face of advancing FR technology.
+1 Introduction
+The combination of vast availability of photos on social media and the increasing integration of surveillance systems is redefining personal privacy. At the core of this transformation is the widespread adoption of facial recognition (FR) technology, facilitated by significant advancements in deep learning and neural networks [9, 18, 48]. FR systems (FRS) like Amazon Rekognition [1], Face++ [13], and Clearview.ai [19] already exhibit remarkable accuracy in identifying individuals from vast online image repositories. As this technology continues to advance and proliferate, the scrutiny of individuals--both online and offline--will reach unprecedented levels.
+With vast amounts of facial data being harvested across various platforms, often without individual knowledge or explicit consent, this threat is quickly growing. As FRS are increasingly deployed, virtually every aspect of our daily life ­ from routine shopping excursions [36] to international travel [41] ­ will therefore quickly become susceptible to monitoring and tracking. The potential misuse of FR technology in contexts such as stalking [52], identity theft [8], and clandestine governmental surveillance [19, 38, 47] raises further serious concerns about personal security and autonomy
+This work is licensed under the Creative Commons Attribution 4.0 International License. To view a copy of this license visit https://creativecommons.org/licenses/by/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA. Proceedings on Privacy Enhancing Technologies 2025(2), 54­70 © 2025 Copyright held by the owner/author(s). https://doi.org/10.56553/popets- 2025- 0049
+
+Although potential future regulations may address some concerns, the current trends underscore the need for privacy-enhancing technologies to safeguard individual privacy. Driven by this observation, there is a growing interest in designing privacy-enhancing solutions that utilize adversarial machine learning to create images that deceive various FRS. In this paper, we focus on adversarial attacks that fool automated FRS but still produce high-utility images.
+Adversarial Attacks as a Defense: Recent advancements in countering FRS have primarily centered around the development of adversarial attacks to modify face images. Of these, early noisebased techniques [6, 66] often suffer from compromised visual quality, making their modifications glaringly evident. While Fawkes system achieved notable success in protecting privacy by adding subtle modifications, also this strategy struggled with image quality preservation [50]. Other strategies, including patch-based methods [29, 51] and image distortion techniques [33, 56, 64], anonymization [30, 32] though promising, were limited in practicality and effectiveness. Additionally, targeted attacks such as clean-label poison attacks [49, 70] have been explored, focusing on manipulating specific images using image classification models.
+GAN-Based Solutions: Recent advancements have leveraged Generative Adversarial Networks (GANs) [14, 28] to balance privacy protection with retaining non-identifying features. Approaches like makeup transfer [21, 67] and facial attribute manipulation [25, 44] enable subtle image modifications. While many early GANbased methods maintain some visual appeal, they exhibit relatively low attack success rates and require retraining for new targets. To address these limitations, StyleAdv [31] recently combined semantic editing with adversarial attacks, leveraging StyleGAN's disentangled latent space [28] for high-quality image reconstruction and improved success rates. Despite these advancements, there has been almost no work using diffusion models for adversarial attacks against FRS. In this work, we aim to design such solutions and explore to what extent such solutions may help address the GAN-based methods vulnerability against sophisticated defense techniques like DiffPure [40] or to increase the transferability of the attacks. Notably, most GAN-based methods are designed to attack a particular model (e.g., whitebox attacks that are not very transferable) or are ineffective against FRS using DiffPure.
+Our Diffusion-Based Solution Approach: To address the above research gap, we introduce DiffPrivate. This method generates robust adversarial samples using diffusion models, improving upon the limitations of previous methods like StyleAdv. We originally chose diffusion models for their generative flexibility, which are ideal for complex, high-quality manipulations needed for privacy-preserving facial transformations. However, our results show that Stable Diffusion also outperforms architectures like StyleGAN in reconstructing finer details. Furthermore, the sequential nature of diffusion processes enables more controlled, gradual modifications, preserving the natural appearance while subtly altering
+
+54
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+identity-specific features. Combining these strengths of diffusion models allows us to enhance the effectiveness of privacy protection.
+DiffPrivate includes two main approaches: one based on DiffAE [43] (Edit-based) and another on Stable Diffusion [46] (Perturbbased). Although these approaches vary, both start by projecting real facial images into a diffusion model's latent space.
+In the Perturb-based approach, DiffPrivate modifies the diffusion process by working with latent codes collected at different steps. It uses optimized text embeddings to guide the cloaking of faces, aiming to maintain the original's appearance. This approach identifies and obscures identity features through "cross-attention maps," targeting specific areas for gradual adjustment over multiple diffusion steps to preserve image quality. The Edit-based approach uses a specialized DiffAE model for detailed editing of facial attributes, allowing for precise adjustments that distance the identity from being recognized by FRS. This approach focuses on direct edits to maintain the natural look of the image.
+Both approaches aim to create images that can evade FRS while preserving human likeness and identity resemblance. Our tests show that DiffPrivate effectively resists FRS and safeguard visual integrity, often enhancing the aesthetic quality similar to a "beauty filter". This dual functionality does not compromise the subject's identity, aligning with the vital importance of not altering facial features in ways that subjects may perceive negatively. Consequently, DiffPrivate signifies an advancement in reconciling the necessity for natural-looking images with privacy protections against FRS.
+Our main contributions are summarized as follows:
+· We introduce DiffPrivate, a strong adversarial attack against FRS that provides relatively strong protection, without sacrificing naturalness or image quality.
+· While attacking the semantic latent space using a conditional diffusion model presents challenges, our series of targeted interventions in the diffusion process allows us to develop an effective new approach for face anonymization.
+· We implement two complementing versions. Our DiffAE version achieves high success rate using attribute-based edits to push the identity toward a target, while our Stable Diffusion version performs more subtle perturbation-based edits.
+· Through comparisons against other state-of-the-art attacks, DiffPrivate is shown to achieve competitive attack performance in terms of attack success rate and transferability.
+· Our experiments demonstrate that DiffPrivate produces more natural-looking adversarial images than state-of-the-art methods and is considerably more robust against advanced FR defense methods such as DiffPure.
+Outline: After giving an overview of related works (§2) and the models used (§3), we introduce DiffPrivate (§4), detail experiments (§5), and present results (§6-§9). We then provide an ablation study (§10), discuss limitations (§11), and conclude (§12).
+2 Related Work
+Privacy Protection: The development of strategies to undermine FRS has introduced both poisoning and evasion tactics. Poisoning attacks, as described by Shan et al. [50], involve altering images within the gallery sets of FRS. While effective, this method is impractical for individual users due to the complexity and access required.
+55
+
+On the other hand, evasion attacks present a more user-friendly alternative, aiming to modify facial images to mislead FRS during their operational phase [6, 21, 29, 51, 66, 67]. Evasion methods, particularly those capable of blackbox attacks, are more accessible for protecting personal privacy [6, 21]. However, the effectiveness of current techniques varies, with some sacrificing visual quality for attack success or vice versa.
+Adversarial Attacks: Traditional methods to generate adversarial examples have primarily focused on optimizing additive noise within the pixel domain. Goodfellow et al. [15] introduced the concept with the Fast Gradient Sign Method (FGSM), highlighting deep neural networks' vulnerability to perturbations. Madry et al. [35] enhanced model resilience through adversarial training with the Projected Gradient Descent (PGD) method, while Carlini and Wagner [3] developed a more sophisticated optimizationbased approach, the CW attack, for effective perturbations. Further advancements included integrating momentum into adversarial example generation for overcoming local optima [10]. In general, Fawkes [50], LowKey [6], and other pixel perturbation methods like Ulixes [7], Face-Off [4] and FoggySight [12] introduce strategic noise to images, adding noise patterns to faces that, while effective, can be perceptually noticeable and thus not ideal for all scenarios. Others have created semantic adversarial examples that subtly alter image attributes to fool binary classifiers, offering insights into vulnerabilities of classifiers less complex than the methods used in FRS (like those we attack here) [26]. Recently, the focus has shifted to using generative models like Variational Autoencoders (VAEs) and GANs to create more realistic and semantically consistent adversarial examples. This new direction, as explored by Wong et al.[63], Xiao et al.[65], and Qiu et al. [44], significantly enhances the sophistication and effectiveness of adversarial attacks, showcasing the potential of generative models in this domain.
+GAN-Based Approaches: GANs offer a promising approach for creating realistic adversarial images [21, 67]. These methods strike a balance between maintaining image quality and evading detection, making them an attractive option for evading FRS. Nonetheless, as FR technologies evolve, so too must these evasion techniques to ensure continued effectiveness.
+Recent developments like AnonFACES [32] and StyleID [30] offer new ways to protect privacy. AnonFACES aims to keep images looking natural while hiding identities, using groups of similar images to maintain some level of uniqueness without revealing too much. StyleID uses GANs to change faces in a way that the person cannot be recognized but keeps important features. Adding to these ideas, StyleAdv [31] uses StyleGAN's advanced features to make high-quality images that are hard for FRS to identify. It keeps the naturalness of protected photos and is easy to use for editing and protecting privacy. However, its effectiveness partly relies on how well the StyleGAN encoder can recreate faces, which is still a hurdle. These steps forward highlight the ongoing work to find a balance between keeping images useful and high-quality while protecting privacy against more advanced recognition systems. In Sec. 6, we compare our performance against two state-of-the-art GAN-based approaches (StyleAdv [31], AMT-GAN [21]) and three perturbation-based approaches (CW [3], PGD [35], Fawkes [50]).
+Diffusion Models: Diffusion models, a class of generative models, have gained attention for their ability to generate high-quality,
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+realistic images by learning to reverse a noise-adding process [20,
+
+where  is the actual noise added to x0 to produce x , and  (x , )
+
+39, 53]. Initially introduced by Sohl-Dickstein et al. [53], these mod- is the noise predicted by the model.
+
+els generate images by gradually removing noise, simulating the
+
+DDIM Framework: The Denoising Diffusion Implicit Model
+
+reverse of a diffusion process. Ho et al. [20] further advanced diffu- (DDIM) framework [54] introduced a deterministic reverse process.
+
+sion models by simplifying their training and improving the quality
+
+Here, the forward process is defined as:
+
+of generated samples. Nichol and Dhariwal [39] extended these improvements, refining model architectures and training methods to produce even more realistic images. In addition to image synthesis, diffusion models have shown promise in adversarial machine learning, particularly in improving adversarial robustness [2, 16, 40, 45, 60]. Studies by Gowal et al. [16], Rebuffi et al. [45], and Wang et al. [60] have leveraged diffusion models to generate synthetic data for adversarial training, enhancing model resilience. Moreover, Nie et al. [40] and Carlini et al. [2] have explored the use of pretrained diffusion models for purifying input images from adversarial noise, providing both empirical and certified defenses. Despite these advancements, the potential of diffusion models in creating adversarial attacks has not been fully explored. This work aims to investigate this untapped area, contributing to the under-
+
+ (x -1 |x , x0) = N
+
+
+
+-1x0
+
++
+
+ 1
+
+-
+
+
+
+-1
+
+x -  x0 1 - 
+
+,
+
+0
+
+,
+
+(5)
+
+which dictates the transition from x to x -1, given the original
+
+image x0. Then, in the reverse process, DDIM first estimates x0
+
+from the noisy image x :
+
+
+
+ (x ,  ) = x -
+
+1 -  ·  (x ,  )
+
+
+
+,
+
+(6)
+
+
+
+and then defines the reverse transition using this estimate:
+
+ x -1 =  -1
+
+x -
+
+1 -  (x ,  ) 
+
++ 1 -  -1 (x ,  ).
+
+(7)
+
+
+
+Importantly for our purposes, DDIM can thus act both as an en-
+
+coder, generating a latent noise representation x from x0, and as a
+
+decoder, reconstructing x0 from x .
+
+standing of diffusion models' capabilities in adversarial contexts.
+
+Non-Digital Attacks: While outside the scope of this paper, 3.2 Latent Diffusion Model
+
+others have shown that adversarial examples also can be created in the real world. This includes patch-based methods such as AdvHat [29] and Adv-Glasses [51]. While such approaches are not always practical and visible patches attached on faces often are easily detected, others have shown that the use of sunglasses impair face identity recognition more significantly than face masks [42] but do not target protection against FRS.
+
+Latent Diffusion Model [46] is an advanced variant of diffusion models that employs a Variational Autoencoder (VAE) to encode high-dimensional data, such as images, into a more manageable, lower-dimensional latent space. This simplification enables the diffusion process to operate in the compressed latent space instead of the original high-dimensional image space.
+The VAE comprises two main components: an encoder E and
+
+a decoder D. The encoder function maps an image  into a latent
+
+3 Background
+
+3.1 Diffusion Model
+
+Diffusion models, a type of generative model, involve two key
+
+stages: (1) a forward process that transforms an input image x0 into a purely noisy state x over  forward steps, and (2) a reverse process
+
+that reconstructs x0 from x through  reverse steps. During the forward process, Gaussian noise is incrementally
+
+added at each step :
+
+ (x |x -1) = N ( x -1,  I),
+
+(1)
+
+where  is a scaling factor that diminishes the image's intensity,
+
+I is the identity matrix, and  I is the variance of the Gaussian
+
+noise added at step . Combining the noise over the first  steps,
+
+the distribution of the noisy image x at any step  can then be
+
+expressed relative the original image x0 as follows:
+
+(x |x0) = N ( x0, (1 -  )I),
+
+(2)
+
+where  =
+
+  =1
+
+(1
+
+-
+
+ ).
+
+The
+
+diffusion
+
+model
+
+aims
+
+to
+
+learn
+
+the
+
+reverse distribution  (x -1|x ), needed for recovering the original
+
+representation  = E ( ), of the image, which the decoder later can use to reconstruct the image ^ = D (). In the context of diffusion
+
+models, the forward diffusion process is applied to the latent rep-
+
+resentation . Similar to described in the previous subsection, this
+
+process involves incrementally adding Gaussian noise to the latent
+
+representation over  steps:
+
+ ( | -1) = N (  -1,  I),
+
+(8)
+
+where 0 is the initial latent representation, and  is the fully noised latent representation at the final step.
+
+The reverse process first learns the reverse distribution  ( -1| ),
+uses it to iteratively obtained the denoised latent representation 0, which is then decoded back into the image space: ^ = D (0). This
+latent diffusion approach, exemplified in Stable Diffusion, reduces
+
+computational complexity while enabling efficient training and
+
+high-quality image generation. It effectively combines the VAE's
+
+efficiency in encoding images with the diffusion model's capability
+
+to generate diverse, high-fidelity outputs. In this work, we integrate
+
+targeted manipulation of the above processes within Stable Diffu-
+
+image from its noisy state. For small differences between steps, this
+
+sion to achieve our goals using a novel Perturb-based approach.
+
+reverse distribution can be approximated as:
+
+ (x -1 |x ) = N ( (x ,  ), 2 I),
+
+(3)
+
+where  (x , ), often a neural network, predicts the mean of the
+
+reverse
+
+Gaussian
+
+distribution
+
+at
+
+each
+
+step,
+
+and
+
+ 2
+
+
+is
+
+the
+
+variance.
+
+The neural network is trained using a loss function that compares
+
+the actual noise added at each step to the predicted noise:
+
+
+
+ L = Ex0,
+
+ -  (x ,  ) 2 ,
+
+(4)
+
+ =1
+
+3.3 Diffusion Autoencoders
+Diffusion Autoencoders (DiffAEs) [43] integrate the powerful image generation capabilities of diffusion models with the semantic understanding of autoencoders. Unlike standard diffusion models, which lack interpretable latent codes, DiffAEs combine a learnable encoder with a diffusion decoder. This two-pronged approach extracts both high-level meaning and fine-grained details from an
+
+56
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Orig. Face
+
+Prope Image
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Open-source model
+
+Open-source or query access
+
+DiffPrivate
+
+Data collection Pre-trained
+
+Not Matched
+
+Protected
+
+Web
+
+Poisoned gallery
+
+Primary Full access
+
+Validator Few Qs
+
+No queries
+
+Blackbox API
+
+User
+
+Target/Victim
+
+Figure 2: Our blackbox security model
+
+Poisoned
+Figure 1: Overview of the DiffPrivate scenario and use cases
+
+image, creating a code that is not only reconstructs the original image but also allows for manipulation of its semantic attributes. These capabilities enable advanced applications such as featurebased image editing, denoising, and conditioned sampling.
+Semantic Encoder: The semantic encoder is designed to map an input face image  into a semantic latent code z = Enc( ) that encapsulates high-level semantics of the face. By manipulating z, we can induce semantic changes in the image, affecting attributes like expression, age, or gender in case of facial images.
+Conditional DDIM: In the Conditional DDIM framework, as proposed in DiffAE, the DDIM model is conditioned on the semantic code z and includes a noise prediction network  (x , , z), with z serving as an additional input. During the decoding phase, the reconstructed image  = x0 is obtained by executing a deterministic generative process, described as:
+
+ (x -1 |x , z) =
+
+N ( (x1, 1, z), 0),
+
+if  = 1,
+
+ (x 
+
+-1
+
+|x ,
+
+
+
+(x ,
+
+,
+
+z)),
+
+otherwise, 
+
+(9)
+
+where  (x , , z) = (x - 1 -  ·  (x , , z))/  . Here, (·|·, ·)
+
+is defined similarly to the DDIM process described earlier.
+
+During the encoding process, the stochastic code x of the in-
+
+put image is obtained using the Conditional DDIM encoder, x =
+
+DDIMenc(, z), by reversing the deterministic generative process:
+
+x +1
+
+=
+
+ +1  (x , ,
+
+z)
+
++
+
+1
+
+-
+
+ +1
+
+(x , ,
+
+z).
+
+(10)
+
+In this process, x is encouraged to encode primarily the informa-
+
+tion that is not captured by z, essentially focusing on stochastic or
+
+variable details that are not represented in the semantic code.
+
+In this work, we incorporate DiffAE in our Edit-based approach.
+
+4 DiffPrivate Framework
+4.1 Use Case Scenario and General Approach
+We consider a scenario where social media users aim to prevent their profiles from being linked to query photos submitted to a FR service. The scenario is motivated by the growing practice of entities like companies and law enforcement agencies scraping public photos from social media and then using FR technology to link query photos to identities and accounts. In this quickly developing scenario, many users may seek to enhance their privacy by uploading slightly altered images that either (1) cause the wrong identity to be suggested, (2) introduce ambiguity in query databases, or (3) increase the likelihood that any FRS model F trained on such data returns the wrong identity, helping users avoid detection. Fig. 1 illustrates the DiffPrivate approach and these use cases.
+
+To protect user privacy from FRS, we develop methods that allow users to generate images with adversarial perturbations. The methods are tunable, allowing users adjusting the desired alteration level to balance privacy protection and visual resemblance. In addition to increased control, this flexibility enables future use cases, including the use of different protection levels for primary subjects and bystanders. We expect the desired privacy protection to be individual, but consider user studies determining people's current interest, expectation, and desirable properties of such a system as interesting future work. Although our solutions are defensive, we refer to them as "attacks" on FRS to align with established terminology.
+4.2 Attacker Model
+We assume that individuals do not control any of the query photos submitted for identification, their public appearance, or their physical appearance when in public. Instead, they can alter and control the photos they upload to social media. For example, in the above scenario the user would use DiffPrivate to create a "protected" version of the original image, recognizing that this image if shared on social media may be collected and used either as a "probe" image or be added (with labels from the social media) to the gallery set G, or even used for training purposes of the FRS model F .
+Furthermore, we assume a "blackbox" model where we do not have access to the FRS models F that we are attacking (and hence defending the user against) but have access to at one or more other FRS models that we can use to execute our adversarial attack. This assumption is realistic as there are many open-source models and APIs available, but the users may not always know what FRS they need to protect themselves against. However, it also places an additional weight on the need for a highly transferable solution and/or the user generating enough samples to pollute the FRS.
+We employ a "blackbox" model assumption unlike the security model used in [31], which permits a limited number of queries to a victim model (we refer to their model as "semi-blackbox") or models that have allowed even more API queries [11]. In our blackbox scenario (Fig. 2), we pragmatically assume access only to an open-source model, referred to as the "primary" model, and some limited queries to a "validator" model (both differ from the "victim" model), and refer to the model that we try to protect the user from as the "victim/target" model. Our approach, with its stricter security model, demonstrates enhanced robustness compared to existing methods. Sec. 5.2 outlines and further motivates our evaluation in both blackbox and semi-blackbox settings.
+4.3 Attacker Goals and Variations
+In this paper, we consider two distinct goals targeting each of the two desirable properties described above:
+
+57
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+· Attribute-based Edits: In this scenario, we aim to edit the image enough that we can shift the identity to a target identity, helping the user create images that potentially could be used to pollute the database of the FRS and/or damage a model trained on such polluted dataset. Here, we think of an attacker that may even apply strong defenses (e.g., DiffPure) but that may use publicly collected images for their database (and training of their FRS model). For this reason, we want the ability to create images that the FRS map to a different targeted identity with some significant probability.
+· Perturbation-based Alterations with Wide Protection: In this scenario, we aim to perturb the image just enough to fool FRS enough that they would return the wrong identity, while people would still recognize the person. As the users typically do not know who the attacker is or what model they are attacking, it is important that this attack is highly transferable and protects against a wide range of FRS.
+
+Input face
+
+Target face Protected Face
+
+Stoch Enc
+
+Cond. Dec
+
+Sem Enc
+
+Optimizing
+Figure 3: Our Edit-based approach utilizes a diffusion autoencoder [43], takes the input face, and calculates the input's stochastic encoding  and semantic latent code . The goal is to optimize  by minimizing a loss function that pushes the identity toward a target identity.
+
+Furthermore, to ensure high utility, the generated images should be of high quality, have a high degree of naturalness, and in the second case closely resemble the person in the photo (even though the FRS is fooled to believe otherwise).
+
+4.4 Formal Goals and High-Level Approach
+
+To achieve the above goals, we present two variations of our at-
+
+tack, both built using the same high-level approach, but incorpo-
+
+rating slightly different loss functions and diffusion models. Specif-
+
+ically, we present one somewhat simpler solution using DiffAE for
+
+attribute-based edits and one somewhat more complex variation
+
+that applies perturbation-based alterations with Stable Diffusion.
+
+In both cases, we attack a FRS assumed to use an unknown
+
+machine learning model M and embedding function F , which
+
+have been trained on a dataset D consisting of paired data points
+
+(ì, ì ), where ì represents an input with specific dimensions
+
+(height, width, channels), ì represents the corresponding ground-
+
+truth label (potentially poisoned) with  possible categories.
+
+Adversarial Attack Strategy: As attackers, our objective is to
+
+manipulate input data ì orig into adversarial examples ì adv. These
+
+
+
+
+
+manipulated inputs aim to deceive the model into producing either
+
+a
+
+desired
+
+target
+
+label
+
+ìtgt
+
+
+or
+
+any
+
+label
+
+other
+
+than
+
+the
+
+true
+
+label
+
+ì .
+
+Recent GAN-based Progress: Systems like StyleAdv [31] and
+
+StyleID [30] have successfully manipulated the identity using a
+
+latent-space approach leveraging StyleGAN [28]. In addition to
+
+StyleGAN being excellent for sampling high-quality images [69],
+
+much of the above works' success also came from leveraging Style-
+
+GANs highly disentangled latent space for image editing.
+
+While these works have proven successful and there are multiple
+
+works proposing different methods for the StyleGAN encoder, there
+
+are always deviations, especially when it comes to the facial domain.
+
+Motivated by the strong and flexible encoders provided by diffusion
+
+models, in this work, we set out to find and incorporate similar
+
+models like StyleGAN for the diffusion context. Specifically, we
+
+look closer at to what extent similar solutions can be achieved using
+
+manipulations of the latent spaces of a diffusion model. After some
+
+exploration, we have found two approach variations to achieve the
+
+above goals: (1) an Edit-based version using DiffAE and (2) a Perturb-
+
+based version using Stable Diffusion. Despite differing mechanisms,
+
+both approaches share a fundamental goal of manipulating facial images to thwart FRS while preserving visual appeal.
+High-level Similarities and Differences: Both approaches use optimization algorithms and diffusion models to iteratively refine modifications that subtly alter facial images, impeding FRS identification. However, they differ somewhat in how this is achieved. In particular, our Edit-based version using DiffAE models focuses on manipulating semantic latent codes within the diffusion model framework, while the perturbation-based version uses Stable Diffusion to intervene in the diffusion process. Furthermore, our Editbased version prioritizes maintaining high visual quality and preserving facial features, whereas the perturbation-based edits emphasize introducing subtle modifications deep into the diffusion process to elude recognition by FRS. These core differences underscore the flexibility of our solution approach to achieve the overarching goal of enhancing facial privacy protection using diffusion models.
+4.5 Edit-Based Version using DiffAE
+When looking for a good replacement to StyleGAN, we found that DiffAE seems to tick all the boxes that StyleGAN offers and more: (1) bi-directional encoding and decoding, (2) highly disentangled latent codes for effective real image editing, and (3) a diffusion-based approach with a deep computational graph, suitable for robust adversarial attacks. Our initial strategy therefore involves using DiffAE to create adversarial samples. Specifically, echoing the objectives of StyleAdv, we seek to find a semantic latent code  that can generate an adversarial sample that ideally is indistinguishable to human observers, yet capable of tricking FR technology.
+Taking this simple approach, as depicted in Fig. 3, we first input an image1 into DiffAE, where it is encoded into a stochastic code  and a semantic latent code . We then enter an optimization loop with respect to , seeking a modified version ^ that fulfills our loss function criteria.
+Our goal is to produce an adversarial image I that effectively bypasses FRS. We achieve this by optimizing the semantic code z of the input image I, resulting in an adversarial semantic code
+1Our choice of imagery in Figs. 3 and 4 are illustrative of DiffPrivate preserving complex backgrounds and keeping other visual elements intact, a task that prior methods like StyleID and StyleAdv find challenging.
+
+58
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+^. This modified code, along with x , is then processed through the DDIM decoding method to generate I:
+
+I = DDIM (x , ^).
+
+(11)
+
+In practical terms, particularly for targeted privacy protection,
+
+our objective is encapsulated in the following optimization problem:
+
+min L (I ) = D (F (I ), F (I )),
+
+(12)
+
+^
+
+where I represents the facial image of the target identity, D is
+
+the cosine distance, and F is the FR model. It is noteworthy that in
+
+real-world scenarios, access to F may not be available.
+
+For better-preserving features of the original image, such as a
+
+facial landmark, we integrate a landmark loss, which calculates L2
+
+distance of the facial landmark of input face I and adversarial face
+
+I: L = LM(I) - LM(I) , where LM is a facial landmark detection model. The optimization problem now becomes:
+
+min L (I ) =  L +  L ,
+
+(13)
+
+^
+
+where  and  are hyperparameters balancing the loss terms.
+
+Algorithm 1 presents our Edit-based method (based on DiffAE)
+
+for generating adversarial images that alter the appearance of the
+
+input image I with the goal of misleading FRS. The inputs consist
+
+of the original image I, iteration count  , mixing coefficient ,
+
+learning rate , identity loss weight  , landmark stability weight
+
+ , encoder function , original latent code , target latent
+
+code  , and validation threshold  . The outputs are the adversarial
+
+image I and the optimized mixing parameter . The algorithm starts by encoding the input image into a latent
+
+representation z and transforming it using   to x . The methodology initializes a vector  (0) as zero, representing no initial
+
+mixing between  and  . This zero vector allows the genera-
+
+tion of a semantic latent code ^, which is then processed with
+
+ 
+
+to
+
+render
+
+the
+
+initial
+
+adversarial
+
+image
+
+I(0) .
+ 
+
+The algorithm employs an iterative optimization loop using the
+
+Adam optimizer. Here, gradient updates to  minimize a loss func-
+
+tion that balances identity and landmark stability costs, weighted
+
+by  and  . This continuous adjustment of  aims at finding an optimal blend of  and  that makes the resulting adversarial image deviate sufficiently from the original to outwit FRS while
+
+still conforming to the provided validator criteria  .
+
+The loop terminates when the adversarial image satisfies the
+
+validator condition or reaches the iteration limit  , finalizing with
+
+ and ^ used to decode the final adversarial image I. This procedure offers a systematic approach to editing the image's latent
+
+space for desired adversarial effects.
+
+4.6 Perturb-Based Version w. Stable Diffusion
+While DiffAE and the above approach provide an intuitive method for crafting the adversarial sample, as we will later show, this method tends to push the identity toward the target identity. This is actually the design intention of the DiffAE model, in which the decoupled latent space  is highly disentangled, with small changes in this latent space reflecting the visible change in pixel space. However, to achieve imperceptible adversarial perturbations, we adopt a more integral approach, as described next.
+Our intuition here is that diffusion models, with their depth computational graph, would cancel out the modification in feature space which does not match pixel space. To fool the models into
+
+Algorithm 1 Edit approach based on DiffAE
+
+1: Input: I,  ,  , ,   ,  , , ,  , 
+
+2: Output: adversarial image I , optimized 
+
+3:  Image Encoding
+
+4: z =  (I), x = DDIM (I, z)
+
+5:  Initialization for Optimized 
+
+6:  (0)  0, where 0 is a zero vector of the same size as 
+
+7: ^(0)   ·  (0) +  · (1 -  (0) )
+
+8:
+
+I(0)
+ 
+
+= DDIM (x , ^(0) )
+
+9: Initialize Adam parameters: 0  0, 0  0,   0
+
+10: Initialize   0
+
+11: while Validator(I, I() ) <  and  <  do
+
+ 
+
+12:
+
+Update ^(+1)   ·  (+1) +  · (1 -  (+1) )
+
+13:
+
+I ( )
+ 
+
+=
+
+DDIM (x , ^() )
+
+14:
+
+L (I() )
+ 
+
+=
+
+ 
+
+·
+
+L
+
+
+
+( I ( )
+
+
+
+
+)
+
++
+
+
+
+·
+
+L
+
+(I() )
+ 
+
+15:    + 1
+
+16:
+
+
+
+
+
+
+
+
+(
+
+)
+
+L (I()
+ 
+
+)
+
+17:   1 ·  -1 + (1 - 1 ) · 
+
+18:   2 ·  -1 + (1 - 2 ) · 2
+
+19: ^   /(1 - 1 )
+
+20: 21:
+
+^   /(1 -  (+1)   ()
+
+2 ) - 
+
+ · ^ /( ^
+
++  )
+
+22:    + 1
+
+23: end while 24:    () , ^  ^() , I = DDIM (x , ^ )
+
+helping us craft adversarial samples carrying hidden features that do not match their visual representation, we need to make the modification deep into individuals passing of the diffusion process.
+While crafting adversarial samples for diffusion models through diffusion process intervention often presents challenges, we highlight two hurdles specific to this approach: (1) the need for an accurate inversion method like StyleGAN's encoder or DiffAE's semantic encoder to project real images onto the latent space; and (2) memory efficiency, as the optimization process requiring interaction with the diffusion process can be memory intensive. Given these challenges, we opt for Stable Diffusion as our base model. This has several advantages. Most importantly, as a latent diffusion model, where the diffusion occurs in a compressed VAE latent space, Stable Diffusion significantly reduces memory costs and, crucially, delivers high-quality images, as supported by the research literature and the wide availability of supporting work around the model. This allows us to leverage existing solutions and tailor them to our specific needs. For inversion, we choose the advanced Null-text inversion technique proposed by Mokady et al. [37].
+To integrate our solution into the inversion process, we first employ DDIM inversion to obtain a sequence of latent codes  at various timesteps within the diffusion process. As illustrated in Fig. 4, the process commences with the original image's direct latent codes 0 and progressively introduces noise until reaching  . Without optimization, initiating the denoising process from  would merely yield a reconstructed version ^0 that deviates substantially from the original 0. Subsequently, the inversion process pivots towards optimizing the null-text, or unconditional prompt, that serves as input to Stable Diffusion. This optimization effectively brings the inverted codes closer to their originals while preserving the original image's prompt description. This preservation is crucial
+
+59
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+Null-text inversion
+
+Prompt
+
+Null-text
+
+..
+
+Cross-atten
+
+Cross-attention map
+
+ , . . . , 1, an optimization is performed for  iterations to minimize  -1 -  -1 (¯ ,  , C) 2 . Here,  -1 (¯ ,  , C) denotes applying the DDIM sampling step using the respective embeddings and
+
+VAE Dec
+
+...
+
+DDIM
+
+Loop
+
+conditional embedding. This process, while less expressive than full model fine-tuning, is efficient and well-suited for pivotal inversion,
+
+VAE Enc
+
+Unconditional Embeds
+
+Protected face
+
+leading to the final edited image using the optimized unconditional
+embeddings { }=1, enabling efficient editing operations on the input image. In brief, we can summarize the process as follows:
+
+Input face
+
+ , { }=1 = Invert ({z }=1, , C,  ).
+
+(14)
+
+The primary aim of this approach is to craft an adversarial image
+
+Figure 4: Our Perturb-based approach utilizes a Stable Diffusion model, which goes through an inversion process that optimizes the null-text embedding, allowing accurate reconstruction of the original identity, then goes through a diffusion loop where cross attention maps are extracted, facili-
+
+I capable of eluding FR technologies. This is accomplished by
+modifying the latent code z of an input image I, thus produc-
+ing a perturbed latent code z. Subsequently, this altered code, in conjunction with { }=1, is subjected to the DDIM decoding process to create :
+
+tating an optimization process pushing the identity features gradually away from the original while keeping the identity resemblance intact.
+
+ = DDIM (prompt, { }=1, z ).
+
+(15)
+
+Like equation (12), particularly when aiming at targeted privacy
+
+preservation, the goal is defined by the following optimization:
+
+Algorithm 2 Perturbation approach based on Stable Diffusion
+
+1: Input: I,  , ,   ,   , Invert , 
+
+2: Output: adversarial image I
+
+3:  Null-text inversion
+
+4:  , { }=1 = Invert ( {z }=1, , C,  )
+
+5:  Attack Generation
+
+6:
+
+(0)
+
+
+z
+
+ 
+
+7:
+
+I(0)
+ 
+
+=
+
+VAE
+
+( (0)
+ 
+
+)
+
+8: Initialize Adam parameters: 0  0, 0  0,   0
+
+9:   0
+
+10: while  <  and Validator(I, I() ) <  do
+ 
+
+11:
+
+( )
+
+ 
+
+,
+
+I
+
+=
+
+DDIM
+
+
+
+
+
+(
+
+{
+
+}=1,
+
+( )
+
+ 
+
+)
+
+12:
+
+I ( )
+ 
+
+=
+
+VAE
+
+( ()
+ 
+
+)
+
+
+
+I
+
+13:
+
+L (I() )
+ 
+
+=
+
+ 
+
+·
+
+L
+
+(
+
+I ( )
+
+
+
+
+)
+
++
+
+ 
+
+·
+
+L 
+
+(I() )
+ 
+
+14:    + 1
+
+15:
+
+   ()
+
+
+L (I() )
+ 
+
+ 
+
+16:   1 ·  -1 + (1 - 1 ) · 
+
+17:   2 ·  -1 + (1 - 2 ) · 2
+
+18: ^   /(1 - 1 )
+
+19: 20:
+
+^ 
+( +1)
+
+ 
+
+ /(1 - 2 )   () - 
+ 
+
+ · ^ /( ^
+
++  )
+
+21:    + 1
+
+22: end while
+
+23:
+
+ 
+
+
+
+( )
+
+
+,
+
+ 
+
+I 
+
+= VAE ( )
+
+min L (I ) = D (F (I ), F (I )),
+
+(16)
+
+ 
+
+where I = VAE (), I is a target facial image, D denotes
+
+the cosine distance, and F represents the FR framework.
+
+A cross-attention map is employed to enhance the retention
+
+of original image features, such as facial landmarks. This map is
+
+a binary mask I highlighting the crucial regions of both the input face I and the adversarial face I. This mask is then utilized on the adversarial image, ensuring that in subsequent iterations,
+
+only pivotal facial regions undergo modification: I = I  I . Additionally, to ensure the structural integrity of the original image,
+
+a self-attention loss L  , derived from the self-attention layers of the U-Net in Stable Diffusion, is integrated into the process.
+
+Thus, the optimization challenge is reformulated as:
+
+min L (I ) =  L +   L  ,
+
+(17)
+
+ 
+
+where  and   are the hyperparameters used to balance the
+
+respective loss terms.
+
+Algorithm 2 presents our perturbation method. The inputs con-
+
+sist of the original image I, iteration count  , learning rate , iden-
+
+tity retention weight  , self-consistency weight   , the null-text
+
+inversion function Invert , and a threshold  for termination.
+
+The output is the adversarial image I. The method begins with a null-text inversion step, using the
+
+Invert function to generate a latent representation  and a
+null latent path  = 1 . From the original latent code z, an approximate image I (0) is then reconstructed via a VAE decoder.
+
+for our technique, allowing us to extract a cross-attention map that
+
+At the core of the algorithm is an optimization loop using the
+
+Adam
+
+optimizer
+
+to
+
+refine
+
+the
+
+latent
+
+code
+
+( )
+
+
+,
+
+ensuring
+
+it
+
+diverges
+
+ 
+
+enough to bypass FRS while preserving perceptual similarity to
+
+focuses on facial regions requiring protection.
+
+the original image I. The adversarial updates incorporate a dynam-
+
+Formally, null-text inversion optimizes a unique unconditional embedding  initiated with the null-text embedding while keeping the model and the conditional textual embedding unchanged. This process can be either global, using a single embedding, or timestamp-
+
+ically masked version of the image, enhancing the robustness of the resultant adversarial traits. Two loss functions, L and L  , weighted by  and   , respectively, guide the training to balance between disguising the identity and maintaining fidelity to the
+
+specific, with distinct embeddings  optimized for each timestamp
+
+, each initialized from the embedding of the previous step +1.
+
+The full algorithm utilizes DDIM inversion to produce a se-
+
+quence
+
+of
+
+noisy
+
+latent
+
+codes
+
+ ,
+
+
+.
+
+.
+
+.
+
+,
+
+0.
+
+For
+
+each
+
+timestamp
+
+
+
+=
+
+original image. The loop terminates when the adversarial image's validator score stays below the threshold  , after which the final adversarial image I is reconstructed from the last updated latent code  using the VAE decoder.
+
+60
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+5 Experimental Setup
+5.1 Datasets
+We leverage three significant datasets to evaluate the performance of FR and image generation/editing algorithms: Labeled Faces in the Wild (LFW) [22], Celebrity Faces Attributes (CelebA) [34] and its high-quality variant CelebA-HQ [27], as well as the Flickr-Faces-HQ (FFHQ) [28] dataset. These datasets are chosen for their benchmark status in various domains related to facial image analysis, including recognition, generation, and editing. A detailed description of each dataset is provided in Appendix B.
+By combining LFW, CelebA/CelebA-HQ, and FFHQ datasets, our evaluation framework enables a comprehensive assessment of FR and image generation/editing algorithms across different datasets. LFW provides a benchmark for FR accuracy in uncontrolled environments, while CelebA and CelebA-HQ offer a rich source of annotated facial images for attribute editing. FFHQ, with its highresolution and diverse images, provides cross validation dataset to compensate CelebA/CelebA-HQ. Together, these datasets ensure a robust and diversified testing ground for our algorithms, facilitating meaningful comparisons with related works.
+5.2 Evaluation Settings
+In our evaluation, we explore different options, including targeted/untargeted whitebox/blackbox attacks against FRS. Our approach uses five well-known FR models: Facenet [48], IR152, IRSE50 (ArcFace) [9], MobileFaceNet (termed as MobileNet in this paper) [5], and IR101 (CurricularFace) [23]. To enhance the transferability of the attack across different systems and inspired by StyleAdv [31], we designate one of these models as a primary model (a whitebox model) and one a second model as validator model (semi-blackbox). Like StyleAdv, we use the first model for identity loss in our optimization process and the validator model (e.g., a third-party service or API), which we query up to three times in our experiments. This limitation simulates realistic attack scenarios where an attacker might have restricted opportunities to test their approach without being detected. Finally, we assume no access to the other three models. This means that we assume no access to their internal details or parameters, which is a common scenario in real-world attacks.
+When reporting our results, we call attacks against the primary models as whitebox attacks (as we have access to the primary model), attacks against the validator model as semi-blackbox [31] attack (as we only can query its API a very limited number of times but do not assume any access to the model itself, only the primary model), and we consider attacks against other models as blackbox attacks (assuming no access to them).
+5.3 Evaluation Metrics
+To assess the effectiveness of the privacy protection mechanism, we introduce a metric called the Privacy Protection Rate (PPR). The PPR is designed to directly measure the ability of the altered images to prevent correct recognition by an FRS. By evaluating the likelihood of mismatching the altered image with the original identity, it offers a practical assessment of our approach's ability to prevent identity leaks. PPR's alignment with standard benchmark practices, such as the LFW benchmark (which typically assess whether a pair of
+61
+
+images belong to the same identity based on a threshold), makes it
+
+more relevant than traditional metrics like recognition accuracy or
+
+true positive rates, which may not fully reflect privacy protection
+
+in real-world scenarios. The PPR metric is based on the cosine
+
+similarity distance, cosine, and is defined as follows:
+
+PPR =
+
+1
+
+ 
+
+cosine (F (I), F (I )) < 
+
+× 100%,
+
+(18)
+
+
+
+I
+
+where  is the indicator function,  the total number of face images
+
+I,  a predefined threshold value, and I and I are the original
+
+and protected face images, respectively. In this context, F is a face
+
+embedding model (feature extractor), referred to as FRS throughout
+
+our paper, which generates a vector representation of facial features
+
+for each image. Here, cosine is defined as:
+
+cosine (ì, ì) = 1 arccos 
+
+ì · ì ì ì 
+
+,
+
+(19)
+
+reflecting the distance based on cosine similarity, as described pre-
+
+viously. To align with privacy protection standards, we set the threshold  for each victim model to where they achieve 1 × 10-3
+
+False Acceptance Rate (FAR). Deciding on this threshold for a par-
+
+ticular system is critical, as it directly impacts the protection rate.
+
+Furthermore, we adhere to a rigorous LFW benchmark to estab-
+
+lish this threshold, serving as a standard for evaluating all related
+
+works when compared with ours. More information regarding the
+
+determination of this threshold can be found in Appendix D.
+
+While users employing our approach do not need to know the
+
+threshold of the target model they are protecting against or the
+
+structure of blackbox models, the threshold of the primary model is
+
+important. Depending on what model is used, these thresholds can
+
+be obtained either by extracting them from the evaluation section
+
+of the corresponding papers, by following the process described
+
+in Appendix D, or by using the results we provide in that section.
+
+In general, there is a tradeoff between ease of crafting adversarial
+
+samples (easier when threshold selected for a small FAR target) and
+
+transferability across models (worse with small FAR target).
+
+In addition to PPR, we employ the Learned Perceptual Image
+
+Patch Similarity (LPIPS) [68] to evaluate the naturalness and quality
+
+of the protected face images. LPIPS has been chosen specifically for
+
+its ability to mirror human visual perception more closely compared
+
+to traditional metrics like SSIM [59] or MS-SSIM [61]. LPIPS is
+
+designed to assess the perceptual difference between images based
+
+on high-level features extracted by deep neural networks, which
+
+tend to align better with human judgment of image quality and
+
+similarity. This is particularly important in our context where subtle
+
+visual changes, which might significantly alter machine recognition
+
+performance, might still be perceived as minor by human observers.
+
+While SSIM and MS-SSIM effectively measure structural simi-
+
+larity, they often do not adequately account for perceptual aspects
+
+like texture and color dynamics, which are important for assess-
+
+ing natural appearance on social media. Since our goal is to create
+
+images that appear natural and consistent with human perception
+
+while deceiving FRS, LPIPS serves as a more appropriate metric,
+
+ensuring that the modifications made preserve the overall aesthetic
+
+and perceptual quality perceived by human viewers.
+
+Combined, PPR and LPIPS provide a comprehensive assessment
+
+of the efficacy of our privacy protection mechanism, covering as-
+
+pects of privacy, visual fidelity, and perceptual quality.
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+Table 1: Comparison with state-of-the-art methods on CelebA-HQ and FFHQ datasets for targeted blackbox attacks.
+
+CelebA-HQ
+
+FFHQ
+
+Methods
+
+PPR (%)  IRSE50 IR101 IR152
+
+LPIPS 
+
+PPR (%)  IRSE50 IR101 IR152
+
+LPIPS 
+
+PGD [35]
+
+0.00 0.53 0.00 0.06
+
+0.00 0.00 0.53 0.07
+
+CW [3]
+
+13.02 1.03 3.54 0.18
+
+7.04 2.01 6.05 0.18
+
+Fawkes [50]
+
+1.52 1.53 14.03 0.04
+
+1.02 1.04 10.52 0.04
+
+AMT-GAN [21] 2.04 0.52 5.09 0.09
+
+1.53 1.52 4.52 0.12
+
+StyleAdv [31] 41.53 45.54 75.53 0.14 20.52 25.03 60.04 0.16
+
+DiffPrivate
+
+88.02 86.54 98.03 0.05 92.03 95.02 98.53 0.06
+
+6 Qualitative and Quantitative Comparisons
+We first present a direct comparison against some of the most related works (see Sec. 2): CW [3], PGD [35], Fawkes [50], AMTGAN [21], and StyleAdv [31]. Here, our selection of specific models for the blackbox context, shown in Table 1, is based on rigorous prior investigations. For instance, Fawkes primarily uses FaceNet in its optimization, making it unsuitable as a blackbox model for our evaluations. Instead, we need at least one model, such as MobileFace, as a validator due to its characteristics as the shallowest model, which, as we discuss in Sec. 7, presents the greatest challenge in terms of attack resistance.
+Qualitative Comparison: Fig. 5 offers a visual example comparison between our work and related works, in which we include direct "face-to-face" comparisons for representative set of example faces. We observed that: (1) perturbation-based methods in pixel space, such as PGD, CW, and Fawkes, exhibit a common drawback wherein the noisy effect is visibly apparent. This can hinder usability for applications like posting protected images on social media, given the human sensitivity to artifacts on faces. (2) GANbased methods, including AMT-GAN and StyleAdv, suffer from some degree of visible distortions, an inherent limitation of GAN models. (3) Our method, which employs semantic editing to make images more attractive, yields the most visually pleasing results. This approach has potential applications as a beautifying face filter, akin to those frequently used in popular apps such as Instagram or Camera360. (4) Our perturbation approach in the latent space demonstrates an advantage in preserving small details in photos, including background elements, hair, and more obscure objects like hands, phones, hats, etc. The comparisons demonstrate that our diffusion-based method for creating protected images produces higher image quality relative to the compared methods. It surpasses GAN-based alternatives in achieving consistent results, a critical factor for applications within the facial domain.
+Image Quality: The evaluation of image quality, as quantified by the LPIPS metric, reveals significant insights into the efficacy of various adversarial methods when using DiffPrivate in Perturbbased mode for this evaluation.
+As shown in Table 1, pixel-perturbation based methods, including PGD, CW, and Fawkes, exhibit relatively low LPIPS scores. Notably, Fawkes achieves the lowest score among them, which can be attributed to Fawkes incorporating LPIPS into its loss function during optimization to minimize perceptual differences. In contrast, GAN-based methods such as AMT-GAN and StyleAdv demonstrate higher LPIPS scores, suggesting more substantial alterations to the image that potentially compromise its natural appearance. Our
+
+method, DiffPrivate, effectively maintains a balance between privacy enhancement and utility preservation. It achieves a significantly lower LPIPS score compared to GAN-based approaches, aligning more closely with the scores of pixel-perturbation methods. This outcome underscores DiffPrivate's ability to maintain the visual integrity of images while providing robust privacy protection, highlighting its advantageous position in reconciling the tradeoffs between adversarial effectiveness and image quality.
+Privacy Protection Rate: In our comprehensive comparison with state-of-the-art methods on the CelebA-HQ and FFHQ datasets for targeted blackbox attacks, as presented in Table 1, we rigorously use the LFW benchmark to set the threshold at a specified False Acceptance Rate (FAR), as detailed in Appendix D. This rigorous approach, coupled with the employment of advanced FRS models, significantly influences the evaluation of protection rates, providing a stark contrast to the methods used in prior works such as Fawkes (and PGD, CW-based methods such as Face-off [4], and FoggySight [12]). These earlier studies either relied on classifier models or focused solely on the FaceNet model, which may not reflect the efficacy against more current and accurate FRS models.
+A notable observation is that the PPR for CelebA-HQ are generally higher than those for FFHQ. This discrepancy can be attributed to the intrinsic differences between the two datasets. CelebA-HQ, with its more uniform and curated collection of images, may inherently facilitate the generation of adversarial examples that are more effective across a variety of models. In contrast, FFHQ, known for its diversity in age, ethnicity, and image quality, presents a more challenging scenario for adversarial attacks, likely due to the increased variability and complexity of the dataset. This further underscores the necessity of a robust evaluation framework that encompasses a wide range of real-world conditions.
+Furthermore, our evaluation strictly observes the blackbox criteria, setting us apart from semi-blackbox settings reported in studies like StyleAdv [31], which show near-perfect protection. Under our stringent blackbox evaluation framework, where we assume no knowledge of or query access to the model (except for a limited use of a validator model not included in the blackbox models list), we find that pixel-perturbation based methods such as PGD, CW, and Fawkes exhibit negligible transferability to blackbox models. This is evidenced by their low or zero PPR scores across all evaluated FRS models. Similarly, AMT-GAN shows limited effectiveness, attributed to a training process that may not adhere to the stricter threshold levels we implement. StyleAdv, while achieving moderate results, falls short of its previously reported outcomes under a less stringent semi-blackbox setup.
+The standout performance of our method, DiffPrivate, demonstrates its advantages, achieving the highest PPR scores across both datasets and all models tested. This underscores the importance of both a rigorous evaluation protocol and the selection of evaluation models that closely mirror real-world application scenarios. The results, as shown in Table 1, highlight the pivotal role of choosing appropriate thresholds and models in accurately assessing the protection rate, affirming the effectiveness of our approach in safeguarding against unauthorized FR attempts. Finally, we note that the high achieved success in the blackbox model scenario, the most challenging of the three threat models, suggests effectiveness in the less restrictive whitebox and semi-blackbox contexts as well.
+
+62
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Input
+
+CW [3]
+
+PGD [35]
+
+Fawkes [50]
+
+AMT-GAN [21]
+
+DiffPrivate(Perturb) DiffPrivate(Edit) StyleAdv [31]
+
+Figure 5: Visualizations of protected face images generated by different face protection methods on CelebA-HQ.
+
+7 Transferability of Protection
+Semi-blackbox Attack: In the semi-blackbox evaluation, detailed in Fig. 6, we explore the effectiveness of DiffPrivate under the assumption that users have whitebox access to a primary model and limited query access to the validator model that (in this case) represents the unauthorized FRS they aim to protect against. This evaluation, deemed resource-intensive, was conducted as a targeted adversarial attack on the FFHQ dataset due to its greater challenge and closer representation of real-world scenarios compared to CelebA-HQ (as discussed in Sec. 6).
+We utilize Stable Diffusion as the base generative model with diffusion steps set to 20, a guidance scale of 2.5, and a default prompt of "a person", our approach employs an Adam optimizer with a learning rate of 5 × 10-3. Crucially, we limit the optimization loop to a maximum of 250 iterations, conducting only three occasional checks with the validator at steps 50, 100, and 250 to determine if an adversarial image meets the validator's requirements. If the adversarial image does not pass the validator's criteria by the final check at iteration 250, the process is terminated.
+
+The resultant heatmap illustrates the PPR achieved across various combinations of primary and validator models. For instance, with MobileFace as the primary model and IR101 as the validator, a PPR of 65% indicates that, within the 250-iteration limit, 65% of the test samples succeeded in generating an adversarial image that could evade detection.
+The heatmap reveals significant variability in protection efficacy, highlighting the impact of model combinations on adversarial success. Notably, when models serve as their own validators (known as whitebox attacks), the PPR approaches or reaches 100%. Conversely, lower PPRs in cross-model evaluations, such as the 22.5% observed when IR152 and IRSE50 serve as validators for each other, reflect the increased difficulty of evading unfamiliar FRSs. These observations underline the critical role of model familiarity and the adversarial model's adaptability in designing effective privacy protection strategies.
+However, there are also several semi-blackbox attacks (where the primary model differ from the validator model) that are highly
+
+63
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+IR101 100 64 46 98 98 FaceNet 100 100 40 70 86
+
+100% 75%
+
+Primary Models
+
+IR152 66 88 100 100 83
+
+50%
+
+IRSE50 78 78 22 100 99
+
+25%
+
+MobileFace 65 78 22 99 100
+
+0%
+
+IR101
+
+FaceNet
+
+IR152
+
+IRSE50 MobileFace
+
+Validator Models
+
+Figure 6: The success in the PPR of crossing attack between
+
+primary and validator models
+
+successful (e.g., IR101 against IRSE50 and MobileFace). The effectiveness in these cases suggests that certain features learned by IR101 are robust enough to generalize across different models, including IRSE50 and MobileFace. This indicates a transferability of the adversarial modifications that is not model-specific but potentially applicable across a spectrum of models with varying architectures. Here, IRSE50 is most sensitive to such semi-blackbox attacks in 3 out of 4 cases (i.e., with IR101, IR152, MobileFace as primary models). When FaceNet is the primary model, IR101 is most vulnerable and when IRSE50 is the primary model, MobileFace is most vulnerable.
+Blackbox Attacks: Fig. 7 presents the results of our evaluation on the transferability of adversarial protection across different blackbox models, utilizing a combination of primary models and validators. This setup aims to assess the effectiveness of adversarial edits against models to which the user is assumed to have no knowledge or access. The evaluation highlights a pattern of transferability that bears resemblance to the findings from the heatmap presented in Fig. 6, underlining the consistency of our adversarial protection strategy across varied settings.
+Two distinct cases emerge from our analysis: (1) Utilizing IR152 as a validator, which is a deep CNN model renowned for its high accuracy on the LFW benchmark, results in the lowest PPR, particularly when paired with FaceNet or IRSE50 as primary models. This observation suggests that despite IR152's high accuracy, it may be more susceptible to adversarial attacks, corroborating the tradeoff between accuracy and robustness documented in prior research [15, 35, 57]. (2) Conversely, selecting MobileFace as the validator consistently yields the highest PPR across all primary models, especially when used in conjunction with FaceNet or IR101. This indicates that MobileFace, despite being the model with the shallowest architecture and the lowest accuracy among those evaluated, offers superior robustness against adversarial attacks. These results underscore the nuanced relationship between model complexity, accuracy, and vulnerability to adversarial manipulation, reinforcing the importance of considering these factors in the development and evaluation of privacy-enhancing technologies.
+8 Robustness of Protection
+In our analysis, represented in Fig. 8, we specifically assess the efficacy of various adversarial protection methods on the CelebAHQ and FFHQ datasets, with a particular focus on the CelebA-HQ
+
+dataset for evaluating the DiffPure method. This targeted evaluation stems from the prerequisite that DiffPure requires a DDPM model trained exclusively on CelebA-HQ for faces, thereby limiting its purification effects to this dataset alone. Given the ineffectiveness of pixel-based perturbation methods in blackbox settings--often resulting in negligible protection rates--we opt for a whitebox evaluation framework to discern robustness.
+Across the datasets, our method consistently exhibits high robustness against purifying methods when compared to alternatives. This is particularly evident on the CelebA-HQ dataset, where the robustness of our protection method outperforms that on the FFHQ dataset. Notably, pixel-perturbation methods such as PGD, CW, and Fawkes are highly susceptible to noise-canceling techniques like Gaussian Blurring and Total Variance Minimization, which can significantly diminish their protection rates. Other purifying methods generally reduce the protection efficacy of these pixel-perturbation methods by approximately half. Remarkably, DiffPure effectively neutralizes the protective capability of all methods except for Ours and StyleAdv. AMT-GAN, while consistently holding a moderate protection rate against other purifying methods, is also vulnerable to DiffPure.
+The observed patterns underscore the nuanced interaction between adversarial protection methods and purifying techniques, highlighting the critical importance of designing protection strategies that are resilient not only to direct adversarial attacks but also to subsequent purification attempts. Our method's strong performance against various purifying methods on CelebA-HQ validates its effectiveness and highlights potential limitations of pixel-perturbation approaches for robust adversarial protection.
+9 Protection with Attributes Editing
+We next analyze the relative protection offered by editing different attributes. For each scenario, we show results from representative models, noting that our model selections and comparisons are consistent with the model selection in Sec. 6 (i.e., the primary model is FaceNet and the validator model is MobileFace) and are generally in line with the tradeoff between model accuracy and robustness captured in Sec. 7 (e.g., blackbox results for FaceNet with MobileFace as validator (Fig. 7a) are outstanding for the LFW datasets, although there will be deviations when we test on other datasets).
+Semi-Blackbox Setting: Fig. 9 illustrates the PPR across various attributes for the DiffPrivate Edit-based method in a semi-blackbox setting, where MobileFace serves as both the validator and the target unauthorized FRS. Notably, the performance across attributes on the CelebA-HQ dataset is predominantly high, a result that aligns with expectations considering CelebA-HQ's use in training the classifier for DiffAE, which guides the attribute editing process. This training alignment ensures a high degree of attribute manipulation success.
+Conversely, the FFHQ dataset presents a more varied set of outcomes, with some attributes experiencing a protection rate decline to as low as 70-80%. Attributes such as Blurry and Pale Skin demonstrate lower protection rates, which could be attributed to the inherent challenges in editing these features in a manner that significantly alters the FRS's perception without compromising natural appearance. This variability in success rates underscores the complexity of attribute-based adversarial editing in diverse
+
+64
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+PPR PPR
+PPR PPR
+PPR
+
+Val: IR101 100%
+
+Val: IR152 Val: IRSE50 Val: MobileFace 100%Val: IR101 Val: FaceNet Val: IR152 Val: MobileFace 100%Val: FaceNet Val: IR152 Val: IRSE50 Val: MobileFace
+
+75%
+
+75%
+
+75%
+
+50%
+
+50%
+
+50%
+
+25%
+
+25%
+
+25%
+
+0% IRSE50IR1M52obileFace
+
+IRSE50IR1M01obileFace
+
+IR152IR1M01obileFace
+
+(a) Primary: FaceNet
+
+IRSE50IR152IR101
+
+0% IR15F2aceMNoebtileFace
+
+IR152IR1M01obileFace
+
+FaceNeIRt 1M01obileFace
+
+(b) Primary: IRSE50
+
+IR15F2aceNeIRt 101
+
+0% IRSE50IR1M52obileFace
+
+IRSE5F0aceMNoebtileFace
+
+IR15F2aceMNoebtileFace
+
+(c) Primary: IR101
+
+IRSE50IR15F2aceNet
+
+100%Val: IR101 Val: FaceNet Val: IRSE50 Val: MobileFace
+
+75%
+
+50%
+
+25%
+
+0% IRSE5F0aceMNoebtileFace
+
+IRSE50IR1M01obileFace
+
+FaceNeIRt 1M01obileFace
+
+(d) Primary: IR152
+
+IRSE5F0aceNeIRt 101
+
+100% Val: IR101 Val: FaceNet Val: IR152
+
+80%
+
+60%
+
+40%
+
+20%
+
+0% IRSE50IR152FaceNet
+
+IRSE50IR152 IR101
+
+IRSE5F0aceNeItR101
+
+(e) Primary: MobileFace
+
+Val: IRSE50 IR152FaceNeItR101
+
+Figure 7: Attacker transferable between cross blackbox models
+
+AMT-GAN
+
+CW
+
+PGD
+
+Fawkes
+
+StyleAdv
+
+Ours
+
+82 92
+
+10 0 0 0
+60 35
+
+23 62 76 70 78 98
+
+23 55 62 69 76 97
+
+23 63 72 70 78 97
+
+29 4 0
+49 80 96
+
+23 66 88 70 78 98
+
+100
+
+80
+
+PPR
+
+60
+
+32 3 0
+40
+
+40
+
+20
+
+0
+
+Feature Squeezing
+
+Gaussian Blur
+
+JPEG Compression
+
+Noise Random
+
+Spatial
+
+Smoothing Total
+
+Variance
+
+Min
+
+DiffPure
+
+(a) CelebA-HQ
+
+AMT-GAN
+
+CW
+
+PGD
+
+Fawkes
+
+StyleAdv
+
+Ours
+
+100
+
+58 78
+
+16 64
+48 46
+56 93
+
+12 51 47 48 58 92
+
+13 66
+57 48
+56 91
+
+23 0 0
+28 56 84
+
+12 66 66
+45 56 90
+
+75
+
+PPR
+
+50
+
+24 2
+25 0
+
+25
+
+0
+
+Feature Squeezing
+
+Gaussian Blur
+
+JPEG Compression
+
+Noise Random
+
+Spatial Smoothing
+
+Total Variance Min
+
+(b) FFHQ
+
+Figure 8: Protection percentage on CelebA-HQ and FFHQ.
+
+Note that DiffPure is not applicable in the case of FFHQ as
+
+this method requires a DDPM model trained on CelebA-HQ
+
+and the purification only works effectively on this dataset
+
+datasets. The high protection rates for attributes like Smiling or Wearing Lipstick in CelebA-HQ, compared to FFHQ, suggest a direct correlation between the training data of the guiding classifier and the effectiveness of attribute manipulation. This observation points to the potential need for selecting the right attributes in optimizing the privacy protection efficacy of edit-based methods, particularly in semi-blackbox settings with only limited access to target FRS.
+Blackbox Setting: Here, we summarize key observations from a comprehensive evaluation of the protection rates across various attributes in a blackbox setting (primary: FaceNet, validator: MobileFace) comparing performance on the CelebA and FFHQ datasets across multiple FRS models: IRSE50, IR152, IR101, and MobileFace (numeric results are provided in Table 2 of Appendix C.1).
+Notably, attributes such as High Cheekbones and Smiling demonstrate high protection rates across both datasets, indicative of the
+
+effectiveness of our protection methods in preserving key facial features while ensuring privacy. In contrast, attributes like Blurry and Wearing Hat exhibit variable protection rates, reflecting the challenges in consistently obfuscating certain features across different FRS models. A particularly intriguing observation is the generally higher protection rates on CelebA compared to FFHQ, which may be attributed to the former's training alignment with the classifier used in DiffAE for guiding attribute editing. The varied success rates across attributes underscore the nuanced complexity of editing facial features for privacy protection, with some attributes (e.g., 5 o Clock Shadow, Big Nose) achieving lower protection rates on FFHQ, potentially due to the dataset's greater diversity and complexity. These findings highlight the importance of adapted approaches in adversarial editing to maximize protection efficacy across diverse facial attributes and recognition systems.
+10 Ablation Study
+In our ablation study, we explore the efficacy of DiffPrivate on Editbased and Perturb-based methods: for Edit-based we selectively choose the target attribute as "Attractive". This study utilizes IRSE50 as the primary model and FaceNet as the validator, with FaceNet's detection threshold  varying from 0.235 to 0.425, corresponding to a False Acceptance Rate (FAR) ranging from 1×10-4 to 1×10-1. This range is indicative of the privacy budget, essentially representing the degree of image modification permissible for crafting adversarial samples. It is critical to note that a lower FAR equates to a less stringent detection threshold, thereby facilitating the generation of adversarial samples with fewer alterations (details in Appendix D).
+Dividing the threshold spectrum into 10 discrete steps, we present in Fig. 10 a visualization depicting how variations in the privacy budget influence image quality. Our observations reveal that the Editbased method, which allows for targeted modifications on selected attributes, tends to yield visually appealing outcomes. Nonetheless, it is observed that the extent of identity alteration becomes more pronounced as the budget increases. Conversely, the DiffPrivate approach employing a Perturb-based methodology, typically results in less visual modifications when compared to the Edit-based strategy. This distinction underscores the inherent tradeoff between maintaining visual fidelity and achieving desired privacy levels.
+
+65
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+100% 90% 80% 70%
+
+CelebA
+
+100% 90% 80% 70%
+
+FFHQ
+
+Minh-Ha Le and Niklas Carlsson
+
+5 o Clock Shadow Arched Eyebrows
+Attractive Bags Under Eyes
+Bald Bangs Big Lips Big Nose Black Hair Blond Hair Blurry Brown Hair Bushy Eyebrows Chubby Double Chin Eyeglasses Goatee Gray Hair Heavy Makeup High Cheekbones
+Male Mouth Slightly Open
+Mustache Narrow Eyes
+Oval Face Pale Skin Pointy Nose Receding Hairline Rosy Cheeks Sideburns
+Smiling Straight Hair
+Wavy Hair Wearing Earrings
+Wearing Hat Wearing Lipstick Wearing Necklace Wearing Necktie
+Young
+
+5 o Clock Shadow Arched Eyebrows
+Attractive Bags Under Eyes
+Bald Bangs Big Lips Big Nose Black Hair Blond Hair Blurry Brown Hair Bushy Eyebrows Chubby Double Chin Eyeglasses Goatee Gray Hair Heavy Makeup High Cheekbones
+Male Mouth Slightly Open
+Mustache Narrow Eyes
+Oval Face Pale Skin Pointy Nose Receding Hairline Rosy Cheeks Sideburns
+Smiling Straight Hair
+Wavy Hair Wearing Earrings
+Wearing Hat Wearing Lipstick Wearing Necklace Wearing Necktie
+Young
+
+Figure 9: The PPR crossing attributes for Edit-based approach
+
+Original
+
+ = 0.235
+
+ = 0.256
+
+ = 0.277
+
+ = 0.298
+
+ = 0.320
+
+ = 0.341
+
+ = 0.362
+
+ = 0.383
+
+ = 0.404
+
+ = 0.425
+
+Perturb
+
+Original
+
+ = 0.235
+
+ = 0.256
+
+ = 0.277
+
+ = 0.298
+
+ = 0.320
+
+ = 0.341
+
+ = 0.362
+
+ = 0.383
+
+ = 0.404
+
+ = 0.425
+
+Edit
+
+Figure 10: Visualizations of protected face images using DiffPrivate (Perturb-based method first row and Edit-based method second row) at different protection budgets denoted by  .
+
+11 Limitations and Future Work
+Target Scope and Vulnerability to Advanced Attacks: Referring to the SoK paper by Wenger et al. [62], our paper falls within the category of "Attacking to Evade Identification". Furthermore, our method, similar to approaches like Fawkes [50], focuses on fooling FRS rather than deceiving human perception. However, as noted by Todt et al. [58], adversarial attack methods, including ours, are relatively vulnerable to advanced attackers who can build/train reverse models with knowledge of the method. This is an inherent drawback of adversarial approaches (see [58] for detailed analysis of robustness against reversion and image quality based on user study and human evaluation). For enhanced robustness against such reversibility, we recommend anonymization methods like DeepPrivate [24], StyleID [30], and AnonFACES [32], which completely alter facial resemblance, and at the cost of lower usability.
+Dependency on Generative Model Quality: The effectiveness of DiffPrivate depends on the performance of the underlying generative model, Stable Diffusion in our case. While Stable Diffusion excels in generativity, flexibility, and reduced bias compared to GANs [55, 69], the quality of reconstructed images is directly linked to its capabilities. Although it generally performs well, it occasionally still shows biases towards certain demographic groups that could impact the uniformity and fairness of our privacy protection.
+Computational Efficiency: The reliance on deep diffusion models, which require significant computational resources for training and inference, might limit the accessibility of our methods to users with lower computational capabilities. Optimizing efficiency without compromising effectiveness remains future work.
+
+Adaptability to Advances in FRS: Our method is tested against state-of-the-art FRS, but as adversarial defenses evolve, its future effectiveness is not guaranteed. The fast-changing landscape demands ongoing updates to ensure our approach remains effective.
+Extended Use Cases: Our diffusion-based models, DiffPrivate, are designed not only to protect individual users' online personas on social media but can also be used to address broader privacy concerns, including as a component to help safeguarding bystander privacy in public datasets [17]. When images captured in social or public spaces are shared, bystanders - whose privacy may be compromised - can have their faces anonymized using DiffPrivate. This approach preserves the utility of these datasets for research or public safety while respecting individual privacy rights. Interesting future work include user studies determining people's current interest, expectation, and desirable privacy levels from such systems.
+12 Conclusion
+In conclusion, DiffPrivate leverages the diffusion process to create facial images that protect users' privacy. Our thorough testing highlights the important technical decisions behind DiffPrivate and its ability to work effectively with blackbox models. This work represents one of the initial attempts to use diffusion models for adversarial attacks aimed at safeguarding biometric privacy. Through this approach, we offer a novel solution that not only challenges FRS but also maintains the natural appearance of the images. Our findings underscore DiffPrivate's potential as a robust tool against the evolving landscape of FR technology, pushing forward the capabilities for privacy protection in digital spaces. Our code can be found here: https://github.com/minha12/DiffPrivate.
+
+66
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Acknowledgments
+This work was supported by the Swedish Research Council (VR) and
+the Wallenberg AI, Autonomous Systems and Software Program
+(WASP) funded by the Knut and Alice Wallenberg Foundation. The
+authors used ChatGPT to correct typos, grammar, and wordings.
+References
+[1] Amazon Web Services. 2023. Amazon Rekognition. https://aws.amazon.com/ rekognition/. Accessed: 2024-01-26.
+[2] Nicholas Carlini, J Zico Kolter, Florian Tramer, Krishnamurthy Dj Dvijotham, Leslie Rice, and Mingjie Sun. 2023. (Certified!!) Adversarial Robustness for Free!. In ICLR.
+[3] Nicholas Carlini and David Wagner. 2017. Towards evaluating the robustness of neural networks. In IEEE Symposium on Security and Privacy (SP). 39­57.
+[4] Varun Chandrasekaran, Chuhan Gao, Brian Tang, Kassem Fawaz, Somesh Jha, and Suman Banerjee. 2020. Face-off: Adversarial face obfuscation. arXiv preprint arXiv:2003.08861 (2020).
+[5] Sheng Chen, Yang Liu, Xiang Gao, and Zhen Han. 2018. Mobilefacenets: Efficient cnns for accurate real-time face verification on mobile devices. In Chinese Conference Biometric Recognition (CCBR). Springer, 428­438.
+[6] Valeriia Cherepanova, Micah Goldblum, Harrison Foley, Shiyuan Duan, John Dickerson, Gavin Taylor, and Tom Goldstein. 2021. Lowkey: Leveraging adversarial attacks to protect social media users from facial recognition. In ICLR.
+[7] Thomas Cilloni, Wei Wang, Charles Walter, and Charles Fleming. 2020. Ulixes: Facial recognition privacy with adversarial machine learning. arXiv preprint arXiv:2010.10242 (2020).
+[8] Jim Cross. 2019. Valley attorney: Facebook facial recognition carries identity theft risk. KTAR News (September 2019). https://ktar.com/story/2735815/valleyattorney- facebook- facial- recognition- carries- identity- theft- risk/
+[9] Jiankang Deng, Jia Guo, Niannan Xue, and Stefanos Zafeiriou. 2019. Arcface: Additive angular margin loss for deep face recognition. In CVPR.
+[10] Yinpeng Dong, Fangzhou Liao, Tianyu Pang, Hang Su, Jun Zhu, Xiaolin Hu, and Jianguo Li. 2018. Boosting adversarial attacks with momentum. In CVPR.
+[11] Yinpeng Dong, Hang Su, Baoyuan Wu, Zhifeng Li, Wei Liu, Tong Zhang, and Jun Zhu. 2019. Efficient decision-based black-box adversarial attacks on face recognition. In Proc. IEEE/CVF CVPR. 7714­7722.
+[12] Ivan Evtimov, Pascal Sturmfels, and Tadayoshi Kohno. 2020. Foggysight: A scheme for facial lookup privacy. arXiv preprint arXiv:2012.08588 (2020).
+[13] Face++. 2023. Face++ Cognitive Services. https://www.faceplusplus.com/. Accessed: 2024-01-26.
+[14] Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, and Yoshua Bengio. 2014. Generative Adversarial Nets. In NeurIPS.
+[15] Ian J Goodfellow, Jonathon Shlens, and Christian Szegedy. 2015. Explaining and harnessing adversarial examples. In ICLR.
+[16] Sven Gowal, Sylvestre-Alvise Rebuffi, Olivia Wiles, Florian Stimberg, Dan A. Calian, and Timothy Mann. 2021. Improving Robustness using Generated Data. arXiv preprint arXiv:2110.09468 (2021). https://arxiv.org/pdf/2110.09468
+[17] Rakibul Hasan, David Crandall, Mario Fritz, and Apu Kapadia. 2020. Automatically detecting bystanders in photos to reduce privacy risks. In 2020 IEEE Symposium on Security and Privacy (SP). IEEE, 318­335.
+[18] Yonghao He, Dezhong Xu, Lifang Wu, Meng Jian, Shiming Xiang, and Chunhong Pan. 2019. LFFD: A light and fast face detector for edge devices. arXiv preprint arXiv:1904.10633 (2019).
+[19] Kashmir Hill. 2022. The secretive company that might end privacy as we know it. In Ethics of Data and Analytics. Auerbach Publications, 170­177.
+[20] Jonathan Ho, Ajay Jain, and Pieter Abbeel. 2020. Denoising diffusion probabilistic models. NeurIPS (2020).
+[21] Shengshan Hu, Xiaogeng Liu, Yechao Zhang, Minghui Li, Leo Yu Zhang, Hai Jin, and Libing Wu. 2022. Protecting Facial Privacy: Generating Adversarial Identity Masks via Style-robust Makeup Transfer. In CVPR.
+[22] Gary B Huang, Marwan Mattar, Tamara Berg, and Eric Learned-Miller. 2008. Labeled faces in the wild: A database forstudying face recognition in unconstrained environments. In Workshop on faces in'Real-Life'Images: detection, alignment, and recognition.
+[23] Yuge Huang, Yuhan Wang, Ying Tai, Xiaoming Liu, Pengcheng Shen, Shaoxin Li, Jilin Li, and Feiyue Huang. 2020. Curricularface: adaptive curriculum learning loss for deep face recognition. In IEEE/CVF CVPR. 5901­5910.
+[24] Håkon Hukkelås, Rudolf Mester, and Frank Lindseth. 2019. Deepprivacy: A generative adversarial network for face anonymization. In International symposium on visual computing. Springer, 565­578.
+[25] Shuai Jia, Bangjie Yin, Taiping Yao, Shouhong Ding, Chunhua Shen, Xiaokang Yang, and Chao Ma. 2022. Adv-Attribute: Inconspicuous and Transferable Adversarial Attack on Face Recognition. In NeurIPS.
+[26] Ameya Joshi, Amitangshu Mukherjee, Soumik Sarkar, and Chinmay Hegde. 2019. Semantic adversarial attacks: Parametric transformations that fool deep classifiers.
+
+In Proc. IEEE/CVF ICCV. 4773­4783. [27] Tero Karras, Timo Aila, Samuli Laine, and Jaakko Lehtinen. 2018. Progressive
+growing of GANs for improved quality, stability, and variation. In ICLR. [28] Tero Karras, Samuli Laine, and Timo Aila. 2019. A style-based generator archi-
+tecture for generative adversarial networks. In CVPR. [29] Stepan Komkov and Aleksandr Petiushko. 2021. AdvHat: Real-world adversarial
+attack on ArcFace face ID system. In ICPR. [30] Minh-Ha Le and Niklas Carlsson. 2022. Styleid: Identity disentanglement for
+anonymizing faces. arXiv preprint arXiv:2212.13791 (2022). [31] Minh Ha Le and Niklas Carlsson. 2024. StyleAdv: A Usable Privacy Framework
+Against Facial Recognition with Adversarial Image Editing. In Proceedings on Privacy Enhancing Technologies (PoPETs). [32] Minh-Ha Le, Md Sakib Nizam Khan, Georgia Tsaloli, Niklas Carlsson, and Sonja Buchegger. 2020. Anonfaces: Anonymizing faces adjusted to constraints on efficacy and security. In Proc. WPES. 87­100. [33] Tao Li and Lei Lin. 2019. AnonymousNet: Natural face de-identification with measurable privacy. In Proc. of CVPR. [34] Ziwei Liu, Ping Luo, Xiaogang Wang, and Xiaoou Tang. 2015. Deep Learning Face Attributes in the Wild. In International Conference on Computer Vision (ICCV). [35] Aleksander Madry, Aleksandar Makelov, Ludwig Schmidt, Dimitris Tsipras, and Adrian Vladu. 2018. Towards Deep Learning Models Resistant to Adversarial Attacks. In ICLR. [36] Angelica Mari. 2019. Brazilian retailer quizzed over facial recognition tech. ZDNet (March 2019). https://www.zdnet.com/article/brazilian-retailer-quizzed-overfacial- recognition- tech/ [37] Ron Mokady, Amir Hertz, Kfir Aberman, Yael Pritch, and Daniel Cohen-Or. 2023. Null-text inversion for editing real images using guided diffusion models. In Proc. IEEE/CVF CVPR. 6038­6047. [38] Paul Mozur and Aaron Krolik. 2019. A surveillance net blankets China's cities, giving police vast powers. The New York Times 17 (2019). [39] Alexander Quinn Nichol and Prafulla Dhariwal. 2021. Improved denoising diffusion probabilistic models. In ICML. [40] Weili Nie, Brandon Guo, Yujia Huang, Chaowei Xiao, Arash Vahdat, and Anima Anandkumar. 2022. Diffusion Models for Adversarial Purification. In ICML. [41] Kate O'Flaherty. 2019. Facial Recognition At U.S. Airports. Should You Be Concerned? Forbes (March 2019). https://www.forbes.com/sites/kateoflahertyuk/ 2019/03/11/facial- recognition- to- be- deployed- at- top- 20- us- airports- shouldyou- be- concerned/ [42] Charles C-F Or, Kester YJ Ng, Yiik Chia, Jing Han Koh, Denise Y Lim, and Alan LF Lee. 2023. Face masks are less effective than sunglasses in masking face identity. Scientific reports 13, 1 (2023), 4284. [43] Konpat Preechakul, Nattanat Chatthee, Suttisak Wizadwongsa, and Supasorn Suwajanakorn. 2022. Diffusion Autoencoders: Toward a Meaningful and Decodable Representation. In CVPR. [44] Haonan Qiu, Chaowei Xiao, Lei Yang, Xinchen Yan, Honglak Lee, and Bo Li. 2020. Semanticadv: Generating adversarial examples via attribute-conditioned image editing. In ECCV. [45] Sylvestre-Alvise Rebuffi, Sven Gowal, Dan A. Calian, Florian Stimberg, Olivia Wiles, and Timothy Mann. 2021. Fixing Data Augmentation to Improve Adversarial Robustness. arXiv preprint arXiv:2103.01946 (2021). https://arxiv.org/pdf/ 2103.01946 [46] Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Björn Ommer. 2022. High-resolution image synthesis with latent diffusion models. In Proc. IEEE/CVF CVPR. 10684­10695. [47] Adam Satariano. 2019. Police use of facial recognition is accepted by British court. The New York Times 4 (2019). [48] Florian Schroff, Dmitry Kalenichenko, and James Philbin. 2015. FaceNet: A unified embedding for face recognition and clustering. In CVPR. [49] Ali Shafahi, W Ronny Huang, Mahyar Najibi, Octavian Suciu, Christoph Studer, Tudor Dumitras, and Tom Goldstein. 2018. Poison frogs! targeted clean-label poisoning attacks on neural networks. In Proc. of NeurIPS. [50] Shawn Shan, Emily Wenger, Jiayun Zhang, Huiying Li, Haitao Zheng, and Ben Y Zhao. 2020. Fawkes: Protecting privacy against unauthorized deep learning models. In 29th USENIX security symposium (USENIX Security 20). 1589­1604. [51] Mahmood Sharif, Sruti Bhagavatula, Lujo Bauer, and Michael K Reiter. 2019. A general framework for adversarial examples with objectives. ACM Transactions on Privacy and Security (TOPS) 22, 3 (2019), 1­30. [52] Maya Shwayder. 2020. Clearview AI's facial-recognition app is a nightmare for stalking victims. Digital Trends (January 2020). https://www.digitaltrends.com/ news/clearview- ai- facial- recognition- domestic- violence- stalking/ [53] Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan, and Surya Ganguli. 2015. Deep unsupervised learning using nonequilibrium thermodynamics. In ICML. [54] Jiaming Song, Chenlin Meng, and Stefano Ermon. 2021. Denoising diffusion implicit models. In ICLR. [55] Michal Stypulkowski, Konstantinos Vougioukas, Sen He, Maciej Ziba, Stavros Petridis, and Maja Pantic. 2024. Diffused heads: Diffusion models beat gans on talking-face generation. In Proc. IEEE/CVF WACV. 5091­5100.
+
+67
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+[56] Qianru Sun, Ayush Tewari, Weipeng Xu, Mario Fritz, Christian Theobalt, and Bernt Schiele. 2018. A hybrid model for identity obfuscation by face replacement. In Proc. of ECCV.
+[57] Christian Szegedy, Wojciech Zaremba, Ilya Sutskever, Joan Bruna, Dumitru Erhan, Ian Goodfellow, and Rob Fergus. 2013. Intriguing properties of neural networks. arXiv:1312.6199 (2013).
+[58] Julian Todt, Simon Hanisch, and Thorsten Strufe. 2022. Fant\^ omas: Understanding Face Anonymization Reversibility. arXiv preprint arXiv:2210.10651 (2022).
+[59] Zhou Wang, Alan C Bovik, Hamid R Sheikh, and Eero P Simoncelli. 2004. Image quality assessment: from error visibility to structural similarity. IEEE transactions on image processing 13, 4 (2004), 600­612.
+[60] Zekai Wang, Tianyu Pang, Chao Du, Min Lin, Weiwei Liu, and Shuicheng Yan. 2023. Better Diffusion Models Further Improve Adversarial Training. arXiv preprint arXiv:2302.04638 (2023).
+[61] Zhou Wang, Eero P Simoncelli, and Alan C Bovik. 2003. Multiscale structural similarity for image quality assessment. In The Thrity-Seventh Asilomar Conference on Signals, Systems & Computers, 2003, Vol. 2. Ieee, 1398­1402.
+[62] Emily Wenger, Shawn Shan, Haitao Zheng, and Ben Y Zhao. 2023. Sok: Anti-facial recognition technology. In IEEE S&P. 864­881.
+[63] Eric Wong and J Zico Kolter. 2021. Learning perturbation sets for robust machine learning. In ICLR. https://openreview.net/forum?id=MIDckA56aD
+[64] Yifan Wu, Fan Yang, and Haibin Ling. 2018. Privacy-Protective-GAN for face de-identification. arXiv:1806.08906 (2018).
+[65] Chaowei Xiao, Bo Li, Jun-Yan Zhu, Warren He, Mingyan Liu, and Dawn Song. 2018. Generating adversarial examples with adversarial networks. In IJCAI.
+[66] Xiao Yang, Yinpeng Dong, Tianyu Pang, Hang Su, Jun Zhu, Yuefeng Chen, and Hui Xue. 2021. Towards face encryption by generating adversarial identity masks. In CVPR.
+[67] Bangjie Yin, Wenxuan Wang, Taiping Yao, Junfeng Guo, Zelun Kong, Shouhong Ding, Jilin Li, and Cong Liu. 2021. Adv-Makeup: A New Imperceptible and Transferable Attack on Face Recognition. arXiv preprint arXiv:2105.03162 (2021).
+[68] Richard Zhang, Phillip Isola, Alexei A Efros, Eli Shechtman, and Oliver Wang. 2018. The unreasonable effectiveness of deep features as a perceptual metric. In Proc IEEE CVPR. 586­595.
+[69] Sharon Zhou, Mitchell Gordon, Ranjay Krishna, Austin Narcomey, Li F Fei-Fei, and Michael Bernstein. 2019. Hype: A benchmark for human eye perceptual evaluation of generative models. Advances in neural information processing systems 32 (2019).
+[70] Chen Zhu, W Ronny Huang, Ali Shafahi, Hengduo Li, Gavin Taylor, Christoph Studer, and Tom Goldstein. 2019. Transferable clean-label poisoning attacks on deep neural nets.
+Supplementary Material
+A Facial Recognition System
+FRS typically have two primary functions: face verification and face identification.
+Face Verification: In face verification, we aim to determine whether two face images, ì1 and ì2, belong to the same individual. We achieve this by:
+(1) Embedding: Each image is transformed into a low-dimensional space using a deep learning model denoted by F . This results in embedding vectors ì1 and ì2 for the respective images.
+(2) Distance Calculation: We compute the distance between these vectors using a distance function  =  (ì1, ì2).
+(3) Thresholding: This distance is compared to a threshold . If   , we conclude the images belong to the same person; otherwise, they differ.
+The threshold  balances the False Acceptance Rate (FAR) and False Rejection Rate (FRR) of the system. A lower  reduces FAR but increases FRR, and vice versa.
+Face Identification: Given a probe image  and a gallery set  of known identities, face identification seeks to identify the corresponding identity in  for  . The process follows:
+(1) Embedding: Similar to face verification,  is transformed into a low-dimensional embedding  using the same model F.
+68
+
+(2) Distance Calculation: We calculate the distance   between 
+
+and each embedding   in  for every identity  (containing
+
+ embeddings).
+
+(3) Thresholding: Depending on the implementation, the probe
+
+is identified with the identity having either the: (a) minimum
+
+mean distance  = arg min
+
+1 
+
+  =1
+
+
+
+
+
+or the (b) smallest
+
+individual distance  = arg min min  
+
+(4) Optional Thresholding: A rank threshold  can be included. In this case, if the rank   of the best-matching identity  is less
+
+than or equal to  , the identification is successful; otherwise,
+
+ is classified as unknown.
+
+Similar to face verification, a lower rank threshold  decreases FAR but increases FRR, while a higher  increases FAR but lowers FRR. Therefore, like threshold ,  must be carefully chosen to optimize system performance and balance FAR and FRR according to the specific application.
+
+B Detailed Dataset Description
+Labeled Faces in the Wild (LFW): The LFW dataset consists of over 13,000 facial images of more than 5,700 individuals. It has been designed to assess the performance of FR algorithms under uncontrolled, real-world conditions. The standard LFW benchmark, focusing on face verification, involves comparing 6,000 pairs of faces to determine whether they depict the same person. This benchmark is critical for evaluating the effectiveness of FRS in diverse and challenging scenarios. We utilize LFW in our evaluation framework to benchmark the FR capabilities of the systems.
+CelebA and CelebA-HQ: CelebA is a large-scale facial attributes dataset designed to support research in facial attribute recognition, face detection, and landmark localization. It contains over 200,000 images of more than 10,000 celebrities, each annotated with 40 attribute labels and five landmark locations. CelebA-HQ, a highquality subset of CelebA, comprises 30,000 images at a resolution of 1024×1024 pixels. These datasets are benchmarks for general tasks in image generation and editing, providing a diverse and comprehensive resource for evaluating algorithm performance in these domains. In our work, CelebA serves as the training dataset for the classifier of the DiffAE model, while CelebA-HQ is used as training data for the DiffPure model on faces.
+Flickr-Faces-HQ (FFHQ): The FFHQ dataset consists of 70,000 high-quality images at 1024×1024 resolution, showcasing a wide diversity in age, ethnicity, and background among the subjects. It is particularly useful for training and testing style-based generative models, such as StyleGAN, for tasks like image generation, manipulation, and style transfer. The FFHQ dataset's emphasis on image quality and diversity makes it an ideal training dataset (in-domain) for the DiffAE model, setting a high standard for generative image quality and style transfer evaluation.
+
+C Additional Results
+C.1 Blackbox Evaluation with Attribute Editing
+Table 2 provides a comprehensive evaluation of the protection rate across various attributes in a blackbox setting, comparing performance on the CelebA and FFHQ datasets across multiple FRS, including IRSE50, IR152, IR101, and MobileFace.
+
+DiffPrivate: Facial Privacy Protection with Diffusion Models
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Table 2: Comparison of different blackbox models across attributes on CelebA and FFHQ datasets.
+
+Attribute
+5 o Clock Shadow Arched Eyebrows Attractive Bags Under Eyes Bald Bangs Big Lips Big Nose Black Hair Blond Hair Blurry Brown Hair Bushy Eyebrows Chubby Double Chin Eyeglasses Goatee Gray Hair Heavy Makeup High Cheekbones Male Mouth Slightly Open Mustache Narrow Eyes Oval Face Pale Skin Pointy Nose Receding Hairline Rosy Cheeks Sideburns Smiling Straight Hair Wavy Hair Wearing Earrings Wearing Hat Wearing Lipstick Wearing Necklace Wearing Necktie Young
+
+IRSE50 26.0 43.0 41.0 46.0 41.0 48.0 34.0 32.5 32.0 37.0 48.0 42.0 29.5 44.0 44.5 47.5 32.5 32.5 35.5 51.0 34.0 62.0 31.0 63.5 51.0 42.0 42.0 51.0 41.0 27.5 57.0 46.5 51.5 39.0 52.5 33.5 43.5 34.5 36.0
+
+CelebA IR152 IR101 55.5 30.5 64.0 34.0 68.5 40.5 65.5 44.0 64.0 32.0 65.0 33.0 63.0 33.0 64.0 36.0 60.0 31.0 59.0 36.0 62.0 33.0 61.0 35.0 57.5 28.0 66.5 37.0 64.0 36.5 54.0 31.0 53.0 32.0 53.0 27.0 68.5 39.0 74.5 47.5 54.0 25.5 69.0 53.5 55.5 27.5 72.0 51.5 70.5 40.0 59.5 36.5 62.0 37.0 64.0 38.5 67.0 35.5 50.5 25.5 67.0 49.5 61.5 35.5 64.5 38.0 63.5 33.0 69.0 41.5 71.0 36.0 62.5 35.0 54.0 27.0 64.0 36.5
+
+MobileFace 24.5 35.5 34.5 42.5 30.0 36.0 25.0 30.5 26.0 23.0 29.5 31.0 24.0 31.5 34.5 42.0 27.0 27.5 34.0 40.0 28.0 46.5 30.5 44.5 35.5 32.5 33.5 36.0 27.0 28.0 44.0 34.5 36.0 29.5 37.5 31.0 35.0 28.0 28.5
+
+IRSE50 41.5 42.5 46.0 57.5 47.0 49.5 45.5 50.5 40.0 42.0 38.0 45.0 32.0 43.5 49.0 51.5 48.0 43.5 42.0 64.0 52.5 65.5 40.0 61.0 44.0 41.5 46.0 45.0 46.0 51.5 66.5 52.0 46.5 38.5 55.5 44.0 45.0 48.0 45.0
+
+FFHQ IR152 IR101 62.5 31.5 63.5 36.0 69.5 45.0 70.0 38.5 66.0 27.5 64.0 38.0 63.0 37.5 66.5 39.0 66.5 32.0 57.0 31.5 50.0 19.0 62.0 39.0 55.0 24.5 60.0 30.5 67.5 40.5 57.5 28.0 58.5 27.0 62.0 30.5 68.0 41.5 78.0 53.5 62.0 32.5 71.0 51.0 52.0 24.0 69.0 45.5 62.5 37.5 59.5 33.5 67.5 34.5 61.5 26.0 63.0 37.5 65.5 32.0 73.0 58.0 65.0 34.5 62.5 34.5 61.5 34.0 65.0 35.5 69.0 44.0 61.5 32.0 62.0 30.5 70.5 40.5
+
+MobileFace 36.5 34.5 39.0 45.0 35.5 42.0 34.0 36.5 33.5 30.5 23.5 34.5 25.5 35.5 37.0 42.0 40.5 35.0 41.5 53.0 40.0 46.5 36.5 48.0 32.5 30.5 41.0 39.0 36.0 45.0 52.5 37.5 36.5 34.0 39.0 40.5 38.0 37.0 38.5
+
+D Detection Threshold at FAR Target
+The effectiveness of facial recognition systems is essential in applications where high security and accurate identity verification are necessary. A crucial part of evaluating these systems involves setting an appropriate detection threshold  that determines whether two facial images represent the same individual. This threshold plays a vital role in balancing the tradeoff between system usability and security, specifically in reducing false acceptances without significantly increasing false rejections. This section presents the mathematical formulation and approach for setting the detection threshold  to achieve a desired FAR using the LFW dataset.
+
+· True Positive (TP): Correctly identifying a match between
+
+different images of the same individual.
+
+· False Positive (FP): Incorrectly identifying a match between
+
+images of different individuals.
+
+· True Negative (TN): Correctly identifying no match be-
+
+tween images of different individuals.
+
+· False Negative (FN): Incorrectly identifying no match be-
+
+tween different images of the same individual.
+
+· False Accept Rate (FAR): The probability of incorrectly
+
+granting access to an unauthorized individual, calculated as
+
+FAR
+
+=
+
+FP FP+TN
+
+.
+
+D.1 Operational Definitions
+
+D.2 Methodology
+
+Before explaining the methodology, it is important to define the key metrics:
+
+The process of determining the detection threshold  for a specified FAR involves the following steps:
+
+69
+
+Proceedings on Privacy Enhancing Technologies 2025(2)
+
+Minh-Ha Le and Niklas Carlsson
+
+Table 3: Detection thresholds and performance metrics for various FRS models at specified FAR targets on the LFW dataset
+
+Model MobileFace IRSE50 (ArcFace) IR152 (ArcFace) FaceNet IR101 (CurricularFace)
+
+FAR Target
+1 × 10-5 1 × 10-4 1 × 10-3 1 × 10-2 1 × 10-1
+1 × 10-5 1 × 10-4 1 × 10-3 1 × 10-2 1 × 10-1
+1 × 10-5 1 × 10-4 1 × 10-3 1 × 10-2 1 × 10-1
+1 × 10-5 1 × 10-4 1 × 10-3 1 × 10-2 1 × 10-1
+1 × 10-5 1 × 10-4 1 × 10-3 1 × 10-2 1 × 10-1
+
+Threshold 0.37153 0.37177 0.3875 0.42018 0.45514 0.39523 0.39547 0.4 0.4231 0.4571 0.38873 0.38897 0.4277 0.44566 0.47085 0.23503 0.23527 0.3352 0.37393 0.42536 0.41383 0.41407 0.4332 0.45104 0.47432
+
+FAR Achieved 0.00067 0.00067 0.00133 0.00967 0.10033 0.00033 0.00033 0.001 0.01 0.09967 0.00033 0.00033 0.00133 0.01033 0.10067 0.00067 0.00067 0.001 0.01 0.1 0.00033 0.00033 0.00133 0.01033 0.10067
+
+AUC 0.95012 0.95068 0.94749 0.95338 0.94774
+
+Accuracy 0.9285 0.93667 0.94233 0.9405 0.94183
+
+(1) Similarity Score Calculation: Calculate similarity scores
+
+for pairs of images within the LFW dataset. These scores
+
+represent the degree of similarity between images, as deter-
+
+mined by the facial recognition model.
+
+(2) FAR Calculation for Various Thresholds: For a range
+
+of
+
+thresholds,
+
+calculate the
+
+FAR as FAR( )
+
+=
+
+FP
+
+FP( ) ( )+TN
+
+(
+
+)
+
+,
+
+where FP( ) and TN( ) are the counts of false positives and
+
+true negatives, respectively, for the threshold  .
+
+(3) Target FAR Achievement: Find the threshold  that yields
+
+an FAR closest to the desired target FARtarget, thus optimizing
+
+the balance between security and usability.
+
+D.3 Optimization Problem
+The optimization problem to identify the ideal detection threshold can be expressed as:
+
+min |FAR( ) - FARtarget |
+
+(20)
+
+
+
+This problem aims to minimize the absolute difference between the FAR at a given threshold and the target FAR, ensuring the facial recognition system operates within the desired security levels.
+
+D.4 Implementation Considerations
+
+depends on whether the FAR changes monotonically with respect to  .
+D.5 Experimental Results
+We evaluated several facial recognition models on the LFW dataset to determine the detection threshold ( ) required to achieve specific FAR. The models tested include MobileFace, IRSE50 (ArcFace), IR152 (ArcFace), FaceNet, and IR101 (CurricularFace). Each model was assessed at FAR targets of 1 × 10-5, 1 × 10-4, 1 × 10-3, 1 × 10-2, and 1 × 10-1 to determine the corresponding threshold ( ) and actual FAR achieved. Additionally, the Area Under the Curve (AUC) and accuracy of each model were recorded to provide a comprehensive evaluation of performance.
+As indicated in Table 3, with a lower FAR, the threshold requirement is lower, making it easier to craft adversarial samples. However, this also leads to less transferability across models. For instance, lower thresholds provide effective protection but may not generalize well across different facial recognition systems.
+These results highlight the variability in performance across different models and FAR targets. Notably, while some models perform exceptionally well at lower FAR targets, the accuracy and AUC provide additional layers of insight into their overall effectiveness in facial recognition tasks.
+
+In practice, applying this method requires careful analysis of the similarity score distribution and may involve calibration techniques to adjust scores before applying the detection threshold. Additionally, the choice of optimization technique, such as binary search,
+
+70
+
+

@@ -1,0 +1,141 @@
+Privacy-preserving Adversarial Facial Features
+WED-AM-007
+West Building Exhibit Halls ABC 392
+
+2
+Quick Preview
+❑ How to preventprivacyleakagefromfacialfeatures?
+✓ Add disturbances in real-time on the server to obtain 
+adversarial features.
+✓The adversarial features of database leakage cannot be 
+reconstructed.
+Reconstruct network
+Client Server
+attacker
+featurefeature
+ Face recognition
+×
+Adversarial
+feature
+Face recognition network
+Client Server
+featurefeature
+attacker
+√
+Reconstruct 
+network
+× Directly storing original facial features.
+× There is a privacy risk when facial 
+features leaked from the database.
+◼ We propose a novel facial privacy-preserving method (namely AdvFace), which can generate
+privacy preserving adversarial features against unknown reconstruction attacks while maintaining
+face recognition accuracy.
+Traditional facial recognition models an adversarial features-based face privacy protection (AdvFace)
+3
+Background
+❑ Face recognitionsystemis widelyused
+Security Healthcare
+ Attendance
+ Finance
+4
+Background
+❑ TypicalClient-Serverface recognitionsystem
+◼ Stored Keys: Facial image x → Facial features E(x)
+A straightforward solution to prevent direct privacy leakage
+5
+Background
+❑ However ,a powerfulbut realisticattackercan reconstructthe originalimagefromthe facialfeature[1~3]
+◼ Using Neural Networks ∅ to implement reconstruction attack: ∅ ∶ 𝒛 → 𝒙, 𝒛 = 𝑬(𝒙)
+◼ Training Objective: Minimizing the reconstruction loss 𝑳𝑹(𝒁, 𝑿)
+[1] Alexey Dosovitskiy, et al. Inverting visual representations with convolutional networks.
+[2] Zecheng He, et al. Model Inversion Attacks Against Collaborative Inference.
+[3] Guangcan Mai, et al. Deep models under the gan: information leakage from collaborative deep learning.
+6
+Background
+[1] Craig Gentry, et al. Implementing gentry’s fully-homomorphic encryption scheme.
+[2] Xiaoyu Kou, et al. Efficient and privacy-preserving distributed face recognition scheme via facenet.
+[3] Mahawaga Arachchige Pathum Chamikara , et al. Privacy preserving face recognition utilizing differential privacy.
+[4] Yunlong Mao, et al. A privacy-preserving deep learning approach for face recognition with edge computing.
+[5] Jiazhen Ji , et al. Privacy-preserving face recognition with learnable privacy budgets in frequency domain.
+[6] Yuxi Mi , et al. Duetface: Collaborative privacy-preserving face recognition via channel splitting in the frequency domain.
+[7] Ang Li , et al. Deepobfuscator: Obfuscating intermediate representations with privacy-preserving adversarial learning on smartphones.
+❑ Motivation:
+◼ Typical protection methods:
+◼ Encryption[1,2] : incur large computation overhead and redeployment costs
+◼ DP(Differential privacy)[3,4] : cannot defend against reconstruction attacks
+◼ Frequency domain[5,6] : cannot defend against reconstruction attacks and incur redeployment costs
+◼ Adversarial training[7] : cannot maintain recognition accuracy and incur redeployment costs
+❑ Goal:
+◼ Resist reconstruction attack
+◼ Maintain face recognition accuracy
+7
+Key Idea of AdvFace
+❑ Design adversarial latent noise to minimize the impact on facial recognition networks 
+and maximum the impact on attack networks
+◼ Noise addition on facial features lightly.
+◼ The added noise serves as an adversarial sample to
+induce attack errors.
+Facial features
++
+Reconstruction attack Attack failed
+Adversarial latent noise
++
+Correct identification
+◼ impact on facial recognition networks:
+◼ impact on attack networks：
+◼ The noise also affects the facial recognition network.
+◼ The added noise can be considered as a normal
+disturbance with only a slight impact.
+Facial features
+Adversarial latent noise
+Face recognition
+8
+❑ Key idea: Strictlylimitthe magnitudeof perturbationto and reduceits impacton facerecognition
+❑ Key idea: Disruptthe mappingfromfacialfeatureto facialimageto defendreconstructionattacks
+Key Idea of AdvFace
+⚫ Build a shadow model 𝑺()
+(1)
+Simulate the practical attacker to learn the mapping
+from facial feature to facial image, and use adversarial
+perturbation to disrupt the mapping.
+Observation: Even if the attacker uses a
+different reconstruction network structure,
+the mapping relationships learned by the
+network are similar.
+Howto resistreconstructionattack?
+Howto maintainfacerecognitionaccuracy?
+(2)
+9
+Privacy Protection
+(3)
+❑ Pipeline: How to replacefacialfeatureby adversarialfeature
+𝑧 = 𝐸 𝑥 ,
+◼ Obtain the reconstructed image and
+calculate the gradient
+(4)
+◼ Generate adversarial features from gradient
+(5)
+◼ Replacefacialfeatureby adversarialfeaturein database
+◼ Generate shadow images ෥𝒙 to replace
+unobtainable original images 𝒙, and
+obtain its feature ෤𝒛
+10
+Privacy Protection
+◼ Maintainingfacerecognitionaccuracy
+◼ Defenseagainstmaliciousidentityinference
+11
+Privacy Protection
+◼ Visualizationof resistanceto reconstructionattack ◼ Transferabilityto differentattacksettings
+12
+Conclusion
+❑ Weproposea novelfacialprivacy-preservingmethod(namelyAdvFace).
+❑ Weunveilthe rationaleof the reconstructionattack.
+➢ AdvFace can generate privacy preserving adversarial features against unknown
+reconstruction attacks while maintaining face recognition accuracy.
+➢ AdvFace can be easily integrated into deployed face recognition systems as a plug-
+in privacy-enhancing module.
+➢ Breaking the mapping from features to facial images has strong transferability in
+defense against reconstruction attacks, as different attack models learn the same
+mapping.
+13
+Thank Y ou

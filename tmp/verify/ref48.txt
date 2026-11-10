@@ -1,0 +1,638 @@
+Pattern Recognition 67 (2017) 149­163
+Contents lists available at ScienceDirect
+Pattern Recognition
+journal homepage: www.elsevier.com/locate/patcog
+
+Multi-biometric template protection based on Homomorphic Encryption
+Marta Gomez-Barrero a,, Emanuele Maiorana b, Javier Galbally c, Patrizio Campisi b, Julian Fierrez d
+a da/sec - Biometrics and Internet Security Research Group, Hochschule Darmstadt, Germany b Dipartimento di Ingegneria, Sezione di Elettronica Applicata, Universita degli Studi Roma Tre, Italy c European Commission - Joint Research Centre, Italy d ATVS - Biometric Recognition Group, EPS, Universidad Autonoma de Madrid, Spain
+
+article info
+Article history: Received 20 June 2016 Revised 14 October 2016 Accepted 15 January 2017 Available online 21 January 2017
+Keywords: Biometrics Template protection Multi-biometrics Homomorphic Encryption Unlinkability Privacy
+
+abstract
+In spite of the advantages of biometrics as an identity verification technology, some concerns have been raised due to the high sensitivity of biometric data: any information leakage poses a severe privacy threat. To solve those issues only protected templates should be stored or exchanged for recognition purposes. In order to improve the performance and achieve more secure and privacy-preserving systems, we propose a general framework for multi-biometric template protection based on homomorphic probabilistic encryption, where only encrypted data is handled. Three fusion levels are thoroughly analysed, showing that all requirements described in the ISO/IEC 24745 standard on biometric data protection are met with no accuracy degradation. Furthermore, even if all the process is carried out in the encrypted domain, no encryptions are necessary during verification, thereby allowing an efficient verification which can be deployed for real-time applications. Finally, experiments are carried out on a reproducible research framework. The results obtained show high accuracy rates, reaching EERs as low as 0.12%, and requiring protected templates comprising 200 KB.
+© 2017 Elsevier Ltd. All rights reserved.
+
+1. Introduction
+Over the last decades, biometric recognition has been developed as a reliable alternative to traditional authentication systems based on PINs or passwords [1]. Among other advantages, biometric characteristics (e.g., face, fingerprint or signature) cannot be lost or forgotten. On the other hand, biometric information is very sensitive and some concerns have been raised regarding the privacy of the subjects - it has already been proved that samples can be recovered from unprotected templates [2­5] and subsequently used to impersonate genuine subjects [6]. In fact, biometric data is considered sensitive data in European Union (EU) General Data Protection Regulation 2016/679 [7], which means that the use of these data is subjected to the right of privacy preservation. As a consequence, templates must be protected, in order to prevent any leakage of this highly sensitive information.
+ Corresponding author. E-mail addresses: marta.gomez-barrero@h-da.de (M. Gomez-Barrero),
+maiorana@uniroma3.it (E. Maiorana), javier.galbally@jrc.ec.europa.eu (J. Galbally), campisi@uniroma3.it (P. Campisi), julian.fierrez@uam.es (J. Fierrez).
+http://dx.doi.org/10.1016/j.patcog.2017.01.024 0031-3203/© 2017 Elsevier Ltd. All rights reserved.
+
+Such privacy protection is granted by Biometric Template Protection (BTP) schemes [8,9]. In these systems, a protected template C, which should not reveal any biometric information, is extracted from the biometric sample M, possibly using a secret key, and stored in the database. More specifically, the ISO/IEC 24745 standard on biometric information protection [10] establishes two main requirements for such templates:
+· Irreversibility: "biometric data shall be processed by irreversible transforms before storage". Therefore, given a protected template C, no biometric information should be learned from it. It should also not be feasible to reconstruct a biometric sample M , which is positively matched to the original sample M by the biometric system.
+· Unlinkability: " the stored biometric references should not be linkable across applications or databases". In other words, given two templates, C1 and C2, extracted from the same biometric sample M and protected with different secret keys, it should not be feasible to decide whether they belong to the same subject.
+Additionally, due to the fact that biometric characteristics cannot be replaced, renewability is also desired (i.e., if one template is
+
+150
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+lost or stolen, a new one, not matching the old template, should be issued). At the same time, other properties such as verification accuracy, speed and storage requirements should be maintained compared to the same system using unprotected data [11].
+Most existing BTP schemes [12,13], commonly categorized as cancelable biometrics and cryptobiometrics, show at least one of the following two drawbacks: i) performance degradation with respect to unprotected systems; ii) they require Auxiliary Data (AD) for verification purposes [8]. Attacks on this AD can disclose sensible information, which compromises both the security of the system and the privacy of the subject [14,15].
+As an alternative to those approaches using AD, Homomorphic Encryption schemes allow for computations to be performed on ciphertexts, with no additional AD, and which generate encrypted results which decrypt to plaintexts that match the result of the operations carried out on the original plaintext [16]. Therefore, combining such an encryption approach with biometric verification systems would meet the aforementioned requirements while preserving verification performance [17]. Since practical implementations of Fully Homomorphic Encryption (FHE) schemes still remain a big challenge [18], somewhat Homomorphic Encryption (HE) schemes, which only allow a limited subset of operations in the encrypted domain, are nowadays being introduced into many applications based on signal processing [18,19], and, particularly, biometrics [20­22].
+However, as HE only allows a restricted set of operations in the encrypted domain, it is possible that some of the most advanced and accurate state-of-the-art systems, such as GMMs or SVMs, are difficult to integrate in the proposed framework while keeping verification time low enough for real time applications [23]. This limitation can be overcome by introducing multi-biometric template protection schemes (MBTP) [24], since the combination of different biometric characteristics generally leads to higher accuracy [25]. As defined in the ISO/IEC TR 24722 on multimodal and other multibiometric fusion [26], fusion can be carried out at three different levels [25], namely:
+· Feature level fusion: a single template of higher dimensionality is generated from the individual templates extracted from each characteristic, hence comprising more discriminative information than each single template.
+· Score level fusion: each unimodal system returns an individual similarity score, which are normalized to a common range and combined in order to obtain a more accurate system [27].
+· Decision level fusion: each unimodal system returns an individual accept/reject decision, which are fused in order to increase the accuracy of the system.
+Even though extensive research has been carried out on the fields of multi-biometric recognition [25] and unimodal biometric template protection [8], several issues remain unsolved in the development of multi-biometric template protection schemes [28]. Two of the most significant challenges are: i) the development of a generic framework for multi-biometric template protection, and ii) the difficulty to obtain protected templates from non pre-aligned samples, without requiring AD (and hence avoiding potential information leakage).
+In the present article, we propose and implement a general template protection framework for multi-biometric systems based on Homomorphic Encryption, analysing the advantages and disadvantages of each fusion level. Two different distance measures are implemented for this particular encryption scheme and compared in terms of: verification performance, irreversibility, unlinkability and computational complexity. To the best of our knowledge, this is the first MBTP scheme based on HE.
+Additionally, the proposed MBTP scheme is defined within an overall security model (see Section 3) that describes the entities
+
+involved in the recognition process and their expected behaviour (i.e., honest or malicious). This way the reader can have a clearer picture of the threats being taken into account and what are the risks against which the protection approach is effective.
+Finally, in order to assess the soundness of the proposed approach, we evaluate a particular case study based on the fusion of on-line signature and fingerprints. We have chosen this particular fusion due to its possible applications: while on-line signature is one of the most widely accepted biometric characteristics, fingerprints offer a very high accuracy and are being deployed in most smartphones. Furthermore, the experimental evaluation is carried out on a reproducible research framework: the real and publicly available multimodal BiosecurID database [29] and an open source implementation of the Paillier cryptosystem.1 Results are reported for the protected and unprotected domains following a common protocol.
+In summary, most proposed BTP schemes report a degradation in verification performance. Furthermore, should a protected template be stolen, there is no way to recover the original biometric sample, thus requiring the re-acquisition of biometric samples in order to re-generate a biometric protected database. In addition, for a subset of methods, AD has to be stored together with the protected templates, being hence more vulnerable to attacks such as the ones proposed in [14,15]. The method proposed in the present article deals with those drawbacks by using Homomorphic Encryption to encrypt biometric templates and the computations carried out at verification time. Furthermore, verification accuracy is enhanced thanks to a multi-biometric approach.
+2. Related works
+Biometric template protection schemes [12,13] have been traditionally divided into cancelable biometrics and cryptobiometrics. Homomorphic Encryption and Garbled circuits do not belong to these categories. A third class, namely biometrics in the encrypted domain, can therefore be added. The general classification of BTP schemes considered in the present article is depicted in Fig. 1.
+Sections 2.1 and 2.2 focus on the review of protection schemes proposed for multi-biometric systems. The references in Fig. 1 correspond to the works described in those sections. However, as depicted in Fig. 1, not all the methods developed for unimodal systems have been translated to the multi-biometric case. For an exhaustive review of works dealing with cancelable biometrics and cryptobiometrics template protection in unimodal systems, the reader is referred to [8].
+On the other hand, as no schemes have been presented so far for multimodal systems in the biometrics in the encrypted domain class, Section 2.3 reviews the existing protection methods in this category for unimodal systems. A summary of the main characteristics of each method is included in Table 1. Even if some properties had been proven in the corresponding articles, if any attack has later shown that the system was not irreversible or not unlinkable, we have written " No". Therefore, as it may be observed, none of the methods grant the aforementioned requirements for BTP schemes (i.e., irreversibility, unlinkability and no performance degradation) at the same time.
+2.1. Cancelable multi-biometrics
+Cancelable biometrics refer to schemes in which biometric data is obscured with an irreversible transformation and verification is carried out in the transformed domain. As shown in Fig. 1, there are two main types of schemes: i) irreversible transformations of
+1 http://www.csee.umbc.edu/kunliu1/research/Paillier.html
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+151
+
+Fig. 1. Multi-biometric template protection taxonomy.
+
+Table 1 Summary of key multi-biometric template protection schemes. " ­" stands for properties not evaluated in the corresponding articles.
+
+Technique
+
+Ref.
+
+Accuracy
+
+Accuracy drop
+
+Irreversibility
+
+Unlinkability
+
+Cryptobiometrics :
+
+[24]
+
+68% GAR
+
+­
+
+No
+
+No
+
+Fuzzy Vault & Commit.
+
+75% GAR
+
+Cancelable :
+
+[30]
+
+89% GAR
+
+­
+
+Yes
+
+­
+
+Random projection
+
+0% FMR
+
+Cancelable :
+
+[31]
+
+ 95% GAR
+
+ 5%
+
+Yes
+
+­
+
+BioHashing, Interp.
+
+BioConvolving
+
+Cryptobiometrics :
+
+[32]
+
+1.8% FMR
+
+­
+
+No
+
+No
+
+Fuzzy vault
+
+0.01% FNMR
+
+Cryptobiometrics :
+
+[33]
+
+0% EER
+
+­
+
+Yes
+
+­
+
+Cascade
+
+Cryptobiometrics :
+
+[34]
+
+0.92% FMR
+
+­
+
+Yes
+
+­
+
+Quantization
+
+0.0002% FNMR
+
+Cancelable :
+
+[35]
+
+1.9% FMR
+
+0%
+
+Yes
+
+No
+
+Irrev. Transformation
+
+0.01% FNMR
+
+Cancelable :
+
+[36]
+
+6% EER
+
+­
+
+Yes
+
+­
+
+Irrev. Transformation
+
+Cryptobiometrics :
+
+[37]
+
+ 3% EER
+
+­
+
+No
+
+No
+
+Fuzzy Comm.
+
+Cryptobiometrics :
+
+[38]
+
+­
+
+­
+
+No
+
+No
+
+Cascade
+
+Complexity Low Low Low
+Low Low Low Low Medium Low Low
+
+the biometric data or unprotected templates, and ii) biometric salting, in which AD is blended with biometric data to derive a distorted version of the biometric template. However, MBTP have only been proposed for the former. A fusion of face and ear samples using random projections and a transformation-based feature extraction, reducing dimensionality with PCA and clustering the features, is proposed in [30]. Applying different cancelable transformations, voice and iris are fused in [31]. The spiral and the continuous components belonging to two different fingerprints from the same subject are mixed in one cancelable template in [36]. More recently, face and iris features are protected with Bloom filters and fused into a single template in [35].
+All of the cited approaches, except the scheme proposed in [35], lead to a degradation in verification performance. Furthermore, should a protected template be stolen, there is no way to recover the original biometric sample or the unprotected template in order to re-encode it with a new key. As a consequence, in order to re-generate the biometric database, biometric samples need to be re-acquired, with the additional nuisance this fact could pose to the subjects.
+2.2. Multi-biometric cryptosystems
+On the other hand, in cryptobiometric systems a key is either bound (key binding schemes in Fig. 1) or extracted (key generation schemes in Fig. 1) from biometric data. In this context, most systems rely on the fuzzy vault [39] and the fuzzy commitment [40] schemes, which are classified as key binding approaches.
+
+A fuzzy vault scheme is proposed in [32], where a single multibiometric template is derived from fingerprint and iris features. On the other hand, a fuzzy commitment scheme for the fusion of two different feature extraction algorithms is applied to 3D face data in a single sensor scenario in [37], which is therefore not applicable to the more general fusion of different biometric modalities. Additionally, fuzzy schemes can be applied to secure sketches, that is, secure representations of biometric templates in which helper data is used to recover the original biometric template and matching is reduced to an error correction [41]. In [24], a single secure sketch is generated from multiple and heterogeneous templates, based on the concatenation of the individual sketches. Practical implementations for fuzzy vault and fuzzy commitment schemes are then proposed for the fusion of iris, fingerprint and face.
+Those methods share a common drawback: AD has to be stored together with the protected templates, being hence more vulnerable to attacks such as the ones proposed in [14,15].
+On the other hand, regarding key generation systems, quantization schemes are applied to face and pre-aligned fingerprint samples in [34].
+In opposition to those previous schemes, a modular approach for the design of multi-biometric cryptosystems is proposed in [33]: a secure sketch is extracted from each biometric template, and used in a sequential manner to secure successive templates. In [38], a more general approach is presented, where multiple secrets are similarly used in a cascade fashion within the secure sketch framework. In this last case, no evaluation of the verification performance is provided. These approaches, classified as key binding
+
+152
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+schemes, have the advantage of an easy escalation to more biometric samples, while the main limitation is that the overall security is bounded by the security of the outermost layer.
+As in the case of cancelable biometrics, cryptobiometric systems usually present a performance degradation with respect to the systems relying on unprotected data.
+2.3. Biometrics in the encrypted domain
+As an alternative to the aforementioned approaches, where either the privacy of the subject is not fully protected or verification performance degrades, secure multiparty computation and homomorphic cryptosystems can be used in order to carry out biometric recognition in the encrypted domain while obtaining results fully comparable to those yielded by plain data [18,42]. In particular, current approaches to biometrics in the encrypted domain [22] are based on Garbled Circuits (GC) [43] and Homomorphic Encryption (HE) [16,18] (see Fig. 1).
+Since efficient implementations of HE schemes are very recent [44], only a few unimodal biometric systems based on this protection technology have been proposed so far. In [21], the authors present a new fingerprint verification system based on the FingerCode fixed-length representation of fingerprints [45] and HE. Results show that verification performance is preserved. However, the database stored in the server is not encrypted and results are reported on a small database comprising data of only 51 subjects. An improved version of that approach is suggested in [46], where a more compact implementation using quantization is proposed at a small cost in terms of verification accuracy.
+In [47], Eigenface based templates are protected with HE. Then, a more efficient approach is presented in [48] using GCs for the threshold comparison. Furthermore, the SCiFI project [49] proposes a biometric identification algorithm specifically designed for a more efficient usage in secure computation, based on fixedlength templates with a constant Hamming weight. In contrast to the Eigenface based approaches, only the matching process, but not the template construction, is secured.
+In [50], a secure iris BTP based on a combination of HE and GCs is proposed, handling encrypted iriscodes. In order to deal with the computation of Hamming Distances in the encrypted domain (divisions are not supported), the division and comparison with a verification threshold is reduced to a inequality comparison carried out with GCs.
+Furthermore, even though biometric algorithms that achieve better detection rates are known in the literature, these schemes are much more complex than the representations used in the aforementioned articles [23], and thus more difficult to implement in the encrypted domain due to the limitation in the number of possible operations that can be performed. In order to compensate for such loss on verification accuracy, the fusion of several biometric characteristics in the encrypted domain is proposed.
+3. Security model
+We will use the following notation in the subsequent sections:
+· Tp = {p1, . . . , p f , . . . , pF }: unprotected templates, comprising F
+features pf.
+· Sdist = ddist (Tp, Tr ): similarity score between two templates Tp
+and Tr, where ddist is a particular distance function: euc stands for Euclidean and cos for cosine (see Section 4.2). · m and m: plain message and its corresponding ciphertext.
+· m = Epk(m, s), where E denotes the encryption function, s a
+random number and pk the public key.
+· m = Dsk(m ), where D denotes the decryption function and sk
+the private key.
+
+In the present section we describe the general security model considered in this work, including all the assumptions made regarding the expected behaviour (honest or malicious) of each of the entities involved in the biometric recognition process. This way the reader can have a more general perspective of how different threats have been taken into account and how the proposed MBTP deals with several privacy and/or security risks.
+First, a general diagram of the unencrypted biometric verification system is depicted in Fig. 2 (left), where two entities are involved:
+· A client, which will acquire the probe biometric sample, extract the features and encode them in the template Tp, generate the similarity score as the distance between Tp and the refer-
+ence template Tr, S = d(Tp, Tr ) (see Eqs. (6) and (9)), and compute the final genuine/impostor verification decision D = (S > ), where  is the pre-defined verification threshold.
+· A server, which will hold the database with the reference templates Tr and send them to the client during verification.
+In order to increase the privacy of the subject, the server must process the client's biometric data without extracting any information from it, and at the same time, the server must protect the information stored in the database [17]. To that end, a different security model is used in the protected system (see Fig. 2, right) where all the data, either stored or shared between client and server in the verification process, should be encrypted. Therefore, the new entities and roles are the following:
+· The client acquires the probe biometric sample, extracts the template Tp and generates the encrypted score E(S) (see Eqs. (7) and (10)), sending it to the server.
+· The DB server holds the database comprising only encrypted templates (E(Tr)) and sends the encrypted reference template E(Tr) to the client during verification.
+· The authentication server holds the key pair (sk, pk) and computes the final genuine/impostor decision D.
+With respect to the model proposed in other biometric template protection approaches [51], in the present scheme the sensor and matcher have been integrated into a single entity: the client.
+Therefore, the requirements on the data flow described in [51] to fulfil the aforementioned irreversibility and unlinkability criteria have been adapted to the present model as:
+· The authentication server should not learn Tr or Tp. · The database server should not learn Tp or trace subjects. · The client should not learn Tr.
+To fulfil those requirements we assume that:
+· According to the honest-but-curious adversary model [52], all parts involved follow the protocols honestly. As a consequence, we may assume that the scores computed by the client are correct.
+· An adversary may have access to one of the servers, but the authentication and DB servers will not collude.
+This way, since the client does not know sk, it cannot decrypt the reference template E(Tr) or the similarity score E(S). The comparator can hence be moved to the server and S cannot be used to carry out hill-climbing attacks that need access to the score in order to be performed [53]. Additionally, as it will be shown in Section 4.2, the probe template Tp does not need to be encrypted, since it never leaves the client (and we are assuming an honest behaviour from the client). As a consequence there is no leak of biometric information in the communication channel.
+In a similar manner, the authentication server does not have access to either the probe template Tp or the encrypted reference E(Tr). This way, it cannot learn any biometric data.
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+153
+
+Fig. 2. Unprotected vs protected biometric verification. In the unprotected scenario (left), a probe biometric sample is acquired and its features extracted (Tr). The final output
+is the binary decision D = (S > ), where S is computed as the distance with respect to the stored unprotected reference (Tp): S = d(Tr, Tp ), according to Eqs. (6) and (9)
+(depending on the distance measure considered). In the protected scenario (right), all the encrypted data or information flow is depicted in red: E(Tp) and E(S). Analogously, the similarity function in the encrypted domain is defined in the text by Eqs. (7) and (10). (For interpretation of the references to colour in this figure legend, the reader is
+referred to the web version of this article.)
+
+4. Proposed system
+Following the security model proposed in the previous section, the Paillier homomorphic probabilistic encryption scheme [44] will be used to encrypt the data (more details in Section 4.1). The implementation of two different distance functions (i.e., Euclidean and Cosine) which reached an optimum accuracy compared to other distances for this particular encryption scheme is described in Section 4.2. Finally, in Section 4.3 we propose a general framework in the encrypted domain for each fusion level defined in the ISO/IEC TR 24722 on multimodal and other multi-biometric fusion [26] .
+4.1. Homomorphic Encryption
+Among the HE schemes proposed in the literature, the Paillier homomorphic probabilistic encryption scheme [44] is used in the present work, due to its advantages over other cryptosystems for this particular application. For instance, the Goldwasser­Micali cryptsosystem [54] is homomorphic for the XOR operation but not for the addition, as needed for the distance functions computations. Other widely used schemes with aditively homomorphic properties include ElGamal crypstosystem [55] and its variants. However, as shown in [44], decryption is faster for the Paillier cryptosystem (and as we will see in Section 4.3 one decryption is carried out during verification). Furthermore, Paillier also offers homomorphic multiplication of plaintexts, needed for the distance functions considered.
+Paillier cryptosystem is based on the decisional composite residuosity assumption (DCRA): given a composite n and an integer z, it is hard to decide whether z is an n-residue modulo n2. In other words, it is hard to decided whether there exists y such that z = yn mod n2.
+As any other public key encryption scheme, two separate keys are required: i) a public key pk for encryption, and ii) a private or secret key sk for decryption. In the Paillier cryptosystem, the pub-
+lic key is defined as pk = (n, g), where n = p · q with p and q two large prime numbers such that gcd(pq, (p - 1)(q - 1)) = 1, and
+g  Zn2 (i.e., the set of integers modulo n2 which possess a multiplicative inverse). On the other hand, the secret key is defined as
+
+sk = (, ), where  = lcm(p - 1, q - 1) and  = (g mod n2 )-1
+
+mod n.
+Given a message m  Zn, its encryption is denoted as m =
+Epk(m, s)  Zn2 , and computed as follows:
+
+Epk(m, s) = gm · sn mod n2
+
+(1)
+
+where s  Zn is a random number providing the probabilistic nature of the cryptosystem. This property is necessary to grant semantic security against chosen-plaintext attacks [54]. In particular, different ciphertexts are obtained when the same plaintext is encrypted several times using the same public key: Epk(m, s1) = Epk(m, s2). This randomness provides the required unlinkability to the protected templates: even if the exact same unprotected features are extracted from a particular biometric sample, the encrypted templates would be different.
+It is shown in [44] that E is a one-way function (i.e., irreversible) if and only if the decisional composite residuosity assumption holds. Therefore, a computationally-bound attacker in possession of an encrypted message m (a protected biometric template) and the public key pk would not be able to extract any information about the plaintext m (biometric information). He could only do so if he obtained the secret key sk and decrypted
+the ciphertext m = Epk(m, s) as follows
+
+m = Dsk(m ) = L (m ) mod n2 ·  mod n
+
+(2)
+
+where L(t ) = (t - 1)/n.
+The main advantage of HE schemes with respect to other cryp-
+tosystems is the fact that some operations can be carried out in
+the encrypted domain, yielding ciphertexts whose corresponding
+plaintexts are the same we would obtain performing the opera-
+tions over the plaintexts. In particular, the Paillier cryptosystem
+fulfils two properties which will be used in the present scheme.
+On the one hand, the product of two ciphertexts, m1 = Epk(m1, s1 ) and m2 = Epk(m2, s2 ), will decrypt to the sum of their correspond-
+ing plaintexts:
+
+Dsk m1 · m2 mod n2 = m1 + m2 mod n
+
+(3)
+
+On the other hand, an encrypted plaintext, m1 = Epk(m1, s1 ),
+raised to a constant l, will decrypt to the product of the plaintext
+
+and the constant:
+
+Dsk (m1 )l mod n2 = m1 · l mod n
+
+(4)
+
+154
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+As a consequence, while an unlimited number of summations can be carried out in the encrypted domain, only a limited number of products can be computed - as it is shown in Eq. (4), one of the factors should be a plaintext. This fact poses a severe challenge for the implementation of many similarity measures.
+4.2. Encrypted distance computation
+
+In order to compare two biometric samples Tp and Tr, two different distances will be considered. In the next subsections, we describe the implementation of each distance function within the Pailler cryptosystem. Since square roots and divisions are not straightforward to implement in the encrypted domain, we will use the square of the Euclidean distance. Furthermore, to avoid overcomplicated notation, the encrypted values Epk(m, s) will be simply denoted as E(m), even though the random number s and the public key pk are needed for the encryption computation (see Eq. (1)). This way, for each particular distance:
+
+· Tp = {p1, . . . , pF } denotes the probe biometric sample.
+· E(Tr)dist denotes the encrypted reference template, for each distance measure. As will be explained in the following subsec-
+tions, and defined in Eqs. (8) and (11), the encrypted template
+E(Tr)dist is different for each distance. The reader should thus be
+aware that E(Tr ) = {E(r1 ), . . . , E(rF )}. This is due to the impos-
+sibility to carry out some operations, such as division or square
+roots, in the encrypted domain. One of the contributions of the
+paper is defining E(Tr)dist for each distance measure, so that the score can be directly computed in the encrypted domain.
+· E(Sdist) denotes the encrypted similarity score, computed between Tp and E(Tr)dist as defined in Eqs. (7) and (10). Following E(Tr)dist, a contribution of the paper is defining, for each of the two considered distance measures, the function E(Sdist) that takes as input Tp and E(Tr)dist, and outputs the encrypted score with no decryptions involved.
+
+We need to take into account two limitations of the Paillier
+
+cryptosystem for the computation of E(Sdist): i) we can carry out a limited set of operations in the encrypted domain (unlimited
+
+sums but a limited number of products), and ii) we can only work with integers. Additionally, all features should be in the same value range in order to carry out the fusion of several modalities in the
+
+multi-biometrics system. To that end, we will consider a two-step approach. First, the real-valued extracted features will be normal-
+
+ized to the interval [0, 1]. Then, we will transform those normal-
+
+ized real-valued features to integer values in a bigger range, in our experiments [0, 103], in order to retain as much information as
+
+possible:
+
+X  round 103 X
+
+(5)
+
+4.2.1. Encrypted Euclidean distance
+Given two F-dimensional templates Tp and Tr, in the unpro-
+tected domain the score Seuc = de2uc(Tp, Tr ), can be efficiently com-
+puted as
+
+F
+
+Seuc =
+
+p2f + r2f - 2p f r f
+
+(6)
+
+f =1
+
+Then, using Eqs. (3) and (4), the encrypted score can be directly computed in the encrypted domain without performing any encryptions in the client (Fig. 2 right) as
+
+E(Seuc ) =
+=
+
+F f =1
+
+E (1 ) p2f
+
+·
+
+E
+
+r2f
+
+· E rf
+
+-2 p f
+
+F f =1
+
+(1 )p2f
+
+·
+
+euc2f
+
+·
+
+euc1f
+
+-2 p f
+
+(7)
+
+The subject's reference template stored in the encrypted database is thus defined by the following ciphertexts:
+
+E(Tr )euc = {1} 
+
+euc2f , euc1f
+
+F f =1
+
+(8)
+
+where euc1f = E(r f ) and euc2f = E(r2f ). As a consequence, all
+cyphertexts involved in Eq. (7) are sent by the server, and products and exponentiations locally computed on the client.
+It should be noted that, given the probabilistic nature of the Paillier cryptosystem, E(1) can be computed and stored separately for each subject at enrolment time, leading to different encrypted values and thereby increasing the security and privacy of the subject. Furthermore, we will avoid the computational overhead caused by the encryption at verification time, at the cost of slightly increasing the storage requirements.
+
+4.2.2. Encrypted cosine similarity The cosine similarity between two F-dimensional vectors Tp and
+Tr is defined in the unencrypted domain (Fig. 2 left) as
+
+dcos(Tp, Tr ) =
+
+Tp · Tr Tp · Tr
+
+F
+=
+f =1
+
+pf · pf Tp · Tr
+
+(9)
+
+As proposed in [56], since dcos (Tp, Tr) is a positive number in the range [0, 1], in order to have a bigger range of values that al-
+lows a comparison among integers with no significant information
+loss, we can compute the final similarity as Scos = 1012dcos(Tp, Tr ),
+which can be directly computed in the encrypted domain (Fig. 2
+right) as
+
+F
+E(Scos ) = E
+f =1
+
+10 6 r f Tr
+
+10 6 p f / T p
+
+F
+=
+f =1
+
+cosf
+
+10 6 p f / T p
+
+(10)
+
+The subject's reference template stored in the encrypted database
+
+is therefore defined as
+
+E(Tr )cos =
+
+cosf
+
+F f =1
+
+(11)
+
+where
+
+the
+
+ciphertexts
+
+cosf
+
+=
+
+E
+
+(
+
+106 r Tr
+
+f
+
+).
+
+Therefore,
+
+all
+
+cyphertexts
+
+involved in Eq. (10) are sent by the server, and products and ex-
+
+ponentiations locally computed on the client.
+
+4.3. Encrypted multi-biometrics
+
+This section builds upon the two encrypted distance measures described in Section 4.2 to present a new HE-based general multibiometric template protection framework for each fusion level (i.e., feature, score and decision level). In order to avoid overcomplicated notation and with no loss of generality, we will stick to the case of fusing two biometric characteristics. However, it should be noted that the present framework can be applied to the fusion of any number of modalities.
+
+4.3.1. Feature level fusion (Fig. 3) At this level, a single protected template comprising all the fea-
+tures, related to both characteristics, is stored in the database and used at verification time. Therefore, all features are concatenated in a single encrypted template, and a single verification encrypted score E(S) is computed. Identity verification is thus carried out in six steps, as shown in Fig. 3:
+0. During enrolment, the reference biometric templates are encrypted using the server public key pk. The encrypted templates
+E(Tfrused ) (see Eqs. (8) and (11)) are stored in the database.
+1. Biometric samples are acquired and a single template, Tfpused, is extracted on the client.
+2. The server sends the encrypted enrolled template to the client,
+E(Tfrused ).
+3. The client computes the similarity score in the encrypted domain: E(S), according to Eqs. (7) and (10) (depending on the distance measure selected as encrypted similarity function).
+4. The encrypted score E(S) is sent to the server.
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+155
+
+Fig. 3. General diagram of the proposed scheme: feature level fusion.
+
+Fig. 4. General diagram of the proposed scheme: score level fusion.
+
+5. The server decrypts the score using the secret key, sk. 6. Finally, the server compares the score to the verification thresh-
+old  and outputs a genuine/impostor verification decision.
+4.3.2. Score level fusion (Fig. 4) In this approach, each biometric characteristic will be pro-
+cessed separately, generating two individual probe templates: T1p
+and T2p. Similarly, the server stores and sends E(T1r ) and E(Tr2 ). The
+client matches them independently to T1p and T2p according to Eqs. (7) and (10), depending on the distance measure considered, producing two individual encrypted scores E(S1) and E(S2).
+
+In order to normalise the individual scores prior to the fusion, several approaches are proposed in [57]. However, it is not possible to implement most of them in the encrypted domain without increasing the computational load due to the restriction in the type of operations that can be performed. We therefore propose a different and simpler approach, that achieves the same performance as the min-max rule proposed for the unprotected domain in [57]. Since all the scores are computed with the same distance measure and all the features are normalised to [0, 103], for each particular distance the range of variation of the scores will depend on the dimensionality of the templates. Therefore, assuming that the dimensionality of the feature vector extracted from the first char-
+
+156
+
+M. Gomez-Barrero et al. / Pattern Recognition 67 (2017) 149­163
+
+Fig. 5. General diagram of the proposed scheme: decision level fusion.
+
+acteristic is higher (F1 > F2), we can perform the following normalisation, which in turn can be easily computed in the encrypted
+
+domain:
+
+S 2 = S2  E S 2 = E S2 
+
+(12)
+
+where  is estimated as the average ratio between S1 and S2 for
+the genuine scores. Then, the final score is computed as the weighted sum of the
+two partial scores:
+
+S =  ·  · S2 + (10 - ) · S1
+
+(13)
+
+where   [0, 10] and  is the aforementioned normalising param-
+eter. This way, it follows that the final encrypted score E(S) can be
+directly computed from the partial fingerprint and signature encrypted scores, E(S1) and E(S2), as follows:
+
+E(S) = E S2 · · E S1 10-
+
+(14)
+
+Seven steps are therefore carried out:
+
+0. During enrolment, the reference biometric templates are en-
+crypted using the server public key pk. The encrypted tem-
+plates E(T1r ) and E(Tr2 ) (see Eqs. (8) and (11)) are stored in the
+database. 1. Biometric samples are acquired and two different templates, T1p
+and T2p, are extracted on the client. 2. The server sends the encrypted enrolled templates to the client
+for each biometric characteristic, E(T1r ) and E(T2r ).
+3. The client computes in parallel the similarity score for each biometric characteristic in the encrypted domain: E(S1) and E(S2),
+according to Eqs. (7) and (10) (depending on the distance mea-
+sure selected as encrypted similarity function).
+4. The client fuses the individual scores according to Eq. (14).
+5. The final encrypted score E(S) is sent to the server.
+6. The server decrypts the score using the secret key, sk.
+7. Finally, the server compares the score to the verification thresh-
+old  and outputs a genuine/impostor verification decision.
+
+4.3.3. Decision level fusion (Fig. 5)
+As in the score level fusion, in this case, each probe biometric
+sample acquired at the client is processed separately, generating two separate templates: T1p and T2p. Both templates are indepen-
+dently compared on the client to E(Tr1 ) and E(Tr2 ), generating two
+partial scores E(S1) and E(S2), which are sent to the server. The fi-
+nal binary decision is computed by the server taking into account
+both partial decisions (D1 and D2), fused with the OR rule:
+
+D1 = S1 > 1
+
+(15)
+
+D2 = S2 > 1
+
+(16)
+
+DOR = D1 OR D2
+
+(17)
+
+Although the OR rule has been considered in this study, as
+the proposed protection framework is general, any other logic rule
+could also be used (e.g., AND).
+As in the previous case, seven steps are carried out:
+
+0. During enrolment, the reference biometric templates are en-
+crypted using the server public key pk. The encrypted tem-
+plates E(T1r ) and E(T2r ) (see Eqs. (8) and (11)) are stored in the
+database. 1. Biometric samples are acquired and two different templates, T1p
+and T2p, are extracted on the client. 2. The server sends the encrypted enrolled templates to the client
+for each biometric characteristic, E(T1r ) and E(T2r ).
+3. The client computes in parallel the similarity score for each biometric characteristic in the encrypted domain: E(S1) and E(S2),
+according to Eqs. (7) and (10) (depending on the distance mea-
+sure selected as encrypted similarity function). 4. The individual encrypted scores, E(S1) and E(S2), are sent to the
+server.
+5. The server decrypts both scores using the secret key, sk.
+6. Each score is compared to its corresponding threshold (1 and 2) in order to generate the individual decision, D1 and D2.
+
+

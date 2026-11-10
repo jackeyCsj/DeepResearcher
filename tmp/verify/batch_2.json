@@ -1,0 +1,72 @@
+[
+  {"claim_id": "SRC", "ref": 8, "verdict": "可达", "evidence": "AAAI 2022 官方PDF全文获取成功（cdn.aaai.org）", "note": ""},
+  {"claim_id": "8a", "ref": 8, "verdict": "支持", "evidence": "正文：\"the distinguishability of face images exists in higher frequency, these frequency values are small, and small errors in them will lead to great impact on the visualization\"", "note": "§Experiments安全分析段"},
+  {"claim_id": "8b", "ref": 8, "verdict": "支持", "evidence": "Fast masking：丢弃DC→Shuffle→self-normalization→channel mixing→Shuffle→self-normalization；修改ArcFace输入通道并上采样；白盒+黑盒GAN(Pix2Pix+StyleGAN2)攻击；Limitations节明确revocability与unlinkability\"beyond the scope of this work\"", "note": ""},
+  {"claim_id": "8c", "ref": 8, "verdict": "部分支持", "evidence": "Table 1：PPFR-FD-DC LFW 99.68 vs ArcFace 99.82属实；仅丢DC（能量损失>94%）\"FR accuracy is marginally affected\"；\"accuracy drops about 3%\"对应丢弃6个通道（能量损失>97%）", "note": "\"丢DC通道精度仅降约3%\"口径有误：3%系丢6通道的数值，丢DC仅轻微影响"},
+  {"claim_id": "8d", "ref": 8, "verdict": "支持", "evidence": "BDCT生成64个频域通道，DC丢弃+两次混洗+自归一化+通道混合（Methodology节，Fig.2(b)）", "note": ""},
+  {"claim_id": "8e", "ref": 8, "verdict": "支持", "evidence": "\"applications based on the client-server model\"；客户端摄像头捕获→掩码→传云端服务器识别（§Introduction, Fig.1(b)）", "note": ""},
+
+  {"claim_id": "SRC", "ref": 9, "verdict": "可达", "evidence": "TechScience HTML全文获取成功", "note": ""},
+  {"claim_id": "9a", "ref": 9, "verdict": "支持", "evidence": "标题即\"Cancelable Multi-biometric Template Generation Based on Dual-Tree Complex Wavelet Transform\"；DWT用于安全虹膜见Related Work", "note": "DWT虹膜为相关工作角色，DTCWT可撤销模板为本文方法"},
+  {"claim_id": "9b", "ref": 9, "verdict": "支持", "evidence": "\"Fouad et al. [11] proposed a secure iris pattern recognition framework...iris image is protected with a key and is embedded in the cover image using LSB and DWT methods\"；IK由指纹+眼睛经DT-CWT融合生成", "note": "虹膜LSB+DWT系转述相关工作Fouad et al.，非本文贡献"},
+
+  {"claim_id": "SRC", "ref": 10, "verdict": "可达", "evidence": "lilyliliu.com PDF全文获取成功（pdftotext）", "note": ""},
+  {"claim_id": "10a", "ref": 10, "verdict": "支持", "evidence": "\"the shearlet transformation is performed in the Fourier domain\"（摘要/§1）；假脸频谱句与[11]共引", "note": ""},
+  {"claim_id": "10b", "ref": 10, "verdict": "支持", "evidence": "\"The proposed descriptor is called LSF since it combines LBP and shearlet\"；\"only the real part of the shearlet transformation in the Fourier domain\"（摘要）", "note": ""},
+  {"claim_id": "10c", "ref": 10, "verdict": "支持", "evidence": "\"We found that only the real part of the shearlet transformation in the Fourier domain is useful for face recognition\"（§1）", "note": ""},
+  {"claim_id": "10d", "ref": 10, "verdict": "支持", "evidence": "LSF = Shearlet（Fourier域）+LBP，仅用实部系数（摘要与方法节一致）", "note": ""},
+
+  {"claim_id": "SRC", "ref": 11, "verdict": "可达", "evidence": "MDPI Electronics HTML全文获取成功", "note": ""},
+  {"claim_id": "11a", "ref": 11, "verdict": "支持", "evidence": "§2.2：\"using the Discrete Fourier Transform (DFT) and averaging the amplitude of each frequency band can reveal discriminative spectral irregularities in fake faces\"", "note": "系引述文献[27] Durall et al. 2019的观点，非FMSI自身实验结论"},
+
+  {"claim_id": "SRC", "ref": 12, "verdict": "可达", "evidence": "math.uh.edu PDF全文获取成功", "note": ""},
+  {"claim_id": "12a", "ref": 12, "verdict": "部分支持", "evidence": "[12]全文无LBP/LSF/\"real part\"内容，该方法为RSN稀疏表示", "note": "LSF描述子与实部论断仅见于[10]，[12]不支撑该半句（与[10]共引可弥补）"},
+  {"claim_id": "12b", "ref": 12, "verdict": "支持", "evidence": "摘要：\"Regularized Shearlet Network (RSN), that takes advantage of the sparse representation properties of shearlets in biometric applications\"", "note": ""},
+
+  {"claim_id": "SRC", "ref": 13, "verdict": "可达", "evidence": "jpdickerson.com PDF全文获取成功", "note": ""},
+  {"claim_id": "13a", "ref": 13, "verdict": "支持", "evidence": "Table 3：Clean 96.7–96.9%，blurred LowKey rank-50 2.8–9.6%；ResNet-50/152、IR-50/152以ArcFace/CosFace在MS-Celeb-1M训练（§4）", "note": ""},
+  {"claim_id": "13b", "ref": 13, "verdict": "支持", "evidence": "\"Our system pre-processes user images before they are made publicly available on social media outlets\"（§1）", "note": ""},
+
+  {"claim_id": "SRC", "ref": 14, "verdict": "可达", "evidence": "arXiv HTML(v2)全文获取成功", "note": ""},
+  {"claim_id": "14a", "ref": 14, "verdict": "支持", "evidence": "Table 8（Face++，CASIA-WebFace，ϵ=16）：APF 65.30/65.11/67.96；FGSM-LMFAP 51.02/49.80/52.04；LowKey 51.63/51.43/52.04（列：W/O、Q75、Q50）", "note": ""},
+  {"claim_id": "14b", "ref": 14, "verdict": "支持", "evidence": "Table 1/8显示JPEG压缩下各方法成功率变化明显；\"The method tackling target JPEG compression of specific factors underperforms when faced with other factors\"", "note": ""},
+  {"claim_id": "14c", "ref": 14, "verdict": "支持", "evidence": "摘要\"unauthorized use of facial recognition systems\"；目标为未授权FRS及商业黑盒API Face++", "note": ""},
+
+  {"claim_id": "SRC", "ref": 15, "verdict": "可达", "evidence": "CVF openaccess PDF全文获取成功", "note": ""},
+  {"claim_id": "15a", "ref": 15, "verdict": "支持", "evidence": "摘要：\"apply discrete cosine transform (DCT)...introduce a fusion module...Compared with existing attacks in the spatial domain, our method is more imperceptible to human observers and does not degrade the visual quality\"", "note": ""},
+  {"claim_id": "15b", "ref": 15, "verdict": "部分支持", "evidence": "[15]仅称频域攻击\"more imperceptible to human observers\"，未陈述\"人眼对特定频段敏感度较低\"机制", "note": "机制表述明确见于[16]（共引）；[15]单独不支撑机制半句"},
+
+  {"claim_id": "SRC", "ref": 16, "verdict": "可达", "evidence": "SciOpen HTML全文获取成功", "note": ""},
+  {"claim_id": "16a", "ref": 16, "verdict": "支持", "evidence": "摘要列出FreqAdv-FFT/Wavelet/Phase/SelDCT/RandDCT五变体；Table 4：WB_WoB-ReID Wavelet对HRNet mAP 0.0252；Table 3：Market-1501 FFT对ResNet-50 mAP 0.0396", "note": ""},
+  {"claim_id": "16b", "ref": 16, "verdict": "支持", "evidence": "摘要：\"utilizes the individual's visual system's decreased sensitivity to specific frequency ranges, making these perturbations less obvious\"", "note": ""},
+
+  {"claim_id": "SRC", "ref": 17, "verdict": "可达", "evidence": "MDPI Mathematics HTML全文获取成功", "note": ""},
+  {"claim_id": "17a", "ref": 17, "verdict": "支持", "evidence": "摘要：\"exploits the frequency domain by learning high, middle, and low band filters as an additional dimension of refining facial UAP\"；§3.1 \"learnable filters ensures that the extracted frequency segment is not solely confined to the predefined...ranges\"", "note": ""},
+
+  {"claim_id": "SRC", "ref": 18, "verdict": "可达", "evidence": "pdxscholar页面可达（WebFetch）；PDF因Cloudflare改用PoPETs官方镜像获取全文", "note": "经petsymposium.org/popets/2021/popets-2021-0006.pdf获取正文"},
+  {"claim_id": "18a", "ref": 18, "verdict": "支持", "evidence": "§Countermeasures \"Perturbation Estimation and Removal\"：对UEP取中位数估计，5张图恢复60%、10张达70%识别；\"using a single UEP perturbation for several images may allow target classifiers to estimate the perturbation\"", "note": ""},
+
+  {"claim_id": "SRC", "ref": 62, "verdict": "可达", "evidence": "arXiv HTML(v1)全文获取成功", "note": ""},
+  {"claim_id": "62a", "ref": 62, "verdict": "部分支持", "evidence": "Table 4：CASIA-WebFace 494k/10.5k、五基准均值0.9470；0.9652见Table 6但系LFW/CFP-FP/AgeDB三基准均值", "note": "claim将0.9652并入\"5基准平均\"范围，口径混用"},
+  {"claim_id": "62b", "ref": 62, "verdict": "部分支持", "evidence": "Table 6：MS1M-MegaFace 14.7M/750k、LFW 0.9975属实", "note": "\"ArcFace/CosFace训练基础\"表述未见于原文"},
+  {"claim_id": "62c", "ref": 62, "verdict": "支持", "evidence": "§4.3：\"two IARPA Janus Benchmarks – IJB-B and IJB-C\"（SDFR评测扩展基准）", "note": "\"大规模\"为概括性修饰，原文未直接写出"},
+  {"claim_id": "62d", "ref": 62, "verdict": "支持", "evidence": "Table 1/6：VGGFace2 3.3M图像、9k身份", "note": "与[60]共引；9,131为通行精确值，论文取整为9k"},
+  {"claim_id": "62e", "ref": 62, "verdict": "支持", "evidence": "Table 1：WebFace42M 42M图像、2M身份", "note": "与[60]共引"},
+
+  {"claim_id": "SRC", "ref": 63, "verdict": "可达", "evidence": "AMBERER文档页获取成功", "note": "二手来源"},
+  {"claim_id": "63a", "ref": 63, "verdict": "支持", "evidence": "页面：\"10,575 subjects and 494,414 images\"（CASIA WebFace条目）", "note": "二手来源"},
+  {"claim_id": "63b", "ref": 63, "verdict": "部分支持", "evidence": "页面有MS1MV2条目，但内容残缺：仅罗列LFW/CFP-FP等基准名，无数据集规模数据", "note": "二手来源；与[62]共引"},
+
+  {"claim_id": "SRC", "ref": 64, "verdict": "可达", "evidence": "exposing.ai页面获取成功", "note": "二手来源（调查项目页面，非原始基准论文）"},
+  {"claim_id": "64a", "ref": 64, "verdict": "支持", "evidence": "\"IJB-C is part of the Janus face recognition program\"；用于face recognition benchmarking；21,294图像/3,531身份", "note": "二手来源"},
+
+  {"claim_id": "SRC", "ref": 65, "verdict": "可达", "evidence": "Omnilert博客页获取成功", "note": "二手来源"},
+  {"claim_id": "65a", "ref": 65, "verdict": "支持", "evidence": "\"They run large-scale tests of facial recognition algorithms using massive databases of images to measure how well different systems perform. These tests consider accuracy and consistency so developers and organizations have a benchmark to compare against\"", "note": "二手来源"},
+
+  {"claim_id": "SRC", "ref": 66, "verdict": "可达", "evidence": "marta-gomez-barrero.com教程页可达（仅摘要）", "note": "二手来源"},
+  {"claim_id": "66a", "ref": 66, "verdict": "不支持", "evidence": "页面为2018-12教程摘要，不可能收录2022年BIOSIG论文；页面无参考文献列表，未见Kirchgasser & Uhl", "note": "二手来源；该引用实际出自[54]，[66]不支撑"},
+
+  {"claim_id": "SRC", "ref": 67, "verdict": "可达", "evidence": "CVF openaccess WACV 2025 PDF全文获取成功", "note": ""},
+  {"claim_id": "67a", "ref": 67, "verdict": "支持", "evidence": "首个频域可解释FR工作；参考文献含[37]DuetFace(Mi et al. MM'22)、[38/39]Random Frequency Components(Mi et al. ICCV'23)、[49]PPFR-FD(Wang et al. AAAI'22)", "note": ""},
+  {"claim_id": "67b", "ref": 67, "verdict": "支持", "evidence": "\"the first to propose explainability of verification-based decisions in the frequency domain\"；此前\"was never addressed before this work\"", "note": ""}
+]

@@ -69,6 +69,7 @@ class State(TypedDict):
     review_summary: list[dict]
     missing_dimensions: str
     tool_call_counts: Annotated[dict, merge_dicts]
+    research_traces: Annotated[list[dict], operator.add]
 
 
 class InputSchema(TypedDict):
@@ -93,6 +94,7 @@ class OutputSchema(TypedDict):
     sub_questions: NotRequired[list[SubQuestion]]
     review_result: NotRequired[dict]
     missing_dimensions: NotRequired[str]
+    research_traces: NotRequired[list[dict]]
 
     
 def build_graph(
@@ -175,6 +177,10 @@ def build_graph(
         return {
             "pending_review_pairs": [(state["sub_question"], note)],
             "tool_call_counts": tool_call_counts,
+            "research_traces": [{
+                "question": state["sub_question"],
+                "trace": researcher.get_research_trace(),
+            }],
         }
 
     def review_node(state: State) -> dict:

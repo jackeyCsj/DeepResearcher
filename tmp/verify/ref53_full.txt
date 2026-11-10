@@ -1,0 +1,538 @@
+ISO/IEC 30136 Performance Testing of Template Protection Schemes
+Marta Gomez-Barrero BioML lab, RI CODE, Universität der Bundeswehr München Int. Face and Fingerprint Performance Conf., 2025-04-01
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+BioML: Biometrics & Machine Learning
+
+Ø Since 2023 (before @UAM, h_da, HSAN)
+Ø Research on (but not limited to!):
+v Different biometric modalities, and multi-biometrics v Biometric Template Protection and Attack Detection v Synthetic data v Explainability
+Ø Chair BIOSIG
+Ø Involved in EAB and ISO/IEC SC 37
+
+Ø More details on: https://www.unibw.de/bioml-en https://www.marta-gomez-barrero.com marta.gomez-barrero@unibw.de
+
+IFPC, 2025-04-01
+
+2
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+Introduction
+
+IFPC, 2025-04-01
+
+3
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Biometrics & Privacy
+
+Ø Biometric data is classified as sensitive personal data by the European Data Protection Regulation (GDPR)
+Ø Different legislations across the globe, adding more protection:
+v Japan Act on the Protection of Personal Information (APPI) also includes extra-territorial protection since 2022
+v Australian Privacy Act is undergoing reforms v The California Consumer Privacy Act (CCPA), based on the GDPR, aims
+to empower consumers with new rights in order to protect their privacy v...
+
+IFPC, 2025-04-01
+
+4
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Inverse biometrics attacks
+
+Ø It was a common belief that the stored templates revealed no information about the biometric characteristics:
+
+Ø However, biometric samples can be recovered from the stored unprotected templates
+
+IFPC, 2025-04-01
+
+5
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Inverse biometrics attacks: Hill-Climbing
+
+Ø Based on the HC algorithms, we can reconstruct biometric samples:
+
+Tface
+
+Thand
+
+Tiris
+
+!
+[M. Gomez-Barrero et al., Int. Conf. on Biometrics, 2012] [M. Gomez-Barrero et al., Information Sciences, 2014] [J. Galbally, et al., Computer Vision & Image Understanding, 2013]
+
+IFPC, 2025-04-01
+
+6
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Linkage attacks
+
+Ø We can enroll with a single instance in different applications
+Tmail
+
+Tbank
+
+Tjob Tfacebook
+
+Same person??
+
+Tlinkedin
+
+Templates need to be protected, so that no one can find out on which applications we are enrolled
+
+IFPC, 2025-04-01
+
+7
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Protecting the subject's privacy
+[ISO/IEC IS 24745 on Biometric Information Protection]
+
+Female, white, 30s...
+
+Irreversibility
+
+=?
+
+Unlinkability
+
+Renewability
+K1
+
+Kn
+Accuracy, template size and verification speed must be preserved.
+
+IFPC, 2025-04-01
+
+8
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Unlinkability vs. Renewability
+
+Ø Diversification in space and time
+
+Template compromised  re-issue: Renewability
+
+Time
+
+Several apps at the same time: Unlinkability
+
+Space
+
+IFPC, 2025-04-01
+
+9
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+BTP architecture
+
+Enrolment
+Signal Proc. Subsyst.
+
+Storage
+
+AD
+
+Verification
+
+Comparison Subsyst.
+
+Signal Proc. Subsyst.
+
+AD
+
+PIE
+PIr
+
+PIR
+
+PIr
+
+PIp
+
+PIC
+
+Feat. Extractor Feat. Extractor
+
+Tr
+PI: Pseudonymous Identifier AD: Auxiliary Data
+
+Tp
+
+Decision
+
+PIE: PI Encoder PIR: PI Recorder PIC: PI Comparator
+
+IFPC, 2025-04-01
+
+10
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+Security and Privacy Evaluation
+
+IFPC, 2025-04-01
+
+11
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+BTP Evaluation: How to?
+
+BTP System
+
+Reproducible Evaluation
+
+Biometric Dataset
+
+Threat Model
+
+Evaluation Protocol
+
+ISO Requirements
+
+Analysis 1: Accuracy
+
+Analysis 2: Irreversibility
+
+Analysis 3: Unlinkability
+
+Analysis 4: Computational Load Increase
+
+IFPC, 2025-04-01
+
+12
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Threat models
+
+Ø We need to describe the attacker's capabilities and skills:
+v Naive model:
+o No knowledge about the system, no access to large DBs o Access to RBRs + black-box system v Collision model: o Access to large DBs o Access to a BTP system that generates similar PIs to the system
+under attack v General model:
+o Full knowledge about the system, statistical properties of the enrolled data, access to protected data
+o Standard model: secret key remains secure o Advanced model: chosen-plaintext and chosen-ciphertext attack o Full disclosure model: secret key compromised
+
+IFPC, 2025-04-01
+
+13
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Accuracy degradation
+
+Ø Most BTP schemes transform either the sample (e.g. surface folding) or the template (e.g., fuzzy vault)
+Ø That leads to the addition of noise or information loss, which in turn leads to a decrease in accuracy
+Ø We need to assess such performance loss in accordance with the ISO/IEC 19795:
+v Compute FMR and FNMR for the baseline system AND the BTP scheme v Following a common experimental protocol v Compare in terms of DET plots
+o The Equal Error Rate (EER), where FMR = FNMR, is not enough!!
+
+IFPC, 2025-04-01
+
+14
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Irreversibility & Unlinkability
+
+Ø Theoretical evaluation:
+v "Proving a computational or an information-theoretic property limiting the success probability or the advantage of any computationallybounded adversary"
+v Example for unlinkability: indistinguishability game describes the advantage of an attacker with respect to a perfect indistinguishable system
+
+Ø Empirical evaluation:
+v "The experimenter shall specify an empirical method of demonstrating irreversibility / unlinkability, for example, empirically estimating the success probability or the advantage over a random guess for some specific adversary in an attack scenario"
+
+[ISO/IEC IS 30136 on Performance Testing of BTP Schemes]
+
+IFPC, 2025-04-01
+
+15
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Irreversibility analysis
+
+Ø How can we analyse irreversibility? Following cryptographic paradigms?
+
+Ø Careful! Some assumptions are not valid:
+v Uniformity of data ­ neighbouring bits are correlated!! v In fact, some biometric templates (e.g., finger vein or fingerprint
+minutiae spectral representation) are compared in terms of their cross correlation!
+v There are also symmetries
+
+Ø Therefore, we need to model such correlations and take them into account in the computations
+v No general method proposed so far
+
+IFPC, 2025-04-01
+
+16
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Irreversibility analysis
+
+Ø : number of
+original sequences leading to a single template.
+Ø For a full disclosure model, the probability of a reconstruction is 2-40,960
+
+[Gomez-Barrero et al., Information Sciences 2016]
+
+IFPC, 2025-04-01
+
+17
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Irreversibility analysis
+
+Ø Are the reconstructed unprotected templates similar to the original ones?
+
+Verification Threshold
+
+Irreversible: HD bigger than impostor comparisons
+
+[Bringer et al., ICB 2015]
+
+IFPC, 2025-04-01
+
+18
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Linkage Attacks: How to?
+
+Tjob Tbank
+
+s = LF (Tjob, Tbank)
+
+s here è success!! J
+
+s here è try again!! L
+
+s can be the dissimilarity score of the system or any other dissimilarity score, such as values extracted from partial decoding in fuzzy schemes
+
+IFPC, 2025-04-01
+
+19
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Unlinkability Analysis
+
+Ø Plot Mated and Non-mated instances distributions, for templates protected with different keys, and analyse them
+Ø Two measures:
+v Local measure () è for which scores is the system vulnerable? v Global measure !"!è how can we compare two systems globally?
+
+Ø Both bounded in [0,1], and defined for all dissimilarity scores Ø General measures, valid for all BTP schemes Ø Available at: https://github.com/dasec/unlinkability-metric Ø Included in the ongoing revision of ISO/IEC 30136
+
+[Gomez-Barrero et al., IEEE T-IFS, 2018]
+
+IFPC, 2025-04-01
+
+20
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Unlinkability Analysis
+
+Ø We need to simulate the enrolment of the subjects in different applications, and then apply the linkage function to those protected templates
+Ø We need access to:
+v Biometric database (DB) v BTP scheme to be evaluated (BTP)
+Ø Define a Linkage Function ()
+v Robustness to one  does not imply robustness to all possible s!
+Ø Compute score distributions of  using DB and BTP
+
+IFPC, 2025-04-01
+
+21
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Computing Score Distributions
+
+Ø Simulate  different applications
+v Choose a reasonably big  - e.g.,  = 10
+Ø Enrol the data subjects into all  applications: for sample  of subject , we have  templates: !",$, %",$, ... , &",$ ... , '",$
+v For subject , having  samples, we have a total of × templates: #$,#, #$,&, ... #$,', &$,#, ... , &$,', ... , ($,'
+Ø Design your protocol for mated and non-mated trials
+Ø Compute mated and non-mated linkage scores by comparing:
+v Mated scores: samples of the same subject, enrolled in different applications: s =  ,#, ,&
+v Non-Mated scores: samples of the different subjects, enrolled in different applications: s =  ,#, ,&
+
+IFPC, 2025-04-01
+
+22
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Full Unlinkability
+No risk, regardless of s
+
+[Gomez-Barrero et al., IEEE T-IFS, 2018]
+
+Cannot ensure both templates belong to the same subject è no risk
+
+IFPC, 2025-04-01
+
+23
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Full Linkability
+High risk, regardless of s
+
+Both templates belong to the same subject èhigh risk
+
+Both templates belong to different subjects è no risk
+
+[Gomez-Barrero et al., IEEE T-IFS, 2018]
+
+IFPC, 2025-04-01
+
+24
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Semi-Linkable Scenario A
+High risk only for some s
+
+More likely both templates belong to the same subject èhigh risk
+
+[Gomez-Barrero et al., IEEE T-IFS, 2018]
+
+More likely both templates belong
+to different subjects è no risk
+
+IFPC, 2025-04-01
+
+25
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Semi-Linkable Scenario B
+High risk, for larger value range s
+
+Most likely both templates belong to
+the same subject èhigh risk
+
+[Gomez-Barrero et al., IEEE T-IFS, 2018]
+IFPC, 2025-04-01
+
+Most likely both templates belong to different subjects è no risk
+26
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+Ø We are interested in evaluating: Ø Doing some math tricks, we get:
+
+Unlinkability Metrics
+
+Ø Where Ø And we can define a global metric as:
+
+[Gomez-Barrero et al., IEEE T-IFS, 2018]
+
+IFPC, 2025-04-01
+
+27
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Choosing ,,proper" keys
+
+Ø Assumption: Key selection is done properly
+v What means properly? v Improper: leading to template collisions ­ can be spotted using !"!
+
+Proper Keys,!"! = 0.02
+
+Improper Keys,!"! = 0.45
+
+[S. Kirchgasser & A. Uhl, Proc. BIOSIG 2022]
+
+IFPC, 2025-04-01
+
+28
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+Summary
+
+IFPC, 2025-04-01
+
+29
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Main BTP Requirements
+
+Ø Do the stored templates reveal any information about the original biometric samples?
+Ø Are my enrolled templates in different recognition systems somehow related to each other?
+Ø What if someone steals a template extracted from my face? Has it been permanently compromised?
+[ISO/IEC IS 24745 on Biometric Information Protection] [ISO/IEC IS 30136 on Performance Testing of BTP Schemes]
+
+IRREVERSIBILITY UNLINKABILITY RENEWABILITY
+
+IFPC, 2025-04-01
+
+30
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+References
+
+Ø M. Gomez-Barrero, J. Galbally. "Reversing the irreversible: A survey on inverse biometrics" Computers & Security, vol. 19, pp. 101700, 2020
+Ø M. Gomez-Barrero, J. Galbally, C. Rathgeb, C. Busch, "General Framework to Evaluate Unlinkability in Biometric Template Protection Systems", IEEE Trans. on Information Forensics and Security, vol. 3, no. 6, pp. 1406-1420, 2018
+Ø M. Gomez-Barrero, C. Rathgeb, J. Galbally, C. Busch, J. Fierrez, "Unlinkable and irreversible biometric template protection based on Bloom filters", Information Sciences, vol. 370-371, pp. 18-32, 2016
+Ø M. Gomez-Barrero, C. Rathgeb, G. Li, R. Raghavendra, J. Galbally, C. Busch, "Multi-Biometric Template Protection Based on Bloom Filters", Information Fusion, vol. 42, pp. 37-50, 2018
+Ø S. Kirchgasser, A. Uhl, "Template Protection: On the need to adapt the current Unlinkability Evaluation Protocol", Proc. BIOSIG, 2022
+Ø ISO/IEC 24745 on Biometric information protection
+Ø ISO/IEC 30136 on Performance testing of biometric template protection schemes - IN REVISION!!!
+Ø S. Rane, "Standardization of biometric template protection", IEEE MultiMedia, vol. 21, no. 4, pp. 9499, 2014
+Ø Handbook of Biometric Template Protection, Springer, eds. V. Krivokuca Hahn, M. Gomez-Barrero, A. Ross, S. Marcel, 2025 (soon)
+v EAB Workshop on BTP on October 29 and 30, 2025
+
+IFPC, 2025-04-01
+
+31
+
+M
+Marta Gomez-Barrero
+marta.gomez-barrero@unibw.de https://www.marta-gomez-barrero.com/
+https://www.unibw.de/bioml-en
+
+

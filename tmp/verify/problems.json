@@ -1,0 +1,79 @@
+[
+ {
+  "id": "35a",
+  "ref": 35,
+  "where": "§4.4",
+  "text": "结合同态加密与可撤销生物特征保护模板的多模态方案",
+  "claim_id": "35a",
+  "verdict": "不支持",
+  "evidence": "论文方法为 secure sketch+DTCWT-DCT 水印+3D 混沌加密，全文未用同态加密",
+  "note": "'HE+cancelable biometrics'仅作为被引相关工作一句话出现，报告将方法描述张冠李戴",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "id": "47a",
+  "ref": 47,
+  "where": "§5.5",
+  "text": "Erkin et al. 证明可通过 SMPC 与高效协议实现隐私保护人脸识别，使加密人脸图像与模板库匹配，并给出参数选择指南",
+  "claim_id": "47a",
+  "verdict": "不支持",
+  "evidence": "链接论文为 Zhou 等，方法是 FFCM 特征编码+对称同态加密，非 SMPC；Erkin et al. 仅作为相关工作被引用",
+  "note": "报告张冠李戴：SMPC 论断对应 Erkin et al. 2009 经典 PPFR（IACR），与引文链接论文非同一研究",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "id": "51e",
+  "ref": 51,
+  "where": "§7.5",
+  "text": "视频流从摄像头传至云端/边缘服务器做神经分析引发隐私担忧，已有基于 GAN 的智能模糊化保护（报告用[51]即 DCTDP/ECCV 论文支撑此视频流 GAN 模糊化论断）",
+  "claim_id": "51e",
+  "verdict": "不支持",
+  "evidence": "全文仅有 deepfake 处顺带提及 videos；无视频流传输云端/边缘或 GAN 智能模糊化内容；黑盒重建攻击用 UNet 解码器",
+  "note": "DCTDP 论文与视频流 GAN 模糊化论断明显无关",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "id": "66a",
+  "ref": 66,
+  "where": "§6.4",
+  "text": "Kirchgasser & Uhl（BIOSIG 2022）'On the need to adapt the current Unlinkability Evaluation Protocol'（与[54]共引）",
+  "claim_id": "66a",
+  "verdict": "不支持",
+  "evidence": "页面为2018-12教程摘要，不可能收录2022年BIOSIG论文；页面无参考文献列表，未见Kirchgasser & Uhl",
+  "note": "二手来源；该引用实际出自[54]，[66]不支撑",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "id": "70b",
+  "ref": 70,
+  "where": "§7.3",
+  "text": "报告原文：'Privacy-preserving Multi-biometric Indexing based on Frequent Binary Patterns（Osorio-Roig et al., IEEE TIFS 2024）[70]'——即报告用引文[70]（You et al. Entropy 2024 扩散模型论文）支撑一篇 TIFS 2024 多模态索引论文的条目。需核实引文[70]链接论文的真实标题与内容，以及它是否与 TIFS 论文为同一篇",
+  "claim_id": "70b",
+  "verdict": "不支持",
+  "evidence": "链接论文为 You et al. Entropy 2024 扩散模型论文；TIFS 2024 论文（Osorio-Roig 等，vol.19, 4835-4850）是另一篇多生物特征索引论文",
+  "note": "确认张冠李戴：引文[70]链接与报告所述 TIFS 条目非同一篇，链接不支撑该条目",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "id": "70c",
+  "ref": 70,
+  "where": "§7.5",
+  "text": "§7.5 中 'Privacy-preserving Multi-biometric Indexing（IEEE TIFS 2024）[70]'（同 70b）",
+  "claim_id": "70c",
+  "verdict": "不支持",
+  "evidence": "同 70b：You et al. Entropy 2024 ≠ Osorio-Roig et al. IEEE TIFS 2024 (DOI 10.1109/TIFS.2024.3386310)",
+  "note": "同一处张冠李戴的重述",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "id": "74b",
+  "ref": 74,
+  "where": "§8",
+  "text": "ISO/IEC 24745 定义不可逆性、不可链接性、保密性三大要求",
+  "claim_id": "74b",
+  "verdict": "不支持",
+  "evidence": "论文列 ISO/IEC 24745 四项要求：Renewability/Irreversibility/Unlinkability/Performance preservation，无 confidentiality",
+  "note": "ISO 24745 三大属性实为不可逆性、不可链接性、可更新性；'保密性'非该标准所列要求，报告表述无该文支撑",
+  "_batch": "tmp/verify\\batch_6.json"
+ }
+]

@@ -1,0 +1,2282 @@
+[
+ {
+  "claim_id": "SRC",
+  "ref": 1,
+  "verdict": "可达",
+  "evidence": "arXiv abs页+HTML全文v3均成功抓取",
+  "note": "ECCV 2022正式版，arXiv:2207.07316",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1a",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§1: 'limit the face recognition service provider to learn only the classification result (e.g., identity) with a certain level of confidence but does not have access to the original image (even by some automatic recovery techniques)'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1b",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§2.3: 'categorized based on how to process input data, i.e., encryption or perturbation'；加密法'unsuitable for current SOTA face recognition systems due to their prohibitive computation cost'；'Differential privacy (DP) is a common-used perturbation approach'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1c",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.1引[32]: 'humans rely only on low-frequency information for image recognition while neural networks use low-and high-frequency information'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1d",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.1: 'using low-frequency information as little as possible is very effective for image privacy protection'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1e",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.1: 'DCT transformation can be beneficial in separating the low-frequency information that is important for visualization from the high-frequency information that is important for identification'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1f",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.1(Fig.3c): 'the most energy (91.6%) of facial images is concentrated in the DC channel'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1g",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.1: 'defines the basic tone of the entire block'；'DC is crucial for visualization, while it has little impact on recognition. Thus it is removed before it enters the next module'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1h",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.1: RGB→YCbCr、value range [−128,127]、H/8×W/8块8×8、8-fold up-sampling、normalized 2D type-II DCT、[H,W,3]→[H,W,8,8,3]",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1i",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§3.2: softmax输出×ε且'the total privacy budget always equals ε'；σ_{i,j,k}=(r_max−r_min)/ε_{i,j,k}、Σε=ε；敏感度由VGGFace2与refined MS1MV2全部图像频域MAX−MIN获得；§4.2 ArcFace损失+ResNet50骨干",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1j",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "§1: HE 'protects data privacy and maintains a high level of recognition accuracy'，但'requires a great additional computation…not suitable for large-scale and interactive scenarios'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1k",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "摘要: 'converts the original image to the frequency domain and removes the direct component termed DC…privacy budget allocation method can be learned based on the loss of the back-end face recognition network within the differential privacy framework…offers a guarantee of privacy in theory…loss of accuracy is very slight'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1l",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "Tab.1: Ours(ArcFace, ε_mean=0.5) LFW 99.48、IJB-C(1e-4) 91.22；PEEP IJB-C 6.02、Cloak 33.82",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1m",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "论文为ECCV 2022频域+可学习DP预算+深度识别网络方法",
+  "note": "定性演进定位，论文属性与描述一致",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1n",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "摘要: 'face unlocking of mobile devices, community access control systems, and city surveillance…facial images often need to be transmitted to third-party servers…risk of a personal privacy breach'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "1o",
+  "ref": 1,
+  "verdict": "支持",
+  "evidence": "摘要: 理论隐私保证+精度损失很小；§3.1 DCT分离可视化/识别信息并移除DC",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 2,
+  "verdict": "可达",
+  "evidence": "Biometric Update报道全文抓取成功（Chris Burt, 2025-05-16）",
+  "note": "新闻报道，同时覆盖S&P 2024论文与Idiap arXiv:2411.03960论文",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "2a",
+  "ref": 2,
+  "verdict": "支持",
+  "evidence": "'Face biometrics templates created with deep learning algorithms tend to extract and encode around 512 numerical values'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "2b",
+  "ref": 2,
+  "verdict": "支持",
+  "evidence": "'would typically require at least 50,000 queries'（随机人脸生成+相似度筛选的传统方法）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "2c",
+  "ref": 2,
+  "verdict": "部分支持",
+  "evidence": "'thousands of times faster'与100次查询出自S&P 2024论文；但'relatively limited computing power''preserve identity, but is agnostic to age''struggles with some expressions and sharp angles'描述的是同报道中Idiap的adapter论文",
+  "note": "张冠李戴：算力有限/年龄不敏感/表情与角度局限属Idiap论文（arXiv:2411.03960），非IEEE S&P 2024论文",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "2d",
+  "ref": 2,
+  "verdict": "支持",
+  "evidence": "'reconstruct facial images with reasonable accuracy thousands of times faster than previously thought possible'（S&P 2024非自适应方法）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "2e",
+  "ref": 2,
+  "verdict": "支持",
+  "evidence": "同2d，报道明确'thousands of times faster than previously thought possible'",
+  "note": "与2d同源重述",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 3,
+  "verdict": "可达",
+  "evidence": "Frontiers in Imaging全文抓取成功（Bassit et al., 2025-05-12）",
+  "note": "DOI 10.3389/fimag.2025.1476377",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "3a",
+  "ref": 3,
+  "verdict": "支持",
+  "evidence": "聚焦'HE-based BTPs that compare and reveal inner product-based scores'；攻击者'use spoofed synthetic faces and lack direct access to the face recognition system'、'without requiring real data or training'；SP注入合成参考且'can be received in a single query'；缓解='performing the comparison with the threshold within the encrypted domain…only the final decision is transmitted in encrypted form'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 4,
+  "verdict": "可达",
+  "evidence": "arXiv:2601.17620v1摘要页抓取成功（Rahimi, Osadchy, Dunkelman）",
+  "note": "已被IJCB 2025接收",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "4a",
+  "ref": 4,
+  "verdict": "支持",
+  "evidence": "摘要: 'reconstruct the biometric template by just observing the success/failure of the authentication attempt (given the ability to inject a sufficient amount of templates)…negligible template reconstruction loss…generative inversion…pipeline from binary scores to high-resolution facial images that successfully pass the system more than 98% of the time…applicable for any protection mechanism that maintains the accuracy of the recognition'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "4b",
+  "ref": 4,
+  "verdict": "支持",
+  "evidence": "摘要同句：>98%通过率、适用于任何保持识别精度的保护机制",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "4c",
+  "ref": 4,
+  "verdict": "支持",
+  "evidence": "同4a摘要重述",
+  "note": "与4a/4b同源重述",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 5,
+  "verdict": "受限",
+  "evidence": "原URL(atvs.ii.uam.es)抓取失败；改用同作者镜像biometrics.eps.uam.es成功下载PDF",
+  "note": "镜像实际为Information Sciences 370–371(2016)18–32期刊版（Gomez-Barrero等），与报告所标'2016 ICB'版本不同但同源同内容框架",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "5a",
+  "ref": 5,
+  "verdict": "部分支持",
+  "evidence": "'fully linkable'四情景与D_sys^↔=1出自本文§3评估框架（Fig.1），D_sys^↔=1意为攻击者'with almost all certainty'可判断两模板是否同源",
+  "note": "该定义是本文提出的评估框架而非ISO/IEC 24745标准定义；原文为'almost all certainty'而非'100%确定性'",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "5b",
+  "ref": 5,
+  "verdict": "部分支持",
+  "evidence": "§1: 'In accordance with the ISO/IEC IS 24745, cancelable biometrics are required to meet the two major requirements of irreversibility and unlinkability'支撑两大要求归属",
+  "note": "两条英文'标准原文'引句（cannot be used to determine any information…/should not be linkable across applications or databases）未出现在该版本中，疑直接引自标准或其他文献",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "5c",
+  "ref": 5,
+  "verdict": "支持",
+  "evidence": "§1不可逆性定义: 'knowledge of a cancelable template C and corresponding key T can not be exploited to reconstruct a biometric signal M′ which positively matches the original biometric sample M…prevents the abuse of stored biometric data for launching spoof or replay attacks'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "5d",
+  "ref": 5,
+  "verdict": "支持",
+  "evidence": "§3: 'D_sys^↔ ∈ [0,1] gives an estimation of the linkability of a system as a whole'；D_sys^↔=0表示fully unlinkable，越低越好",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "5e",
+  "ref": 5,
+  "verdict": "部分支持",
+  "evidence": "本文仅称ISO/IEC 24745要求'two major requirements of irreversibility and unlinkability'",
+  "note": "renewability（可更新性）在该文中未作为24745要求提及，'三大要求'说法不能由该文献支撑",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "5f",
+  "ref": 5,
+  "verdict": "支持",
+  "evidence": "摘要: 'we re-design the original scheme and propose an additional, easily integrable, processing step, which is referred to as structure-preserving feature re-arrangement…In order to generate cross-matching resistant protected templates'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 6,
+  "verdict": "可达",
+  "evidence": "AAAI OJS PDF下载并提取文本成功（Zhong, Mi et al., Fudan+Tencent, AAAI 2025）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "6a",
+  "ref": 6,
+  "verdict": "支持",
+  "evidence": "§4.5: 'Unlinkability. It requires that when generating different protective templates for the same person's identity, the generated templates cannot be associated with each other'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "6b",
+  "ref": 6,
+  "verdict": "支持",
+  "evidence": "§3.2采用spherical linear interpolation（slerp）；§4.5: 'SlerpFace achieves D_sys^↔=0.05'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "6c",
+  "ref": 6,
+  "verdict": "支持",
+  "evidence": "§4.5: SSWL D_sys^↔为'a [0,1] value…To achieve unlinkability, the distributions of mated and non-mated pairs should be close and with small D_sys^↔'，越低越好",
+  "note": "度量引自Gomez-Barrero et al. (TIFS 2017)",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "6d",
+  "ref": 6,
+  "verdict": "支持",
+  "evidence": "Fig.6(b): 'CFP-FP unprotected, D_sys^↔=0.94'与'CFP-FP protected(SlerpFace), D_sys^↔=0.05'；§4.5结论满足irreversibility, revocability, unlinkability（ISO/IEC 24745:2022）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 7,
+  "verdict": "可达",
+  "evidence": "IDIAP镜像PDF下载并提取文本成功（Melzi, Otroshi Shahreza, Rathgeb等, IEEE ACCESS 2025）",
+  "note": "DOI 10.1109/ACCESS.2025.3590989",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "7a",
+  "ref": 7,
+  "verdict": "支持",
+  "evidence": "§I: 'biometric templates can reveal sensitive personal information like health conditions, emotions, and soft-biometric attributes'；摘要CB方案'often fail to preserve the privacy of soft-biometric information'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "7b",
+  "ref": 7,
+  "verdict": "支持",
+  "evidence": "§I: 'Unlinkability can be obtained by introducing some randomness with keys or random parameters…When unlinkability is satisfied, compromised biometric templates can be revoked and substituted with new ones, providing template renewability'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_1.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 8,
+  "verdict": "可达",
+  "evidence": "AAAI 2022 官方PDF全文获取成功（cdn.aaai.org）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "8a",
+  "ref": 8,
+  "verdict": "支持",
+  "evidence": "正文：\"the distinguishability of face images exists in higher frequency, these frequency values are small, and small errors in them will lead to great impact on the visualization\"",
+  "note": "§Experiments安全分析段",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "8b",
+  "ref": 8,
+  "verdict": "支持",
+  "evidence": "Fast masking：丢弃DC→Shuffle→self-normalization→channel mixing→Shuffle→self-normalization；修改ArcFace输入通道并上采样；白盒+黑盒GAN(Pix2Pix+StyleGAN2)攻击；Limitations节明确revocability与unlinkability\"beyond the scope of this work\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "8c",
+  "ref": 8,
+  "verdict": "部分支持",
+  "evidence": "Table 1：PPFR-FD-DC LFW 99.68 vs ArcFace 99.82属实；仅丢DC（能量损失>94%）\"FR accuracy is marginally affected\"；\"accuracy drops about 3%\"对应丢弃6个通道（能量损失>97%）",
+  "note": "\"丢DC通道精度仅降约3%\"口径有误：3%系丢6通道的数值，丢DC仅轻微影响",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "8d",
+  "ref": 8,
+  "verdict": "支持",
+  "evidence": "BDCT生成64个频域通道，DC丢弃+两次混洗+自归一化+通道混合（Methodology节，Fig.2(b)）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "8e",
+  "ref": 8,
+  "verdict": "支持",
+  "evidence": "\"applications based on the client-server model\"；客户端摄像头捕获→掩码→传云端服务器识别（§Introduction, Fig.1(b)）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 9,
+  "verdict": "可达",
+  "evidence": "TechScience HTML全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "9a",
+  "ref": 9,
+  "verdict": "支持",
+  "evidence": "标题即\"Cancelable Multi-biometric Template Generation Based on Dual-Tree Complex Wavelet Transform\"；DWT用于安全虹膜见Related Work",
+  "note": "DWT虹膜为相关工作角色，DTCWT可撤销模板为本文方法",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "9b",
+  "ref": 9,
+  "verdict": "支持",
+  "evidence": "\"Fouad et al. [11] proposed a secure iris pattern recognition framework...iris image is protected with a key and is embedded in the cover image using LSB and DWT methods\"；IK由指纹+眼睛经DT-CWT融合生成",
+  "note": "虹膜LSB+DWT系转述相关工作Fouad et al.，非本文贡献",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 10,
+  "verdict": "可达",
+  "evidence": "lilyliliu.com PDF全文获取成功（pdftotext）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "10a",
+  "ref": 10,
+  "verdict": "支持",
+  "evidence": "\"the shearlet transformation is performed in the Fourier domain\"（摘要/§1）；假脸频谱句与[11]共引",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "10b",
+  "ref": 10,
+  "verdict": "支持",
+  "evidence": "\"The proposed descriptor is called LSF since it combines LBP and shearlet\"；\"only the real part of the shearlet transformation in the Fourier domain\"（摘要）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "10c",
+  "ref": 10,
+  "verdict": "支持",
+  "evidence": "\"We found that only the real part of the shearlet transformation in the Fourier domain is useful for face recognition\"（§1）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "10d",
+  "ref": 10,
+  "verdict": "支持",
+  "evidence": "LSF = Shearlet（Fourier域）+LBP，仅用实部系数（摘要与方法节一致）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 11,
+  "verdict": "可达",
+  "evidence": "MDPI Electronics HTML全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "11a",
+  "ref": 11,
+  "verdict": "支持",
+  "evidence": "§2.2：\"using the Discrete Fourier Transform (DFT) and averaging the amplitude of each frequency band can reveal discriminative spectral irregularities in fake faces\"",
+  "note": "系引述文献[27] Durall et al. 2019的观点，非FMSI自身实验结论",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 12,
+  "verdict": "可达",
+  "evidence": "math.uh.edu PDF全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "12a",
+  "ref": 12,
+  "verdict": "部分支持",
+  "evidence": "[12]全文无LBP/LSF/\"real part\"内容，该方法为RSN稀疏表示",
+  "note": "LSF描述子与实部论断仅见于[10]，[12]不支撑该半句（与[10]共引可弥补）",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "12b",
+  "ref": 12,
+  "verdict": "支持",
+  "evidence": "摘要：\"Regularized Shearlet Network (RSN), that takes advantage of the sparse representation properties of shearlets in biometric applications\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 13,
+  "verdict": "可达",
+  "evidence": "jpdickerson.com PDF全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "13a",
+  "ref": 13,
+  "verdict": "支持",
+  "evidence": "Table 3：Clean 96.7–96.9%，blurred LowKey rank-50 2.8–9.6%；ResNet-50/152、IR-50/152以ArcFace/CosFace在MS-Celeb-1M训练（§4）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "13b",
+  "ref": 13,
+  "verdict": "支持",
+  "evidence": "\"Our system pre-processes user images before they are made publicly available on social media outlets\"（§1）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 14,
+  "verdict": "可达",
+  "evidence": "arXiv HTML(v2)全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "14a",
+  "ref": 14,
+  "verdict": "支持",
+  "evidence": "Table 8（Face++，CASIA-WebFace，ϵ=16）：APF 65.30/65.11/67.96；FGSM-LMFAP 51.02/49.80/52.04；LowKey 51.63/51.43/52.04（列：W/O、Q75、Q50）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "14b",
+  "ref": 14,
+  "verdict": "支持",
+  "evidence": "Table 1/8显示JPEG压缩下各方法成功率变化明显；\"The method tackling target JPEG compression of specific factors underperforms when faced with other factors\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "14c",
+  "ref": 14,
+  "verdict": "支持",
+  "evidence": "摘要\"unauthorized use of facial recognition systems\"；目标为未授权FRS及商业黑盒API Face++",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 15,
+  "verdict": "可达",
+  "evidence": "CVF openaccess PDF全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "15a",
+  "ref": 15,
+  "verdict": "支持",
+  "evidence": "摘要：\"apply discrete cosine transform (DCT)...introduce a fusion module...Compared with existing attacks in the spatial domain, our method is more imperceptible to human observers and does not degrade the visual quality\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "15b",
+  "ref": 15,
+  "verdict": "部分支持",
+  "evidence": "[15]仅称频域攻击\"more imperceptible to human observers\"，未陈述\"人眼对特定频段敏感度较低\"机制",
+  "note": "机制表述明确见于[16]（共引）；[15]单独不支撑机制半句",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 16,
+  "verdict": "可达",
+  "evidence": "SciOpen HTML全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "16a",
+  "ref": 16,
+  "verdict": "支持",
+  "evidence": "摘要列出FreqAdv-FFT/Wavelet/Phase/SelDCT/RandDCT五变体；Table 4：WB_WoB-ReID Wavelet对HRNet mAP 0.0252；Table 3：Market-1501 FFT对ResNet-50 mAP 0.0396",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "16b",
+  "ref": 16,
+  "verdict": "支持",
+  "evidence": "摘要：\"utilizes the individual's visual system's decreased sensitivity to specific frequency ranges, making these perturbations less obvious\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 17,
+  "verdict": "可达",
+  "evidence": "MDPI Mathematics HTML全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "17a",
+  "ref": 17,
+  "verdict": "支持",
+  "evidence": "摘要：\"exploits the frequency domain by learning high, middle, and low band filters as an additional dimension of refining facial UAP\"；§3.1 \"learnable filters ensures that the extracted frequency segment is not solely confined to the predefined...ranges\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 18,
+  "verdict": "可达",
+  "evidence": "pdxscholar页面可达（WebFetch）；PDF因Cloudflare改用PoPETs官方镜像获取全文",
+  "note": "经petsymposium.org/popets/2021/popets-2021-0006.pdf获取正文",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "18a",
+  "ref": 18,
+  "verdict": "支持",
+  "evidence": "§Countermeasures \"Perturbation Estimation and Removal\"：对UEP取中位数估计，5张图恢复60%、10张达70%识别；\"using a single UEP perturbation for several images may allow target classifiers to estimate the perturbation\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 62,
+  "verdict": "可达",
+  "evidence": "arXiv HTML(v1)全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "62a",
+  "ref": 62,
+  "verdict": "部分支持",
+  "evidence": "Table 4：CASIA-WebFace 494k/10.5k、五基准均值0.9470；0.9652见Table 6但系LFW/CFP-FP/AgeDB三基准均值",
+  "note": "claim将0.9652并入\"5基准平均\"范围，口径混用",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "62b",
+  "ref": 62,
+  "verdict": "部分支持",
+  "evidence": "Table 6：MS1M-MegaFace 14.7M/750k、LFW 0.9975属实",
+  "note": "\"ArcFace/CosFace训练基础\"表述未见于原文",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "62c",
+  "ref": 62,
+  "verdict": "支持",
+  "evidence": "§4.3：\"two IARPA Janus Benchmarks – IJB-B and IJB-C\"（SDFR评测扩展基准）",
+  "note": "\"大规模\"为概括性修饰，原文未直接写出",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "62d",
+  "ref": 62,
+  "verdict": "支持",
+  "evidence": "Table 1/6：VGGFace2 3.3M图像、9k身份",
+  "note": "与[60]共引；9,131为通行精确值，论文取整为9k",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "62e",
+  "ref": 62,
+  "verdict": "支持",
+  "evidence": "Table 1：WebFace42M 42M图像、2M身份",
+  "note": "与[60]共引",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 63,
+  "verdict": "可达",
+  "evidence": "AMBERER文档页获取成功",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "63a",
+  "ref": 63,
+  "verdict": "支持",
+  "evidence": "页面：\"10,575 subjects and 494,414 images\"（CASIA WebFace条目）",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "63b",
+  "ref": 63,
+  "verdict": "部分支持",
+  "evidence": "页面有MS1MV2条目，但内容残缺：仅罗列LFW/CFP-FP等基准名，无数据集规模数据",
+  "note": "二手来源；与[62]共引",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 64,
+  "verdict": "可达",
+  "evidence": "exposing.ai页面获取成功",
+  "note": "二手来源（调查项目页面，非原始基准论文）",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "64a",
+  "ref": 64,
+  "verdict": "支持",
+  "evidence": "\"IJB-C is part of the Janus face recognition program\"；用于face recognition benchmarking；21,294图像/3,531身份",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 65,
+  "verdict": "可达",
+  "evidence": "Omnilert博客页获取成功",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "65a",
+  "ref": 65,
+  "verdict": "支持",
+  "evidence": "\"They run large-scale tests of facial recognition algorithms using massive databases of images to measure how well different systems perform. These tests consider accuracy and consistency so developers and organizations have a benchmark to compare against\"",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 66,
+  "verdict": "可达",
+  "evidence": "marta-gomez-barrero.com教程页可达（仅摘要）",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "66a",
+  "ref": 66,
+  "verdict": "不支持",
+  "evidence": "页面为2018-12教程摘要，不可能收录2022年BIOSIG论文；页面无参考文献列表，未见Kirchgasser & Uhl",
+  "note": "二手来源；该引用实际出自[54]，[66]不支撑",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 67,
+  "verdict": "可达",
+  "evidence": "CVF openaccess WACV 2025 PDF全文获取成功",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "67a",
+  "ref": 67,
+  "verdict": "支持",
+  "evidence": "首个频域可解释FR工作；参考文献含[37]DuetFace(Mi et al. MM'22)、[38/39]Random Frequency Components(Mi et al. ICCV'23)、[49]PPFR-FD(Wang et al. AAAI'22)",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "67b",
+  "ref": 67,
+  "verdict": "支持",
+  "evidence": "\"the first to propose explainability of verification-based decisions in the frequency domain\"；此前\"was never addressed before this work\"",
+  "note": "",
+  "_batch": "tmp/verify\\batch_2.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 19,
+  "verdict": "可达",
+  "evidence": "liner.com Quick Review 页存在，为 PPFR-FD (Wang et al., AAAI 2022) 评论页，含方法综述与 LFW 实验结果",
+  "note": "二手评论来源",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "19a",
+  "ref": 19,
+  "verdict": "部分支持",
+  "evidence": "页面含 masking 方法与实验综述，但抓取内容未见 revocability/unlinkability 局限表述",
+  "note": "镜像/二手来源，对应原论文 claim 8b；局限表述以原论文为准，本次抓取未覆盖",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "19b",
+  "ref": 19,
+  "verdict": "支持",
+  "evidence": "页载 LFW 99.68% vs ArcFace 未保护 99.82%，移除超 94% 图像能量",
+  "note": "镜像/二手来源，对应原论文 claim 8c，数字一致",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "19c",
+  "ref": 19,
+  "verdict": "支持",
+  "evidence": "页载 fast masking: discards DC, shuffles, self-normalizes, mixes frequency channels",
+  "note": "镜像/二手来源，对应原论文 claim 8b/8d",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 20,
+  "verdict": "可达",
+  "evidence": "arXiv 摘要页完整，标题、作者、摘要均可获取",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20a",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "摘要：counterintuitive discovery（仅视觉不可分辨高频通道）、credible split by cruciality、non-crucial channels 服务端处理、feature mask 注意力迁移、comparable to ArcFace",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20b",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "摘要支持频域通道分割+注意力迁移的方法定位",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20c",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "摘要：comparable computation cost to unprotected ArcFace；plug-in interactive block 嵌入现有骨干；protects from visual inspection/reconstruction/identification",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20d",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "摘要明确 collaborative inference 客户端-服务器协作推理框架",
+  "note": "关于间接缓解梯度泄露无定量证据部分为报告自身推断，源文未涉及，不构成矛盾",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20e",
+  "ref": 20,
+  "verdict": "部分支持",
+  "evidence": "DuetFace 无密码学级保证属实，但摘要自称 protects face images from undesired reconstruction",
+  "note": "无法防御重建攻击的观点与源文主张相悖，该论断主要来自共引文献[38] AdvFace",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20f",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "摘要支持：视觉不可分辨通道抗肉眼检查、开销与 ArcFace 相当",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20g",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "arXiv 页标注 Accepted to ACM Multimedia 2022",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "20h",
+  "ref": 20,
+  "verdict": "支持",
+  "evidence": "摘要：在选定频率通道上保持精度与隐私平衡",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 21,
+  "verdict": "可达",
+  "evidence": "alphaXiv 页面存在，作者列表与摘要与 arXiv:2207.07340 完全一致",
+  "note": "镜像来源",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "21a",
+  "ref": 21,
+  "verdict": "支持",
+  "evidence": "镜像摘要含 counterintuitive discovery、credible split、feature mask、comparable to ArcFace",
+  "note": "镜像/二手来源，对应原论文 claim 20a",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "21b",
+  "ref": 21,
+  "verdict": "支持",
+  "evidence": "镜像页方法描述与 arXiv 版一致",
+  "note": "镜像/二手来源，对应原论文 claim 20b",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "21c",
+  "ref": 21,
+  "verdict": "支持",
+  "evidence": "镜像页确认 collaborative inference 客户端-服务器场景",
+  "note": "镜像/二手来源，对应原论文 claim 20d",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 22,
+  "verdict": "可达",
+  "evidence": "arXiv 摘要页完整，标注 ICCV 2023",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "22a",
+  "ref": 22,
+  "verdict": "支持",
+  "evidence": "摘要：pruning human-perceivable low-frequency components；training and inference on randomly selected frequency components；elucidate the seeming paradox",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "22b",
+  "ref": 22,
+  "verdict": "支持",
+  "evidence": "摘要支持随机频率分量+剪除低频的方法定位",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "22c",
+  "ref": 22,
+  "verdict": "支持",
+  "evidence": "arXiv 页 Comments 标注 ICCV 2023",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "22d",
+  "ref": 22,
+  "verdict": "支持",
+  "evidence": "摘要：effectively balances privacy protection goals and recognition accuracy",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 23,
+  "verdict": "可达",
+  "evidence": "WebFetch 直接抓取失败，经 WebSearch 快照确认 huggingface.co/papers/2308.10461 页面存在且摘要与 arXiv 一致",
+  "note": "镜像来源；页面经搜索快照核实",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "23a",
+  "ref": 23,
+  "verdict": "支持",
+  "evidence": "镜像页摘要含 prunes human-perceivable low-frequency components、randomly selected frequency components",
+  "note": "镜像/二手来源，对应原论文 claim 22a",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "23b",
+  "ref": 23,
+  "verdict": "支持",
+  "evidence": "镜像页方法描述与 arXiv 版一致",
+  "note": "镜像/二手来源，对应原论文 claim 22b",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "23c",
+  "ref": 23,
+  "verdict": "支持",
+  "evidence": "镜像页标注 ICCV 2023",
+  "note": "镜像/二手来源，对应原论文 claim 22c",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 24,
+  "verdict": "可达",
+  "evidence": "arXiv:2401.13386v1 摘要页完整，作者 Han/Li/Denzler",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "24a",
+  "ref": 24,
+  "verdict": "支持",
+  "evidence": "摘要：hybrid frequency-color fusion 降维、sparse color information 缓解 DP 噪声后精度下降、identity-specific embedding mapping 拉大身份距离、SMPC 计算嵌入距离",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "24b",
+  "ref": 24,
+  "verdict": "支持",
+  "evidence": "摘要支持频域-颜色混合域方法定位",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "24c",
+  "ref": 24,
+  "verdict": "支持",
+  "evidence": "arXiv 页标注已被 VISAPP 2024 接收",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "24d",
+  "ref": 24,
+  "verdict": "支持",
+  "evidence": "摘要原句：around 2.6% to 4.2% higher accuracy than the state-of-the-art in the 1:N verification scenario",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "24e",
+  "ref": 24,
+  "verdict": "支持",
+  "evidence": "摘要原句：The noticeable drop in recognition accuracy is a pitfall for most methods",
+  "note": "稀疏颜色缓解加噪后精度下降亦见摘要",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 25,
+  "verdict": "可达",
+  "evidence": "SCITEPRESS PDF 下载成功并提取全文（VISIGRAPP/VISAPP 2024, pp.536-546）",
+  "note": "即 arXiv:2401.13386 的会议版",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "25a",
+  "ref": 25,
+  "verdict": "支持",
+  "evidence": "§1：Most frequency-based FR methods have high-dimensional inputs without utilizing any color information；selects the most important coefficients across the channel to discard redundant information",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "25b",
+  "ref": 25,
+  "verdict": "支持",
+  "evidence": "§4.3.2：rank-1 提升 7.4% ArcFace、9.4% DCTDP、13.3% DCTDP-FF、8.1% HFCF-LBP、9.3% HFCF-DLBP，数字完全一致",
+  "note": "会议版特有实验结论，arXiv 摘要页未含此细节",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "25c",
+  "ref": 25,
+  "verdict": "支持",
+  "evidence": "论文标题与内容即为 Hybrid Frequency-Color Domain 方法",
+  "note": "与[24]同源",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "25d",
+  "ref": 25,
+  "verdict": "支持",
+  "evidence": "§1 同句指出频域方法高维输入且未利用颜色信息",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 26,
+  "verdict": "可达",
+  "evidence": "ScienceDirect 公开摘要与 Highlights 可获取（PRL Vol.166, 2023, pp.1-7），正文付费墙",
+  "note": "标题全称含 and reversible data hiding in YUV colorspace，报告标题略有截短",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "26a",
+  "ref": 26,
+  "verdict": "支持",
+  "evidence": "Highlights：Embed adversarial perturbations of Y channel into UV channel by reversible data hiding",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "26b",
+  "ref": 26,
+  "verdict": "支持",
+  "evidence": "摘要：ensure that authorized models can recover original image data without distortion",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 27,
+  "verdict": "可达",
+  "evidence": "arXiv HTML 全文可获取",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "27a",
+  "ref": 27,
+  "verdict": "支持",
+  "evidence": "摘要/正文：propose a new method for generating reversible adversarial examples based on local visible adversarial perturbation",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 28,
+  "verdict": "可达",
+  "evidence": "ScienceDirect 公开摘要可获取（Information Sciences Vol.629, 2023, pp.566-579）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "28a",
+  "ref": 28,
+  "verdict": "支持",
+  "evidence": "摘要：proposes face privacy-preserving method based on Invertible Mask Network (IMN)；almost perfectly recover the protected face",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "28b",
+  "ref": 28,
+  "verdict": "支持",
+  "evidence": "摘要：the recovered face can be obtained by authorized users；contribution 称 losslessly recover by authorized users",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 29,
+  "verdict": "可达",
+  "evidence": "arXiv:2204.08895 摘要页完整",
+  "note": "镜像来源",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "29a",
+  "ref": 29,
+  "verdict": "支持",
+  "evidence": "arXiv 摘要：IMN 保护隐私且 almost perfectly recover，与 InfoSci 版一致",
+  "note": "镜像/二手来源，对应原论文 claim 28a",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 30,
+  "verdict": "可达",
+  "evidence": "Monash 研究库页面完整，含摘要与出版信息（ICICS 2023, LNCS 14252, pp.333-350）",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "30a",
+  "ref": 30,
+  "verdict": "支持",
+  "evidence": "摘要原句：employs homomorphic encryption (HE) and secure multi-party computation (MPC)",
+  "note": "",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "30b",
+  "ref": 30,
+  "verdict": "支持",
+  "evidence": "摘要：database held by a third party, such as a cloud server，云外包场景明确",
+  "note": "摘要未明确'授权解密'表述，CryptoMask 仅揭示是否匹配而不恢复图像，该短语为报告概括",
+  "_batch": "tmp/verify\\batch_3.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 31,
+  "verdict": "可达",
+  "evidence": "arXiv:2608.08924v1 存在，2026-08-09 提交，题为 From Noise to Meaning",
+  "note": "论文真实存在，主题为 VSS 秘密共享+隐写术+篡改检测，非同态加密论文",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "31a",
+  "ref": 31,
+  "verdict": "部分支持",
+  "evidence": "该文参考文献[35]为 Song et al. PLoS ONE 2025 HE 人脸识别、[37]为 Wang et al. Expert Systems 2025 多密钥 HE",
+  "note": "链接论文仅在文献列表中引用这两篇，本身并非 HE 论文；用[31]支撑该两条目属二手引用、张冠李戴",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "31b",
+  "ref": 31,
+  "verdict": "支持",
+  "evidence": "正文 related works 称 homomorphic encryption 'enables operations on encrypted data, but is computationally complex'",
+  "note": "HE 计算复杂的论断可在该文找到",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 32,
+  "verdict": "受限",
+  "evidence": "HAL 页面被 Anubis 反爬拦截；经 HAL API 元数据及 arXiv:1503.04624 镜像全文核实",
+  "note": "论文即 Barbier et al. ARES 2015，arXiv 有同文镜像",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "32a",
+  "ref": 32,
+  "verdict": "支持",
+  "evidence": "§3.4 'applies multiple times the BioHashing algorithm'；摘要称结合 watermarking 与 cancelable biometrics",
+  "note": "生物特征数据为指纹 BioCode（FVC2002/2004 指纹库实验），人脸图像主要作为嵌入载体/相关工作场景",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "32b",
+  "ref": 32,
+  "verdict": "支持",
+  "evidence": "嵌入标记为 owner 与 customer 的 BioCode 串联加图像标识，同时证明所有权与身份",
+  "note": "水印同时承载版权（proof of ownership）与生物特征身份",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "32c",
+  "ref": 32,
+  "verdict": "部分支持",
+  "evidence": "论文面向数字图像版权保护（proof of ownership），非生物特征数据库版权/模板存储场景",
+  "note": "适用场景被夸大，与[33]共引的模板存储安全表述超出原文范围",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 33,
+  "verdict": "可达",
+  "evidence": "IEEE CAS 2023 页面可达：Sardar et al., Palmprint Recognition, vol.4 pp.1051-1063",
+  "note": "论文真实存在，但为掌纹（palmprint）而非人脸",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "33a",
+  "ref": 33,
+  "verdict": "支持",
+  "evidence": "摘要：'A novel Bio-Cryptosystem has been proposed... no need to remember the users' tokens'，含 cancelable biometrics 组件",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "33b",
+  "ref": 33,
+  "verdict": "支持",
+  "evidence": "user-specific token 与掌纹特征计算 cancelable 特征向量，泄露后可重发",
+  "note": "可撤销性表述成立（co-cited 通用论断）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "33c",
+  "ref": 33,
+  "verdict": "部分支持",
+  "evidence": "论文场景为掌纹识别系统模板保护，原始特征离线保存、可撤销特征加密在线保存",
+  "note": "模板存储安全主旨成立，但非人脸场景，与[32]共引",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 34,
+  "verdict": "可达",
+  "evidence": "ScienceDirect 摘要页可达：Srinivas et al., Computers & Security vol.157, 104573, 2025-10",
+  "note": "全文付费，摘要与引言片段可见",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "34a",
+  "ref": 34,
+  "verdict": "支持",
+  "evidence": "引言：'introduces a novel cancellable biometric template protection system to resolve the gap between accuracy and security'",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "34b",
+  "ref": 34,
+  "verdict": "支持",
+  "evidence": "摘要称 CB 方案常因变换复杂度导致精度下降，本文 DFE 生成可重发行的可撤销模板",
+  "note": "精度-安全性平衡与可撤销重发表述成立（co-cited 通用论断）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 35,
+  "verdict": "可达",
+  "evidence": "ResearchGate 页面可达：Ghouzali et al., Intelligent Automation & Soft Computing 27(1):35-51, 2021",
+  "note": "页面含 PDF 正文片段",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "35a",
+  "ref": 35,
+  "verdict": "不支持",
+  "evidence": "论文方法为 secure sketch+DTCWT-DCT 水印+3D 混沌加密，全文未用同态加密",
+  "note": "'HE+cancelable biometrics'仅作为被引相关工作一句话出现，报告将方法描述张冠李戴",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "35b",
+  "ref": 35,
+  "verdict": "部分支持",
+  "evidence": "管线含指纹 sketch、水印嵌入人脸、混沌加密、人脸+指纹分数级融合，多阶段确实复杂",
+  "note": "原文未将复杂度表述为缺点，系报告概括（与[36]共引）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 36,
+  "verdict": "受限",
+  "evidence": "IEEE 直链返回 HTML 拦截页；经 IEEE Access 卷期页（vol.12 pp.173557-173582）及 ADS/DOAJ 替代来源核实",
+  "note": "论文为 Rachapalli et al. 2024, DOI 10.1109/ACCESS.2024.3501368",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "36a",
+  "ref": 36,
+  "verdict": "支持",
+  "evidence": "摘要：提取人脸、虹膜、掌纹特征，QR 码彩色化生成单向可撤销模板，IEEE Access 2024",
+  "note": "多模态可撤销模板保护表述一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "36b",
+  "ref": 36,
+  "verdict": "部分支持",
+  "evidence": "三模态+QR 彩色化+变换域验证，管线多阶段；原文未明确称复杂度高",
+  "note": "系报告概括性缺点（与[35]共引）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "36c",
+  "ref": 36,
+  "verdict": "支持",
+  "evidence": "论文即多模态（face+iris+palmprint）多生物特征模板保护",
+  "note": "多模态方向表述成立（与[70]共引）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 37,
+  "verdict": "可达",
+  "evidence": "PDF 下载成功，15 页，Fierrez/Gomez-Barrero 2016 Bloom filter 不可链接性论文",
+  "note": "与 ref 5 为同一论文不同 URL 版本",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "37a",
+  "ref": 37,
+  "verdict": "支持",
+  "evidence": "§2: BioHashing 'operates as a key-binding scheme, using secret subject-specific tokens'",
+  "note": "密钥绑定、主体特定令牌表述与原文逐字一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 38,
+  "verdict": "可达",
+  "evidence": "CVPR 2023 幻灯片 13 页下载成功，含 Motivation 对比页",
+  "note": "幻灯片（非论文全文），文字精简",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38a",
+  "ref": 38,
+  "verdict": "支持",
+  "evidence": "第6页：'Frequency domain[5,6]: cannot defend against reconstruction attacks and incur redeployment costs'",
+  "note": "[5]=Ji DCTDP、[6]=Mi DuetFace，与报告语境一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38b",
+  "ref": 38,
+  "verdict": "部分支持",
+  "evidence": "第13页称 AdvFace 可抵抗未知重建攻击且维持精度，'easily integrated... as a plug-in'，无需重新部署",
+  "note": "前半成立；'需要对抗训练/重新部署'与幻灯片 plug-in 表述矛盾（仅离线训练 shadow model）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38c",
+  "ref": 38,
+  "verdict": "支持",
+  "evidence": "第6页：'DP(Differential privacy)[3,4]: cannot defend against reconstruction attacks'，[3]=Chamikara",
+  "note": "空间域 DP 无法防重建表述有明确依据",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38d",
+  "ref": 38,
+  "verdict": "支持",
+  "evidence": "同上第6页 DP 无法防御重建攻击的明确表述",
+  "note": "§5.4 表述成立",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38e",
+  "ref": 38,
+  "verdict": "部分支持",
+  "evidence": "第6页支持'频域无法防重建'及'Encryption: large computation overhead'；'缺乏密码学级保证'与 SMPC/BTP 未在幻灯片出现",
+  "note": "前半有据；'密码学级''SMPC/BTP'为报告引申（与[20][40]共引）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38f",
+  "ref": 38,
+  "verdict": "支持",
+  "evidence": "第6页四类方法对比支持表中频域行'无法防重建'、DP 行'无法防重建'",
+  "note": "空间域对抗扰动行可由 AdvFace 自身结论支撑",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "38g",
+  "ref": 38,
+  "verdict": "支持",
+  "evidence": "第5页指出现实攻击者可从人脸特征重建原图，为全文动机",
+  "note": "作为背景引用成立（较宽泛）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 39,
+  "verdict": "可达",
+  "evidence": "arXiv:2205.11090v1 摘要页可达，Wang et al. 2022-05-23 提交",
+  "note": "论文真实存在",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "39a",
+  "ref": 39,
+  "verdict": "支持",
+  "evidence": "摘要：'reduces at least 50% error rate on LFW, CFP-FP and AgeDB'，MAE 从掩码脸重建",
+  "note": "数字与数据集表述严格一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 40,
+  "verdict": "受限",
+  "evidence": "cvcops19.cispa.saarland 连接被重置；经 arXiv:1805.00577（同一论文 BTAS 2018 版）全文核实",
+  "note": "Boddeti, Secure Face Matching Using FHE",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "40a",
+  "ref": 40,
+  "verdict": "支持",
+  "evidence": "§1: '48.7 MB of memory for each 512-dimensional encrypted face template and 12.8 secs for matching a single pair'",
+  "note": "12.8s/48.7MB 系文中引用 Troncoso-Pastoriza et al. 的 naive FHE 数据；TAR 25.77 vs 25.78 见 Table 2 IJB-B 行 FAR=0.01%",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "40b",
+  "ref": 40,
+  "verdict": "部分支持",
+  "evidence": "该文称 FHE 提供 128-192 bit 安全但 naive 开销大，其框架已降至 0.01s/16KB；未涉及 SMPC/BTP",
+  "note": "HE 强保证+开销主旨成立，SMPC/BTP 超出该文范围（与[38]共引）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "40c",
+  "ref": 40,
+  "verdict": "支持",
+  "evidence": "§1 naive FHE 需 48.7MB/模板、12.8s/匹配对，结论再次确认",
+  "note": "表中 HE 行高开销表述有依据",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 41,
+  "verdict": "受限",
+  "evidence": "Springer 正文页反爬（Client Challenge）；content/pdf 直链可下载，26 页全文已核实",
+  "note": "Chitrapu et al., Discover Computing 29:132, 2026",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "41a",
+  "ref": 41,
+  "verdict": "支持",
+  "evidence": "§3.4 '512-dimensional deep features... reduced to 256 dimensions'；正文：加密 3.3141s→1.6570s、密文计算 5.3890s→2.6947s、总时长 4.49143s/4.45853s（无 LPP 约 8.7s）",
+  "note": "所有数字与原文表 6-9 及 §4 分析一致（表中 512 维计算列为 5.3895，正文写作 5.3890）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "41b",
+  "ref": 41,
+  "verdict": "支持",
+  "evidence": "论文动机即高维特征加密开销大，LPP 降维后密文更小、加密距离计算更快",
+  "note": "报告将 LPP 降维原理类比到频域预处理，机制表述成立",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 42,
+  "verdict": "可达",
+  "evidence": "arXiv:2509.00332v1 HTML 全文可达，Ao & Boddeti 2025",
+  "note": "论文真实存在",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "42a",
+  "ref": 42,
+  "verdict": "支持",
+  "evidence": "'the first end-to-end encrypted face recognition system' with FHE；CKKS；CryptoFaceNet；'without decryption at any point'",
+  "note": "与报告表述逐点一致",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "42b",
+  "ref": 42,
+  "verdict": "支持",
+  "evidence": "正文：HE 'provides provable post-quantum security'、'considered quantum-secure'（LWE/RLWE）",
+  "note": "量子安全表述有依据",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 43,
+  "verdict": "可达",
+  "evidence": "OPC Tech-Know Blog 'Computing while blindfolded'，2023-10-24，David Weinkauf",
+  "note": "二手来源（科普博客）",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "43a",
+  "ref": 43,
+  "verdict": "支持",
+  "evidence": "博客：bootstrapping 开销'can be so great that it outweighs any gain'；'Levelled fully' FHE 用于 bounded-depth 计算、'no negative performance hit due to bootstrapping'",
+  "note": "二手来源；报告'实际多采用分层 FHE'为稍强概括，博客原意是深度可预知时的可选方案",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "43b",
+  "ref": 43,
+  "verdict": "支持",
+  "evidence": "博客引早期测试 bootstrapping 'up to 30 minutes'、典型慢 1000 倍",
+  "note": "二手来源；bootstrapping 昂贵表述成立",
+  "_batch": "tmp/verify\\batch_4.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 44,
+  "verdict": "可达",
+  "evidence": "CACM 文章 Belt and Braces 抓取成功，Key Insights 与正文均含 FL 无形式化隐私保证、DLG、DP 小样本信噪比论述",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "44a",
+  "ref": 44,
+  "verdict": "支持",
+  "evidence": "Key Insights: FL avoids raw data exposure 'but it still lacks a rigorous privacy guarantee against indirect information inferences'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "44b",
+  "ref": 44,
+  "verdict": "支持",
+  "evidence": "隐私攻击一节: DLG 'optimizes the dummy inputs and labels via minimizing the difference between the dummy and targeted gradients'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "44c",
+  "ref": 44,
+  "verdict": "支持",
+  "evidence": "Key Insights: DP 'can mathematically formulate and limit the indirect privacy leakage' but 'may suffer from the low signal-to-noise ratio issue when having a small number of learning samples'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "44d",
+  "ref": 44,
+  "verdict": "支持",
+  "evidence": "上述 FL 无保证/DLG/DP 小样本信噪比三点均为原文明确论述",
+  "note": "表格式总结与原文一致",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 45,
+  "verdict": "可达",
+  "evidence": "AAAI 2022 FedGC 论文 PDF 下载并以 pdftotext 提取全文核对",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "45a",
+  "ref": 45,
+  "verdict": "支持",
+  "evidence": "摘要: sharing whole parameters 'suffers from privacy leakage'; 'propose a softmax-based regularizer to correct gradients of class embeddings by precisely injecting a cross-client gradient term'; 'guarantees higher privacy'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "45b",
+  "ref": 45,
+  "verdict": "支持",
+  "evidence": "引言: 共享全连接层类嵌入后 'one client's private high-fidelity face images can be easily synthesized... via DeepInversion'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 46,
+  "verdict": "可达",
+  "evidence": "arXiv:2510.23931 HTML 抓取成功，摘要明确评估 DP-SGD/PDP-SGD 对抗 GLA",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "46a",
+  "ref": 46,
+  "verdict": "支持",
+  "evidence": "摘要: 'we investigate the effectiveness of Differential Privacy (DP) mechanisms — specifically, DP-SGD and a variant... (PDP-SGD) — as defenses against GLAs'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 47,
+  "verdict": "可达",
+  "evidence": "MDPI Entropy 28(1):5 抓取成功，作者 Zhou, Li, Zhu, Zhou, Wu，非 Erkin et al.",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "47a",
+  "ref": 47,
+  "verdict": "不支持",
+  "evidence": "链接论文为 Zhou 等，方法是 FFCM 特征编码+对称同态加密，非 SMPC；Erkin et al. 仅作为相关工作被引用",
+  "note": "报告张冠李戴：SMPC 论断对应 Erkin et al. 2009 经典 PPFR（IACR），与引文链接论文非同一研究",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "47b",
+  "ref": 47,
+  "verdict": "支持",
+  "evidence": "原文: 'Sadeghi et al. [25]... 96.4%. In comparison, our scheme achieves an accuracy of 98.582%, which is 2% higher'",
+  "note": "96.4% 系 Sadeghi et al.（HE 类 PPFR）在 ORL 上的数据，98.582% 为该文方案数据",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "47c",
+  "ref": 47,
+  "verdict": "支持",
+  "evidence": "原文: 'their relatively small scale limits the statistical significance'; 'expand the evaluation scope to larger-scale and more diverse facial datasets, including... different ages, lighting conditions, and postures'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 48,
+  "verdict": "可达",
+  "evidence": "Pattern Recognition 67 (2017) 149-163 PDF 下载并提取全文核对",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "48a",
+  "ref": 48,
+  "verdict": "支持",
+  "evidence": "§2.3: '[50], a secure iris BTP based on a combination of HE and GCs... handling encrypted iriscodes... Hamming Distances... reduced to a inequality comparison carried out with GCs'",
+  "note": "该组合为相关工作 [50]，非本文自身方法",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 49,
+  "verdict": "可达",
+  "evidence": "Biometric Update 2026-01 新闻抓取成功，内容与观点一致",
+  "note": "二手来源（新闻报道）",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "49a",
+  "ref": 49,
+  "verdict": "支持",
+  "evidence": "'BTP could be achieved with the help of homomorphic encryption, which does not traditionally fall into the BTP domain. In Norway... banking industry is testing homomorphic encryption from Mobai'",
+  "note": "二手来源；通用方法不适用引自 Handbook 转述",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "49b",
+  "ref": 49,
+  "verdict": "支持",
+  "evidence": "'methods used for generic data protection are usually unsuitable for protecting biometric templates... hashing, conventional encryption, distributed databases and smart cards... trusted execution environments'",
+  "note": "二手来源（新闻报道）",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 50,
+  "verdict": "可达",
+  "evidence": "NISTIR 8271 完整 PDF（29.5MB）下载并提取全文核对",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "50a",
+  "ref": 50,
+  "verdict": "支持",
+  "evidence": "FNIR(N,R,T) 定义页（N=enrolled subjects, R=candidates examined）；'False negative error rates in a particular scenario range from a few tenths of one percent to beyond fifty percent'；rank-50 与 FPIR=0.001 表均存在",
+  "note": "范围约 0.001-0.5 与原文 'few tenths of one percent to beyond fifty percent' 及最优算法 rank-1 miss ~0.1% 相符",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "50b",
+  "ref": 50,
+  "verdict": "支持",
+  "evidence": "执行摘要: 12.3M 人/26.6M 张照片库、127+76 个算法、'useful for comparison of face recognition algorithms'",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 51,
+  "verdict": "可达",
+  "evidence": "ECVA ECCV 2022 DCTDP 正式版 PDF 下载并提取全文核对",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "51a",
+  "ref": 51,
+  "verdict": "支持",
+  "evidence": "Tab.1 及 §4.3: LFW/CALFW 平均降 0.14%/0.65%；CFP-FP/AgeDB/CPLFW 平均降 2.5%；IJB-B/IJB-C 达 89.33% vs PEEP 5.82%、Cloak 33.58%、InstaHide 61.88%",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "51b",
+  "ref": 51,
+  "verdict": "支持",
+  "evidence": "§4.1 数据集 LFW/CFP-FP/CPLFW/CALFW/AgeDB/IJB-B/IJB-C；§4.4 攻击实验取平均隐私预算 0.5",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "51c",
+  "ref": 51,
+  "verdict": "部分支持",
+  "evidence": "论文用 PSNR 与 Feature Similarity 评估自身白盒(IDCT+去噪)与黑盒(UNet 解码器)重建攻击，但未讨论跨工作指标不一致/难以横向比较",
+  "note": "'难以横向比较'系报告综合推断，非原文观点",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "51d",
+  "ref": 51,
+  "verdict": "支持",
+  "evidence": "该文即 ECCV 2022 DCTDP 主线工作，与 §7.1 演进描述一致",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "51e",
+  "ref": 51,
+  "verdict": "不支持",
+  "evidence": "全文仅有 deepfake 处顺带提及 videos；无视频流传输云端/边缘或 GAN 智能模糊化内容；黑盒重建攻击用 UNet 解码器",
+  "note": "DCTDP 论文与视频流 GAN 模糊化论断明显无关",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "51f",
+  "ref": 51,
+  "verdict": "支持",
+  "evidence": "§3.1: DCT 分离可视化重要低频与识别重要高频，DC 通道聚合 91.6% 能量、对识别影响小故移除",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 52,
+  "verdict": "可达",
+  "evidence": "alphaXiv 镜像页抓取成功，AI Overview 与摘要内容与原文一致",
+  "note": "二手来源（alphaXiv 镜像，arXiv:2207.07316）",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "52a",
+  "ref": 52,
+  "verdict": "支持",
+  "evidence": "AI Overview: 'uniform budget distribution results in 65.966% accuracy on LFW, compared to 99.48% with learned allocation'，与原文 §4.6 一致",
+  "note": "二手来源；数字已与 ECCV 原文核对一致",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "52b",
+  "ref": 52,
+  "verdict": "支持",
+  "evidence": "镜像页摘要与 AI Overview 含 LFW/CFP-FP/AgeDB/IJB-B/IJB-C 等基准与实验设置描述",
+  "note": "二手来源",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "52c",
+  "ref": 52,
+  "verdict": "支持",
+  "evidence": "AI Overview: 'PEEP 5.82%, Cloak 33.58%, InstaHide 61.88%, proposed 89.33%'，与原文 Tab.1 一致",
+  "note": "二手来源；数字已与 ECCV 原文核对一致",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 53,
+  "verdict": "可达",
+  "evidence": "NIST IFPC 2025 演示页 PDF 下载并提取全文核对（Gomez-Barrero, 2025-04-01）",
+  "note": "二手来源（会议演示页）",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "53a",
+  "ref": 53,
+  "verdict": "支持",
+  "evidence": "第 29 页 'Main BTP Requirements [ISO/IEC IS 24745][ISO/IEC IS 30136]: IRREVERSIBILITY UNLINKABILITY RENEWABILITY'",
+  "note": "二手来源（演示页）",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "53b",
+  "ref": 53,
+  "verdict": "支持",
+  "evidence": "参考文献页: 'ISO/IEC 30136 on Performance testing of biometric template protection schemes - IN REVISION!!!'",
+  "note": "演示页仅标注 IN REVISION，未明确 DIS 阶段；二手来源",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 54,
+  "verdict": "可达",
+  "evidence": "arXiv:2311.04633 HTML 抓取成功，五个问题均逐句核对",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "54a",
+  "ref": 54,
+  "verdict": "支持",
+  "evidence": "摘要: local score-wise measure D↔(s) 基于似然比 + global measure D↔sys 独立于分数域，均落于闭区间；应用于 biometric salting/Bloom filters/HE/block re-mapping 四方案",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "54b",
+  "ref": 54,
+  "verdict": "支持",
+  "evidence": "§III 引 ISO/IEC IS 24745: 'cannot be linked to each other or to the subject(s) from which they were derived'；判定 T1、T2 是否隐藏同一生物实例",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "54c",
+  "ref": 54,
+  "verdict": "部分支持",
+  "evidence": "原文明确仅采用两种分布（mated/non-mated）：'In contrast to [13], where three score distributions are considered, here only two distributions will be analysed'；未引用 Kirchgasser & Uhl 2022",
+  "note": "三组分布及 Kirchgasser & Uhl 引文应属 Ferrara et al. 或后续文献，引此文有偏差",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "54d",
+  "ref": 54,
+  "verdict": "支持",
+  "evidence": "§I 原文: 'there is still no general metric, protocol or framework to assess, in an objective way, the unlinkability of biometric templates'；30136 项目未纳入标准化不可链接性度量",
+  "note": "",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "54e",
+  "ref": 54,
+  "verdict": "支持",
+  "evidence": "§I 引 [9]: 'a standardised benchmark protocol for biometric template protection schemes, in terms of recognition accuracy, security and privacy, is necessary for a further deployment'",
+  "note": "该句为转引自 [9]，非作者本人观点",
+  "_batch": "tmp/verify\\batch_5.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 55,
+  "verdict": "可达",
+  "evidence": "NeurIPS 2023 正式论文 PDF，标题 Sun et al., Privacy Assessment on Reconstructed Images",
+  "note": "论文真实存在，PDF 完整可读",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "55a",
+  "ref": 55,
+  "verdict": "支持",
+  "evidence": "摘要：PSNR/SSIM 常用于重建攻击下隐私风险评估，越相似=泄露越多",
+  "note": "报告表述与摘要一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "55b",
+  "ref": 55,
+  "verdict": "支持",
+  "evidence": "图1 caption：PSNR/SSIM 高、MSE/LPIPS 低者反被人类判为泄露更少；提出 SemSim",
+  "note": "反直觉发现为论文核心动机，明确含 LPIPS",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "55c",
+  "ref": 55,
+  "verdict": "支持",
+  "evidence": "摘要：hand-crafted metrics 仅与人类评估弱相关且互相矛盾",
+  "note": "同 55b 的重述，成立",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "55d",
+  "ref": 55,
+  "verdict": "支持",
+  "evidence": "论文用 4 种攻击、14 个模型评估，指出指标在不同攻击/模型下不稳定",
+  "note": "可作攻击模型不一致讨论背景",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 56,
+  "verdict": "可达",
+  "evidence": "Sara et al., JCC 2019, Image Quality Assessment through FSIM/SSIM/MSE/PSNR",
+  "note": "SCIRP 开放获取 PDF 完整",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "56a",
+  "ref": 56,
+  "verdict": "部分支持",
+  "evidence": "文中 PSNR=10log10(peakval²/MSE)，SSIM 基于结构信息；但未提'滑动窗口'",
+  "note": "PSNR 基于 MSE 成立；'SSIM 滑动窗口卷积'细节非该文表述",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 57,
+  "verdict": "可达",
+  "evidence": "VideoProcessing.ai 博文 'Ways of cheating on popular objective metrics'",
+  "note": "二手技术博客来源",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "57a",
+  "ref": 57,
+  "verdict": "支持",
+  "evidence": "文称 'MSE (hence of the PSNR)'，SSIM 测结构失真，并列明两者适用边界与批评",
+  "note": "二手来源，内容本身成立",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 58,
+  "verdict": "可达",
+  "evidence": "iso.org 标准 53256 页面，ISO/IEC 30136:2018 摘要完整",
+  "note": "官方页面可访问",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "58a",
+  "ref": 58,
+  "verdict": "支持",
+  "evidence": "摘要：要求测量报告单次/多次成功攻击的理论与经验概率及模板被攻破后泄露信息量",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "58b",
+  "ref": 58,
+  "verdict": "支持",
+  "evidence": "摘要：支持 accuracy/secrecy/privacy 评估，给出多样性与不可链接性测量指南",
+  "note": "secrecy 即报告所指'保密性'",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 59,
+  "verdict": "可达",
+  "evidence": "iso.org 西语镜像页（No disponible en español，内容同英文页）",
+  "note": "ISO 页面镜像",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "59a",
+  "ref": 59,
+  "verdict": "支持",
+  "evidence": "镜像页摘要与 58b 完全一致",
+  "note": "镜像页面，内容一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "59b",
+  "ref": 59,
+  "verdict": "支持",
+  "evidence": "生命周期显示 stage 90.92 (para revisar)，'Será reemplazada por' ISO/IEC DIS 30136",
+  "note": "修订替代信息属实",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 60,
+  "verdict": "可达",
+  "evidence": "Unidata 博客 '20 Best Face Recognition Datasets for ML in 2026'",
+  "note": "二手博客来源",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "60a",
+  "ref": 60,
+  "verdict": "部分支持",
+  "evidence": "博客仅称 '13K+ labeled images'，未给出 13,233/5,749/1,680 具体数字",
+  "note": "规模数量级与用途（unconstrained verification、legacy model evaluation）相符，但精确数字不在该来源中",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "60b",
+  "ref": 60,
+  "verdict": "支持",
+  "evidence": "MegaFace 1M distractors；CelebA 200K+、CelebA-HQ 1024×1024；VGGFace2 3.3M/9,131；WebFace42M 42M/2M",
+  "note": "全部数字与博客原文一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 61,
+  "verdict": "可达",
+  "evidence": "Kaggle LFW dataset 页面，jessicali9530/lfw-dataset",
+  "note": "Kaggle 页面可抓取",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "61a",
+  "ref": 61,
+  "verdict": "支持",
+  "evidence": "页面：'13,233 images of 5,749 people... 1,680... two or more distinct photos'，unconstrained face recognition",
+  "note": "规模与用途均一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 68,
+  "verdict": "可达",
+  "evidence": "PoPETs 2025(2):54-70 PDF，Le & Carlsson, DiffPrivate",
+  "note": "官方 PDF 完整",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "68a",
+  "ref": 68,
+  "verdict": "支持",
+  "evidence": "摘要：introduce DiffPrivate，基于 latent diffusion 的 Perturb/Edit 两种人脸隐私保护方式",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 69,
+  "verdict": "可达",
+  "evidence": "BMVC 2024 workshop PDF，Leibl & Mayer, StablePrivacy",
+  "note": "BMVA 存档 PDF 完整",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "69a",
+  "ref": 69,
+  "verdict": "支持",
+  "evidence": "摘要：Stable Diffusion 引导的人脸数据集去标识化（de-identification）",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "69b",
+  "ref": 69,
+  "verdict": "支持",
+  "evidence": "正文明确提 'the CCPA in California [34]'，其参考文献[34]即 'Assembly bill no. 375 — california consumer privacy act, 2018'",
+  "note": "论文确实提及 CCPA 且引用的正是 AB No. 375 (2018)，报告引用成立",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 70,
+  "verdict": "可达",
+  "evidence": "MDPI Entropy 2024, 26(6):479, You et al., DIFP 扩散模型人脸隐私保护",
+  "note": "链接论文真实存在",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "70a",
+  "ref": 70,
+  "verdict": "支持",
+  "evidence": "摘要：提出 Diffusion Models for Face Privacy Protection (DIFP)，生成可恢复的高分辨率保护人脸",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "70b",
+  "ref": 70,
+  "verdict": "不支持",
+  "evidence": "链接论文为 You et al. Entropy 2024 扩散模型论文；TIFS 2024 论文（Osorio-Roig 等，vol.19, 4835-4850）是另一篇多生物特征索引论文",
+  "note": "确认张冠李戴：引文[70]链接与报告所述 TIFS 条目非同一篇，链接不支撑该条目",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "70c",
+  "ref": 70,
+  "verdict": "不支持",
+  "evidence": "同 70b：You et al. Entropy 2024 ≠ Osorio-Roig et al. IEEE TIFS 2024 (DOI 10.1109/TIFS.2024.3386310)",
+  "note": "同一处张冠李戴的重述",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 71,
+  "verdict": "可达",
+  "evidence": "arXiv:2504.07392v6，Tomašević et al., ID-Booth, FG 2025",
+  "note": "arXiv 摘要与 HTML 全文可访问",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "71a",
+  "ref": 71,
+  "verdict": "支持",
+  "evidence": "摘要：triplet identity training objective，增强小数据集并 'training of better-performing recognition models in a privacy-preserving manner'",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "71b",
+  "ref": 71,
+  "verdict": "部分支持",
+  "evidence": "实验用 TFD/FFHQ/LFW/CA-LFW/CP-LFW/CFP-FP/AgeDB-30；全文未出现 CASIA-WebFace、WebFace260M",
+  "note": "5 个数据集仅 3 个（LFW、CFP-FP、AgeDB）相符，另 2 个系报告误加",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 72,
+  "verdict": "受限",
+  "evidence": "Springer 页面被浏览器验证拦截；经 OpenAIRE 镜像确认摘要",
+  "note": "原 URL 不可直接抓取，替代来源核实摘要",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "72a",
+  "ref": 72,
+  "verdict": "部分支持",
+  "evidence": "摘要确认综述覆盖 'leveraging generative models like GANs and diffusion models' 合成数据隐私替代；但 DCFace/Arc2Face/PortraitBooth 名称未在可及摘要中核实",
+  "note": "主旨成立，具体方法名待核全文",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 73,
+  "verdict": "可达",
+  "evidence": "arXiv:2303.02715v1，Rathgeb et al., Deep Learning in BTP: An Overview",
+  "note": "arXiv 摘要完整",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "73a",
+  "ref": 73,
+  "verdict": "支持",
+  "evidence": "摘要：深度学习影响 algorithmic fairness, vulnerability to attacks, template protection；提供 BTP 领域综述",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 74,
+  "verdict": "可达",
+  "evidence": "arXiv:2302.13286v1，Shahreza et al., Benchmarking of Cancelable Biometrics for Deep Templates",
+  "note": "arXiv HTML 全文可访问",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "74a",
+  "ref": 74,
+  "verdict": "支持",
+  "evidence": "摘要：BioHashing/MLP Hashing/Bloom Filters/IoM-URP/IoM-GRP，评估 unlinkability/irreversibility/recognition performance，覆盖人脸、语音、指静脉、虹膜",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "74b",
+  "ref": 74,
+  "verdict": "不支持",
+  "evidence": "论文列 ISO/IEC 24745 四项要求：Renewability/Irreversibility/Unlinkability/Performance preservation，无 confidentiality",
+  "note": "ISO 24745 三大属性实为不可逆性、不可链接性、可更新性；'保密性'非该标准所列要求，报告表述无该文支撑",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 75,
+  "verdict": "受限",
+  "evidence": "Wiley 页面仅返回标题；经检索确认摘要（USQ/ACM/IET 镜像）",
+  "note": "原 URL 正文不可抓取，摘要经替代来源核实",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "75a",
+  "ref": 75,
+  "verdict": "支持",
+  "evidence": "摘要：'This survey informs the progress, trend and challenges of feature extraction and learning for cancellable biometrics'",
+  "note": "Yang et al., CAAI Trans. Intell. Technol. 9(1), 2024",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 76,
+  "verdict": "可达",
+  "evidence": "PMC11398211，Huang et al., Sensors 2024, 24(17):5507",
+  "note": "PMC 全文可访问",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "76a",
+  "ref": 76,
+  "verdict": "支持",
+  "evidence": "引言原文：'most adversarial perturbations manifest as high-frequency signals... Neural networks... tend to overfit to low-frequency signals'",
+  "note": "与报告表述逐句对应",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 77,
+  "verdict": "可达",
+  "evidence": "arXiv:2410.16317v1，Wang et al., 物理对抗攻击综述，HTML 全文可访问",
+  "note": "全文部分章节在抓取中截断",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "77a",
+  "ref": 77,
+  "verdict": "部分支持",
+  "evidence": "'40 relevant papers... from 2016 to 2024' 属实；隐私保护仅引述文献[40]，'预测作用将增长'在可及内容中未见",
+  "note": "论文数量与年份属实；隐私保护工具化论述仅一笔带过",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "77b",
+  "ref": 77,
+  "verdict": "支持",
+  "evidence": "III 节讨论鲁棒性、跨环境/黑盒迁移、虚实转换信息损失等真实环境难点",
+  "note": "稳定性难点明确，可检测性在防御章节涉及",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 78,
+  "verdict": "可达",
+  "evidence": "PoPETs 2024(3) PDF，Le & Carlsson, StyleAdv",
+  "note": "官方 PDF 完整",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "78a",
+  "ref": 78,
+  "verdict": "支持",
+  "evidence": "表7：五 FRS top-1 均降至 0%；ArcFace(irse50) top-5 0.5%、top-100 7.0%；防御含 JPEG、total variance、feature squeezing、spatial smoothing",
+  "note": "数字与防御实验均一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "SRC",
+  "ref": 79,
+  "verdict": "可达",
+  "evidence": "arXiv:2404.04580v2，SDFR Competition, FG 2024",
+  "note": "arXiv 摘要完整",
+  "_batch": "tmp/verify\\batch_6.json"
+ },
+ {
+  "claim_id": "79a",
+  "ref": 79,
+  "verdict": "支持",
+  "evidence": "摘要：'crawling the Internet and without individuals' consent, raising legal, ethical, and privacy concerns'；竞赛研究合成数据训练 FR 模型",
+  "note": "与报告表述一致",
+  "_batch": "tmp/verify\\batch_6.json"
+ }
+]

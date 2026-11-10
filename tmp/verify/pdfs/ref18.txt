@@ -1,0 +1,1264 @@
+                                                               Proceedings on Privacy Enhancing Technologies ; 2021 (1):85­106
+
+Arezoo Rajabi*, Rakesh B. Bobba*, Mike Rosulek, Charles V. Wright, and Wu-chi Feng
+
+On the (Im)Practicality of Adversarial Perturbation for Image
+Privacy
+
+Abstract: Image hosting platforms are a popular way            Fig. 1. From left to right: original image, UEP perturbed image,
+to store and share images with family members and              and k-RTIO perturbed image.
+friends. However, such platforms typically have full ac-
+cess to images raising privacy concerns. These concerns        1 Introduction
+are further exacerbated with the advent of Convolu-
+tional Neural Networks (CNNs) that can be trained on           Integration of high-resolution cameras into ubiquitous
+available images to automatically detect and recognize         handheld devices (e.g., mobiles, tablets) has made it
+faces with high accuracy.                                      easy to capture everyday moments in digital photos.
+Recently, adversarial perturbations have been proposed         Combined with the availability of fast mobile networks
+as a potential defense against automated recognition           many of the captured digital images and videos are
+and classification of images by CNNs. In this paper,           shared over the network or transmitted to third-party
+we explore the practicality of adversarial perturbation-       storage providers. It has been reported that users of
+based approaches as a privacy defense against au-              social networks share more than 1.8 billion new photos
+tomated face recognition. Specifically, we first iden-         each day [2]. While cloud-based photo storage and shar-
+tify practical requirements for such approaches and            ing platforms provide virtually unlimited storage space
+then propose two practical adversarial perturbation ap-        for saving and sharing images and are highly reliable
+proaches ­ (i) learned universal ensemble perturbations        and available, such services also raise privacy concerns.
+(UEP), and (ii) k-randomized transparent image over-           Although most social networks and photo storage and
+lays (k-RTIO) that are semantic adversarial perturba-          sharing platforms now provide privacy settings to limit
+tions. We demonstrate how users can generate effective         public accessibility of images, they are often compli-
+transferable perturbations under realistic assumptions         cated and insufficient [54, 65]. Furthermore, those plat-
+with less effort.                                              forms have direct access to users' images and it is not
+We evaluate the proposed methods against state-of-the-         inconceivable for such service providers to exploit the
+art online and offline face recognition models, Clari-         users' image data for their own benefit [62, 68].
+fai.com and DeepFace, respectively. Our findings show
+that UEP and k-RTIO respectively achieve more than                  The advent of scalable Convolutional Neural Net-
+85% and 90% success against face recognition models.           works (CNNs) for automated face detection and recog-
+Additionally, we explore potential countermeasures that        nition [35, 38, 45, 70, 77] exacerbates this concern. While
+classifiers can use to thwart the proposed defenses. Par-      such tools provide benign and beneficial service to users,
+ticularly, we demonstrate one effective countermeasure         they nevertheless pose a significant privacy threat. For
+against UEP.                                                   example, Shoshitaishvili et al. [65] recently proposed
+                                                               a method for tracking relationships among people by
+Keywords: Image Privacy, Convolutional Neural Net-             analyzing pictures shared on social platforms using
+works (CNNs), Adversarial Examples, Transferable Per-          face recognition and detection CNNs. Recently, a face-
+turbations, Transparent Image Overlays                         recognition based image search application, Clearview
+                                                               AI app [26], has emerged that can take a given picture
+DOI 10.2478/popets-2021-0006
+Received 2020-05-31; revised 2020-09-15; accepted 2020-09-16.  Wu-chi Feng: Portland State University, wuchi@pdx.edu
+
+*Corresponding Author: Arezoo Rajabi: Oregon State
+University, rajabia@oregonstate.edu
+*Corresponding Author: Rakesh B. Bobba: Oregon
+State University, rakesh.bobba@oregonstate.edu
+Mike Rosulek: Oregon State University, ro-
+sulekm@oregonstate.edu
+Charles V. Wright: Portland State University,
+cvw@pdx.edu
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  86
+
+of a person and search a database of more than 3 billion              perturbation that can be applied to multiple im-
+images scraped from Facebook, YouTube and millions                    ages. Compared to previous adversarial pertur-
+of other websites and provide matching images along                   bation learning techniques, our UEP approach
+with links to websites containing those photos. News                  requires fewer and smaller local CNNs trained
+of the use of this application by law enforcement agen-               over smaller (by an order of magnitude) training
+cies has raised concerns about severe erosion of privacy.             sets.
+Emergence of such applications combined with the inef-           (b) Our k-Randomized Transparent Image Overlays
+fective privacy settings of social networks, necessitates             (k-RTIO) is a novel semantic adversarial per-
+the development of practical tools that allow end users               turbation [28] approach that generates many
+to protect their privacy against automated classifiers. In            unique image perturbations (3rd image in Fig-
+this paper, we primarily focus on thwarting automated                 ure 1) using only a small number of overlay
+face recognition.                                                     source images and a secret key, and without re-
+                                                                      quiring users to train their own CNNs. In con-
+     Adversarial image perturbation has been recently                 trast to previous semantic adversarial perturba-
+proposed as a way to protect against automated face                   tion approaches, k-RTIO perturbations are re-
+recognition by fooling CNNs into misclassifying the im-               versible.
+age [20, 31, 63]. Adversarial perturbations [22, 23] have   3. We evaluate the effectiveness of both meth-
+the nice property that the perturbed images are percep-          ods against highly accurate celebrity recognition
+tually indistinguishable from the original image but are         and face detection models from clarifai.com,
+misclassified by a CNN. Thus adversarial perturbation            Google Vision API, and DeepFace [57], two state-
+provides a nice balance of privacy against automated             of-the-art online classifiers and one offline classi-
+classifiers without degrading the usability of the images        fier, respectively. Our results show that while UEP
+for end users. However, these methods are not always             and k-RTIO are effective at thwarting automated
+practical for real-world use due to the unrealistic as-          face recognition, k-RTIO is computationally much
+sumption of full knowledge about the adversaries' CNNs           cheaper than UEP.
+(i.e., white-box model).                                    4. We discuss potential counter measures against our
+                                                                 schemes and demonstrate one effective countermea-
+     While black-box approaches for adversarial pertur-          sure against UEP.
+bations do exist (e.g., [42, 48, 56]), they either assume
+that end users have access to large datasets (e.g., mil-    The rest of this paper is organized as follows: We dis-
+lions of images) and can train large local CNNs (e.g.,      cuss related work in Section 2. In Section 3, we present
+with thousands of classes), or that they can query the      the system model and requirements for a practical pri-
+target CNN making them unrealistic as well. Seman-          vacy mechanism based on adversarial perturbations. We
+tic adversarial perturbations [28, 29] are a newer class    present some preliminaries on adversarial examples and
+of adversarial perturbations that can target unknown        transferable adversarial methods in Section 4. We in-
+CNNs. They do not require any learning and are there-       troduce our two proposed approaches in Section 5 and
+fore computationally very efficient. However, they are      evaluate them in Section 6. In Section 7, we discuss our
+not reversible making them unsuited for image storage       findings and some future directions. Finally, we conclude
+applications.                                               in Section 8.
+Contributions: We explore the practicality of adver-
+sarial perturbations to thwart automated image classifi-    2 Related Work
+cation by CNNs, and make the following contributions:
+1. We identify key requirements for practical adversar-     Many cryptographic and non-cryptographic techniques
+                                                            for protecting image privacy have been proposed. Here
+     ial perturbation based image privacy against auto-     we primarily focus on works most relevant to the prob-
+     mated face recognition.                                lem of thwarting recognition by automated classifiers
+2. We propose two novel schemes for adversarial per-        while allowing recognition by humans.
+     turbation of images that do not require special        Adversarial Perturbations: The problem of thwart-
+     knowledge of the target CNNs (i.e., black-box ad-      ing recognition by automated classifiers while allowing
+     versarial methods) and that satisfy the identified
+     requirements.
+     (a) Our learning-based Universal Ensemble Per-
+
+          turbation (UEP) approach (2nd image in Fig-
+          ure 1) learns a single transferable adversarial
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  87
+
+recognition by humans has recently received attention in     an image with the same thumbnail as the original im-
+the research community [20, 31, 44, 63, 74]. Adversar-       age. Depending on the size of the thumbnail preserved,
+ial perturbation based approaches [20, 31, 63] among         TPE schemes are capable of thwarting recognition by
+them are most closely related to this paper. While           CNNs [44, 74] while still allowing image owners to dis-
+those approaches can fool CNNs and preserve images'          tinguish between encrypted images. Their goal was to
+recognizability by humans they have some limitations.        thwart recognition by any end user other than those
+Oh et al. [31] assume that end users have full knowl-        who are already familiar with the image, and hence
+edge about and access to target CNNs (i.e., white-box        preserve thumbnails with very low resolution. In con-
+model). Other works [20, 63], while they use a black-        trast, our work aims to thwart only classifiers and not
+box model, assume users are able to train large CNNs         humans.
+to learn perturbations. However, in real-world settings,     Irreversible Obfuscations: An early approach to
+users typically do not have access to the target CNNs        thwarting facial recognition software while preserving
+or other automated tools used by adversaries or on-          facial details was face deidentification (e.g., [16, 24, 25,
+line service providers to analyze images. Moreover, all      32, 50, 71]) that was proposed to provide privacy guar-
+those approaches learn a perturbation for each image         antees when sharing deanonymized video surveillance
+making it expensive to protect a large set of images.        data. In this approach instead of obfuscating the im-
+Fawkes [63] aims to perturb images to prevent target         age or parts of it, faces in the image are modified to
+CNNs from learning a model on them and can be com-           thwart automated face recognition algorithms. These
+plementary to our effort. Semantic adversarial pertur-       approaches extend the k-anonymity [72] privacy notion
+bations [28, 29] that can fool unknown CNNs without          to propose the k-same family of privacy notions for im-
+requiring any learning have been recently proposed. As       ages. At a high-level, to provide k-same protection for
+they do not require any learning, they are computa-          a face in an image it is replaced with a different face
+tionally very efficient. However, they are not reversible    that is constructed as an average of k faces that are the
+making them ill-suited for image storage applications.       closest to the original face. These approaches have the
+In contrast, we aim to propose practical methods for         benefit of providing mathematically well-defined protec-
+generating reversible transferable perturbations that do     tion against face recognition algorithms. However, these
+not need high computation or storage resources.              approaches have the downside that these modify the
+Image Encryption: Encryption techniques specifically         original image and the transformation is typically not
+designed for protecting image privacy have also been         reversible. Further, the perturbed image is typically not
+proposed (e.g., [58, 76]). These techniques obfuscate        correctly recognizable by humans. A slightly different
+the entire image and as a consequence images are ren-        but related approach is where a face that needs pri-
+dered unrecognizable even by their owners making them        vacy protection in an image is replaced with a similar
+unable to distinguish between images without first de-       one from a database of 2D or 3D faces (e.g., [8, 41]).
+crypting them. Further, it has been shown that P3 [58]       AnonymousNet [40] is recent de-identification approach
+is vulnerable to automated face recognition [46].            using generative adversarial networks (GANs). These
+                                                             approaches are also irreversible. In contrast, we aim to
+     To address the problem of searching through en-         create reversible perturbations where the perturbed im-
+crypted images, Pixek App [1] uses image encryption          ages are recognizable by humans.
+with embedded searchable tags. However, such schemes
+require modifications at the service providers (this is the       Approaches like blurring, pixelation, or redaction
+same for encrypted file system [21, 33] based solutions      have long been used for protecting privacy in images and
+as well) and need additional effort on part of end users     text (e.g., [37, 81]). However, such techniques are not
+to tag and browse images using tags. In contrast, our fo-    only irreversible but have been shown to be ineffective
+cus is on techniques that are not only reversible but also   especially against automated recognition methods [27,
+allow end users to manage their image repositories nat-      37, 46, 50, 81].
+urally (i.e., visually rather than using keywords/tags).
+                                                                  Approaches that remove people or objects from im-
+     Thumbnail Preserving Encryption (TPE)                   ages (e.g., [7, 34, 59]) or that abstract people or objects
+schemes [44, 74, 78] have been proposed to preserve          (e.g., [13, 75]), or that replace faces [69] also exist. How-
+privacy of images while allowing image owners to distin-     ever, those approaches are irreversible. Further, it has
+guish between ciphertexts of different images naturally      been shown that even if redaction techniques like replac-
+(i.e., visually) without having to decrypt them. They        ing faces with black space are used, it may be possible to
+achieve this by ensuring that the ciphertext is itself       deanonymize using person recognition techniques [53].
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  88
+
+3 System Model and                                         tions should not require excessive computational effort
+   Requirements                                            or large volumes of training data. We assume that, while
+                                                           an individual user may have access to their own images
+In this work, our focus is on practical adversarial per-   and some images of other potential users of the plat-
+turbation approaches that make scalable automated im-      form (either publicly available or those of friends using
+age analysis by service providers more difficult. Thwart-  the same platform), a user does not have access to the
+ing recognition by humans is not a goal. In fact, we       entire dataset used by the service provider for training
+aim to develop approaches that allow image recognition     the target CNN.
+by end users so they can interact with images natu-        Low Storage Cost: The storage requirements of the
+rally. We assume that image storage and sharing service    scheme should be small and should not increase with
+providers do not have access to meta-data or auxiliary     the number of images. Any information needed to re-
+information and treat them as an honest-but-curious or     verse the perturbation should take up minimal storage
+semi-honest adversary [52]. We assume that the service     at the end user.
+provider has trained an image classification CNN either    Compatibility: Since service providers have incen-
+using publicly available user images or images that the    tives to learn and profit from user data, proposed
+users have already stored with the service. A user's goal  schemes should not depend on their support and should
+is to perturb the images that they upload to the ser-      be compatible with existing services to ease adoption.
+vice to prevent automated recognition or classification    Hence, using embedded thumbnails, encrypted file sys-
+of their images. To be practical the perturbation mech-    tems (e.g., [21, 33]) and more advanced solutions such
+anism should satisfy the following requirements.           as searchable encryption for images [1] are not practical.
+Black-box Scheme: In practice, end users will not          Most of the popular storage services that we tested such
+have access to the CNNs used by third-party service        as Google Drive, iCloud, etc. do not support embedded
+providers and typically will not have detailed knowledge   thumbnails.
+of the target CNNs parameters and weights. Thus, any
+viable perturbation mechanism should not require any       4 Preliminaries
+special knowledge of the target CNN, eliminating the
+use of white-box adversarial perturbation techniques.      CNNs: Convolutional Neural Networks (CNNs) have
+We assume that the user does not know anything about       become very popular for image classification. CNNs are
+the structure of the target CNN, not even all the classes  constructed by several convolutional and maxpooling
+that the CNN is able to classify images into (i.e., it is  layers and one or two fully connected layers (see Fig-
+a black-box), and assume that the user does not have       ure 18 in Appendix A). At the end, there is a soft-
+query access to the CNN.                                   max layer which translates the output of the last layer
+Recognizability: While white-box (i.e., full knowledge     to probabilities. Generally, a convolutional neural net-
+of target CNN) adversarial perturbations typically are     work is defined by a function F (x, ) = Y which takes
+very small and imperceptible [23], black-box perturba-     an input (x) and returns a probability vector (Y =
+tions on the other hand can be significant and are typ-    [y1, · · · , ym] s.t. i yi = 1) representing the proba-
+ically perceptible [48]. To be viable, the perturbed im-   bility of the input belonging to each of the m classes.
+ages should be perceptually recognizable by end users      The input is assigned to the class with maximum prob-
+but not recognizable by automated classifiers. Users       ability.
+should be able to browse through perturbed images nat-
+urally using the standard interface, without having to          To learn classifiers, the loss function which repre-
+reverse the perturbation.                                  sents the cost paid for inaccuracy in classification prob-
+Recoverability or Reversibility: For image storage         lems, is minimized. The cross entropy loss function is
+applications, end users must be able to reverse the per-   one of the popular and sufficient loss functions that is
+turbation in order to recover the original image with      used in classification problems. For training a CNN, we
+minimum to no distortion, i.e., no loss of perceptual      optimize the CNN's parameters () for given inputs.
+quality. At the same time, the service provider should     Adversarial Perturbations: Adversarial generation
+not be able to remove or reduce the perturbation.          methods find and add a small perturbation () to an
+Low Computational Cost: Since end users need to
+create the perturbations, learning or creating perturba-
+                     On the (Im)Practicality of Adversarial Perturbation for Image Privacy  89
+
+image that will cause the target CNN to misclassify it.      5 Proposed Approaches
+
+min  2 + J(F (x, ))                                          In this section, we introduce two methods to perturb
+                                                             images in order to fool any unknown CNN. The first
+                                         (1)                 method is a learning-based approach called Universal
+s.t. argmax F (x + ) = y, x +   [0, 1]d                      Ensemble Perturbation (UEP). The second method is
+                                                             a semantic perturbation method called k-Randomized
+where , x, y and J(.) are the perturbation, given            Transparent Image Overlays (k-RTIO). We motivate
+input image, true label of input image, and the loss         each approach and describe how we generate and ap-
+function, respectively. Many methods have been pro-          ply the perturbations.
+posed to generate a small perturbation for a known
+CNN (e.g., [11, 23, 49, 73]), but they suffer from low       5.1 Universal Ensemble Perturbation
+transferability to unknown CNNs (See Appendix A for
+different types of adversarial attacks). Therefore, trans-   As discussed in Section 3, any viable perturbation ap-
+ferable perturbation generation methods were proposed        proach for image privacy should be black-box as users
+to address this issue and are discussed next.                are unlikely to have access to or knowledge about CNNs
+Ensemble Method: Ensemble methods to create                  used by service providers. Since black-box perturbations
+transferable perturbations were proposed in [6, 42].         tend to be significant and perceptible, reversibility of
+Those works learn a perturbation for a given image on        perturbations becomes important to recover the origi-
+several local CNNs, instead of using only one CNN, such      nal image. Storing the perturbations used for each im-
+that the learned perturbation fools all local CNNs. They     age so the original can be recovered will require nearly
+established that such perturbations are transferable and     the same order of storage as storing the original images
+can fool unknown CNNs with high success rate. In other       themselves. Therefore, in our approach we aim to gen-
+words, a perturbation for an image is generalized by         erate a single perturbation that can be applied to sev-
+learning it on multiple CNNs. To show the transferabil-      eral images to successfully fool an unknown CNN, that
+ity of perturbations, authors assessed their method on,      is, both universal and transferable. We achieve this by
+clarifai.com, a state-of-the-art online classifier.          using an ensemble approach through learning on a few
+Universal Perturbation: Moosavi-Dezfooli et al. [48],        local CNNs. Unlike previous work [42, 48], our approach
+showed that it is possible to find a single (universal)      uses fewer and smaller CNNs, and requires significantly
+perturbation that can be applied to multiple images to       smaller training datasets than the one used to train local
+successfully fool a CNN into misclassifying all of them.     CNNs (see Section 6).
+Universal perturbation is defined as a noise pattern         Perturbation Learning: We create our Universal En-
+which leads a CNN misclassifying most of the input im-       semble Perturbation (UEP) approach by building on the
+ages (x's) with probability of p (p-value) when added        ideas from the ensemble approach [42], universal pertur-
+to those input images. This work showed that a uni-          bation approach [48], and CW perturbation optimiza-
+versal perturbation is transferable to other CNNs with       tion and addition approach [11].
+different structures but trained on the same dataset as
+the original. Further, the perturbation is added directly         UEP learns a highly transferable, universal, and re-
+to images which causes significant loss during image re-     versible perturbation using an ensemble of a few small
+covery because of rounding the pixels' value to 0 or 1 if    local CNNs. Moreover, to prevent the target CNN from
+they are not in range of [0, 1].                             reducing the impact of the perturbation by using a re-
+                                                             duced resolution version of the image [15], we learn a
+     While all of these approaches are black-box ap-         perturbation which works for different image resolutions
+proaches, (i) they either need to train and learn on mul-    by training each local CNN on different resolutions of
+tiple (4 - 5) large local CNN(s) (see Summary in Sec-        the image. For this work, we used three small CNNs
+tion 6.1) to create a transferable perturbation(s) [6, 42,   with only 10 classes each (see Section 6). We empiri-
+48] or (ii) generate one perturbation per image [6, 42]      cally found that using fewer than three CNNs makes
+and do not meet low computation and low storage cost         learning transferable perturbations harder, while using
+requirements. Further, they add the perturbation di-         more than three CNNs makes learning a perturbation
+rectly to image's pixel value leading to significant losses
+during recovery.
+           On the (Im)Practicality of Adversarial Perturbat3ion for Image Privacy                                                      90
+
+Recovered                                                      UEP(Y1(x), · · · , Ym(x), x1, · · · , xn, p):
+
+                                                                = inf
+
+                                                               // finding the true label of each image
+
+                                                                i yi = argmax(Y (xi))
+                                                               lbound = 0.001, upbound = 100000
+
+Perturbed                                                      while lbound < upbound:
+
+                                                                        c = (upbound + lbound)/2
+
+                                                                         i, zi = xi
+
+                                                                        while i k (Yk(zi) = yi) < p × N
+
+                                                                          min  2 + cf (z1, · · · , zN )
+
+Original                                                                zi    =  1  (tanh  (arctanh  (2  ×  (xi  -  0.5))  +    ))  +  0.5
+                                                                                 2
+
+                                                                        if  2 <  2:
+
+                                                                        
+
+                                                                        upbound = (upbound + lbound)/2
+
+                                                                        else
+
+Fig. 2. From bottom to top: The last row shows the original             lbound = (upbound + lbound)/2
+images of celebrities. The middle row represents the UEP per-
+turbed images. The first row displays the recovered images.    return 
+
+computationally expensive without significant improve-         Fig. 3. UEP method learns a universal perturbation  on a few
+ment in success rate.                                          local CNNs (Y1, · · · , Yc) for set of given inputs x1, · · · , xn.
+
+     After learning a few (in our case only 3) local CNNs      Perturbation Addition: In the universal perturba-
+on different image resolutions, we learn a universal per-      tion approach [48], the perturbation vector is added di-
+turbation which can fool all the local CNNs with a given       rectly to all images, and if the new value of pixels are not
+probability of p ( [0, 1]). To optimize the misclassifica-     in the range of [0, 1], then the new values are rounded to
+tion rate, we extend the objective function introduced         the nearest acceptable values (0 or 1). However, round-
+in [11] for an ensemble of CNNs and a universal attack         ing a pixel's value leads to information loss during image
+as follows:                                                    recovery. Therefore, we add the learned perturbation to
+                                                               the arc-tangent hyperbolic value of an image instead of
+ f (x1, · · · , xN ) =                                         adding directly to the images as in [11]:
+            max(max{Yl(xi)j : j = yi} - Yl(xi)yi , -) (2)
+                                                                           1                                        +
+     li                                                        xi,pert  =   (tanh (arctanh (2  ×     (xi  -  0.5))         ×  ))  + 0.5
+                                                                           2
+where Yl(xi) is the probability vector assigned by the                                                                              (4)
+lth CNN to the ith input which shows the probability
+of the input image belonging to each category. And yi          where xi,pert is the perturbed version of the image
+denotes the true label of xi. We aim to minimize the
+perturbation amount as well as maximize the misclassi-         xi and  is the learned perturbation. Here  is a weight-
+fication confidence (). The problem can be defined as
+follows:                                                       ing factor that tunes transferability versus perturbation
+
+     min  2 + cf (x1,perturbed, · · · , xN,perturbed) (3)      amount. While this does not eliminate rounding losses
+
+                                                               completely, it significantly reduces such loss.
+
+A large value for coefficient c causes the resulting per-      Further, unlike the traditional adversarial ap-
+turbation to have a larger value (to force all CNNs to
+misclassify it), while a very small value for this param-      proaches, UEP perturbation can be added in with dif-
+eter may lead to null solution space since it tries to fool
+all CNNs for all inputs with a small perturbation. We          ferent weights to the image to control the trade-off be-
+optimize the perturbation for different coefficient c val-
+ues using a binary-search (see Figure 3) and pick the          tween transferability and recognizability. While learning
+smallest perturbation that can fool p × N of total sam-
+ples (N ).                                                     UEP on local CNNs, we set  = 1 to create a powerful
+
+                                                               perturbation. But, when applying the learned perturba-
+
+                                                               tion to an image, we can set  value to trade-off between
+
+                                                               fooling success rate and recognizability (see Section 6).
+
+                                                               The original image is recovered by reversing the pro-
+
+                                                               cess on the perturbed image. Adding the perturbation
+
+                                                               to the arc-tangent hyperbolic value of an image, both
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy                            91
+
+simplifies the objective function and alleviates informa-       Fig. 5. Left to right: original, k-RTIO perturbed and recovered
+tion loss during image recovery [11].                           images.
+Practicality of UEP: As the preceding discussion
+shows, UEP is designed to be a black-box perturbation           over image space and measuring dependencies among
+approach that produces highly transferable and uni-             adjacent pixels to find a pattern or a feature. Trans-
+versal perturbations. It meets the reversibility and low        parent image overlay-based approach tends to decrease
+storage cost requirements identified in Section 3 as per-       the pixel dependencies and makes features invisible to
+turbations can be reversed by storing only the univer-          CNN kernels. Here we build on this transparent overlays
+sal perturbation. While the perturbations produced by           based approach that was originally proposed for fooling
+UEP are significant and perceptible, as seen in Figure 2,       Google Video API [29]. When translated to images, this
+the perturbed images are still recognizable for humans          approach adds a weighted overlay image to the original
+and can be recovered with very low loss by removing             image as follows:
+perturbation. Further, since UEP uses three small local
+CNNs with only 10 classes and does not require users            Ipert =  × Iorg + (1 - ) × Iovl  (5)
+to have access to large datasets. UEP is also computa-
+tionally more efficient compared to previous approaches
+as will see in Section 6. Further, UEP does not require
+any changes to the service provider and can work with
+existing services.
+
+5.2 k-Randomized Transparent Image                              where  is mixing parameter, and Ipert, Iorg and Iovl
+     Overlays                                                   are perturbed, original, and overlay images.
+
+While our UEP approach requires lower computa-                       Despite the high transferability (success in fooling
+tional resources compared to previous learning-based            unknown CNNs) especially at low values of , direct
+approaches, learning perturbations is still computation-        application of this technique has the following draw-
+ally expensive (see Section 6.1). Semantic perturba-            back. If the same overlay image is used for perturbing
+tions [29] on the other hand do not rely on learning and        multiple original images then the original images can
+tend to be computationally cheaper. Different semantic          potentially be recovered through a well known signal
+perturbation approaches target different weaknesses of          processing technique called Blind Signal Separation [10]
+CNNs (e.g., coverage of training data, reliance on inter-       (see Figure 21 in Appendix D). If a different overlay im-
+pixel dependencies etc.) [28].                                  age is used for each original image, then all those overlay
+                                                                images need to be stored locally to be able to recover the
+     The main component of CNNs are kernels in the              original images defeating the purpose of cloud-storage
+convolutional layers. Kernels are small windows moving          and violating our low storage requirement. Further, we
+                                                                need to make sure that perturbed image is recognizable
+Fig. 4. k-RTIO Scheme. ID of main image is used to select k     by end users. To overcome this problem, we propose
+overlay images from the set S and then ID of selected images    k-Randomized Transparent Image Overlays which gen-
+are used to generate a permutation. Both overlay selection and  erates a unique overlay for every image using only a
+block permutation algorithm use the user's secret key.          small set of initial overlay images, a secret seed and a
+                                                                pseudorandom function.
+                                                                Perturbation Generation: To generate unique over-
+                                                                lays for each original image, we first choose a random
+                                                                subset of k (typically 3 or 4) candidate overlay images
+                                                                from a set S of stored initial overlay images. This set
+                                                                S is relatively small (30 images) and can be stored en-
+                                                                crypted on a cloud platform or locally. The choice of
+                                                                this set does not significantly change the fooling per-
+                                                                formance of k-RTIO; we discuss selection of this set in
+                                                                Section 6.2. As shown in Figure 4, to select these k im-
+                                                                ages for each source image, users use their secret key
+                                                                and ID of the original image (each image has a different
+                                                    On the (Im)Practicality of Adversarial Perturbation for Image Privacy         92
+
+ID) as inputs to a pseudorandom function. More con-                     (a) Original (b) = 1 (c) = 2 (d) = 3 (e) = 4 (f) = 5
+cretely, we employ AES as the pseudorandom function.
+Let key denote a 128-bit seed and let id be a unique                 Fig. 6. UEP recognizability vs.  that controls noise level
+identifier for the given source image (e.g., a filename or
+timestamp). Then the choice of the jth overlay image
+(out of |S| = m possibilities) is made according to:
+
+                AES(key, id 0 j) mod m.                              image using the reverse process as follows:
+
+After selecting k random candidate images, the k chosen              Iorg  =  Iper  -  (1 - )                              Iovli
+images are divided into b blocks each and these blocks                                  k×
+are permuted using a pseudorandom permutation. The                                             Iovli Overlays(key,id,b,S)
+permutation of blocks is based on the candidate overlay
+image ID, source image ID, and user's secret key. Specif-            Practicality of k-RTIO: As the preceding discussion
+ically, the blocks of the jth overlay image are permuted             shows, k-RTIO does not require knowledge of the tar-
+using the Fisher-Yates shuffling algorithm [19]. Recall              get CNN, nor does it require support from the service
+that in the ith iteration of Fisher-Yates, the algorithm             provider. Further, k-RTIO generates semantic pertur-
+chooses a random value in the range {0, . . . , b-i}, where          bations and does not require learning using any CNNs
+b is the number of items being shuffled. This random                 and is therefore computation2 ally cheaper than UEP (see
+choice can be derived in a repeatable way (for the jth               Section 6.2). Since the perturbations are efficient to gen-
+overlay image) via:                                                  erate, end users do not need to store individual pertur-
+                                                                     bations for recovering original images but can re-create
+       AES(key, id 1 j i) mod b - i + 1.                             them using a secret key and a small set of initial overlay
+                                                                     images leading to low near constant storage overhead.
+    As long as the ids of a user's images are distinct,              The recognizability of images perturbed using k-RTIO
+                                                                     is a function of , b and k. In Section 6.2 we will ex-
+then all inputs to AES are distinct. Use of a pseudo-                plore values of these parameters such that k-RTIO can
+                                                                     thwart recognition by automated classifiers while pro-
+random function guarantees that all its outputs are in-              viding reasonable recognizability for humans.
+
+distinguishable from random, when invoked on distinct
+
+inputs. Using this approach, the user needs to store only
+
+the short AES key, and the set of initial images S from
+
+which all unique overlay images can be re-derived as                 6 Evaluation
+
+needed for recovering the original image (see Figure. 7).            In this section, we evaluate the success rate of the two
+                                                                     proposed methods against two state-of-the-art online
+    The final overlay image is simply the average of                 image classifiers (www.clarifai.com and Google Vision
+                                                                     API) and a state-of-the-art offline recognition and de-
+these k images with permuted blocks. Although the pool               tection model DeepFace [57]. We then discuss the com-
+                                                                     putational costs of each approach. Finally, we explore
+S of base overlay images may be small, the number of                 different filtering techniques that classifiers could po-
+                                                                     tentially use as countermeasures against the proposed
+derived overlay images that result from this process is              perturbations.
+
+very large. For example, for an image set of |S| = 10,               6.1 UEP Performance
+
+k = 4 and b = 12, the number of possible overlay images              UEP Simulation Setup: UEP requires training a
+                                                                     few small local CNNs. We trained 3 small CNNs, two
+is       10!    × (12!)4    7.3 × 1031  making  it  hard  for  the   VGG-16 [66] and one Facescrub CNN [46] using ran-
+    10!(10-4)!                                                       dom initialization points. VGG-16 has 5 convolutional
+                                                                     layers and 2 fully connected layers (see Figure 18) and
+target CNN to correctly guess the overlay used even if               FaceScrub CNN has 3 convolutional layers and 2 fully
+
+S is known.
+
+Perturbation Addition: As shown in Figure 4, the
+
+generated overlay is added to the source image as fol-
+
+lows:
+
+                          (1 - )
+Ipert =  × Iorg + k                                           Iovli
+
+                                  Iovli Overlays(key,id,b,S)
+
+where Overlays(key, id, b, S) is a function that takes se-
+cret key, image id, number of blocks and overlays set
+S and returns k overlays images with permuted blocks.
+The perturbation can be removed to recover the original
+                                                          On the (Im)Practicality of Adversarial Perturbation for Image Privacy  93
+
+Overlays(key, id, b, S):                                               rameter (see Equation 3), which controls the pertur-
+   K =                                                                 bation amount, we used binary search in the range of
+   for j = 1 to k:                                                     [0.001, 100000] and set p = 0.7.
+      // randomly choose k overlay candidates
+      v = AES(key, id 0 j) mod |S|
+      IMG = vth element of S
+      remove vth element from S
+
+      // keyed Fisher-Yates shuffle on blocks
+      for i = 1 to b:
+
+         t = AES(key, id 1 j i) mod b - i + 1
+         swap blocks b - i and t in IMG
+
+      add IMG to K
+
+   return K
+
+Fig. 7. Pseudorandom method for creating overlay images with           Fig. 8. UEP performance on Google Vision API face detection
+permuted blocks for an image with identifier id. # of blocks per       model, and DeepFace face detector and recognition models.
+overlay image is b. Set of candidate overlay images is S.
+
+connected layers (more details of the CNNs are in Ap-                  UEP Effectiveness: We evaluate UEP against
+                                                                       Google Vision API's face detection model, and face de-
+pendix C). Recall that, to prevent the target CNN from                 tection and recognition models of clarifai.com and
+                                                                       DeepFace [57]. To this end, we selected more than 1000
+reducing the impact of the perturbation by using a lower               FaceScrub images in total from all the 530 classes (not
+                                                                       just the 10 classes on which local CNNs were trained).
+resolution version of the image [15], we train each local              Then we cropped (Note: all adversarial perturbation
+                                                                       methods learn on a specific image size that depends on
+CNN on different image resolutions and learn a pertur-                 the CNNs' input size.) faces with DeepFace face detec-
+                                                                       tor model [51] and then applied UEP generated pertur-
+bation over them. To implement a resolution reduction                  bation. Moreover, we can control the transferability of
+                                                                       UEP perturbation by using different weighting () pa-
+or a thumbnail function, we used an additional convo-                  rameter (see equation 4). We evaluate our method for
+                                                                       different values of  parameter.
+lutional  layer  size  of  2×2  with  values   of      1  =  0.25  to  UEP vs. Google Vision API: Google Vision API was
+                                                     2×2               able to detect 98.8% of faces in cropped benign images.
+                                                                       As shown in Figure 8 (dashed blue line), for a small
+resize input images before rendering them to CNNs. For                 value of , UEP perturbation exhibited low transfer-
+                                                                       ability (i.e., success rate) against Google Vision API.
+example, by setting up the stride value to 2 × 2 we can                However, for larger  values, Google Vision API's face
+                                                                       detection rate decreases significantly ( 30% at  = 5).
+have a thumbnail function that reduces the size of the                 While larger  values can fool face detection models,
+                                                                       they also decrease recognizability for humans. Figure 6
+image  to    1   =  0.25   of  original  size  (see  Figure  19    in  shows the recognizability of the images for different val-
+           2×2                                                         ues of . Thus, there is a trade-off between fooling suc-
+                                                                       cess rate and human recognizability. Note that, this is
+Appendix A).                                                           a face detection model and not a recognition model.
+                                                                       UEP vs. Clarifai.com: Clarifai.com's face detection
+We used the FaceScrub [51] dataset, an image                           could detect more than 99% of faces and recognize
+                                                                       87.25% faces of unmodified images. Clarifai.com was
+dataset of 530 celebrities (classes) and  100K images                  able to detect 98% of perturbed faces with UEP per-
+
+for our evaluations. We selected 10 classes, uniformly
+
+at random, from among 230 classes of FaceScrub that
+
+have at least 150 images in the training dataset. The
+
+use of only 10 classes for training local CNNs is keeping
+
+inline with our assumption of limited end user access
+
+to data and computational capacity. To detect celebrity
+
+faces and crop them, we used DeepFace face detector
+
+CNN [57]. For each of the 10 celebrities (classes), we
+
+randomly selected 150 - 200 images from the training
+
+dataset and learned three local CNNs, two at 224 × 224
+
+pixel resolution and one at 112×122 pixel resolution. We
+
+then chose 200 (N ) images in total over these 10 celebri-
+
+ties (classes) from the training dataset and learned a
+
+universal ensemble (UEP) perturbation over these im-
+
+ages across the three local CNNs that we trained. As
+
+shown in Figure 3, to find the best value for c pa-
+                               On the (Im)Practicality of Adversarial Perturbation for Image Privacy      94
+
+turbation even with  = 5. However, its face recogni-                  8
+tion was able to recognize fewer than 6% of faces for
+ = 3 (green dash-and-dot line in Figure 8). In other                  6
+words, face recognition model is more sensitive to per-
+turbations. While small values of  are not good enough             k
+to thwart recognition by unknown CNNs, with  = 2,
+face recognition model of clarifai.com was able to recog-             4
+nize only 37% of faces and this comes down to less than
+6% for  = 3. As seen in Figure 6, perturbed faces still               2
+remain recognizable for  = 3.
+UEP vs. DeepFace Models: We also evaluated UEP                           4  8  16          32         64
+against DeepFace face detection and recognition mod-
+els. We sampled more than 1000 images of celebrities                           Block Size
+from FaceScrub dataset that are known to DeepFace
+face recognition model (about 186 classes). This model             Fig. 10. Different number of overlay images vs. different number
+was able to detect all faces in unperturbed images and             of block sizes for  = 0.6. Used same overlay images per row.
+recognize 97.28% of them. We then tested DeepFace
+with perturbed images with different levels of pertur-             that the average SSIM measured over the 1000 original
+bation ( values). As shown in Figure 8, the face de-               and recovered images is 0.99 (SD = 0.0038). A distribu-
+tection and face recognition models have low accuracy,             tion of SSIM values for UEP recovered images is shown
+less than 20% (for both detection and recognition) for             in Figure 13.
+larger values of ( 3).                                             UEP Computational Cost: Our universal transfer-
+                                                                   able 1perturbation is learned using only 200 randomly
+   0.6                                                             selected images but can be applied to any other image.
+                                                                   Compared to previous approaches [42, 48], our hybrid
+   0.5                                                             approach requires significantly less computational effort
+                                                                   and time and achieves better results. But even training
+­                                                                  small CNNs is computationally expensive operation. For
+                                                                   instance, training three small local CNNs and learning
+   0.45                                                            a universal transferable perturbation using 200 images
+                                                                   took 13 hours on a standard desktop with 64GB RAM
+   0.4                                                             and an Intel Xeon E5-1630v4 3.70GHz quad-core CPU,
+                                                                   and a GTX 1080 Ti GPU with 11GB RAM (Appendix C
+         4  8  16          32  64                                  has network details). Training the 3 local CNNs took
+                                                                   less than 1 hour and learning the universal transferable
+               Block Size                                          perturbation over 200 images took about 12 hours. How-
+                                                                   ever, this is a one-time computation cost that can be
+Fig. 9. Different  values vs. size of block for k = 3 overlay im-  expended offline. The learned perturbation can be used
+ages. Overlay images were chosen randomly but the same overlay     for perturbing multiple images and hence the learning
+images were used in all cases.                                     cost is amortized over all the images.
+
+Recoverability/Reversibility: UEP does not add the per-k                Since a single perturbation can be applied for a
+turbat8ion directly to pixels but adds it in the arc-              batch of images, the cost for storing the learned per-
+tangent hyperbolic space (see equation 4). When map-               turbations in order to recover the original image is only
+ping back to the pixel space (integers values in [0, 255]),        a small fraction of the storage required for the images.
+we ma6y need to round the pixel's value. However, this             For example, in our evaluation we created a universal
+loss is not perceptually recognizable as measured by the           perturbation for 200 images and hence the additional
+structural similarity index (SSIM) [82] between the orig-          cost for local storage is one perturbation (1/200th of
+inal an4d recovered images. SSIM is a popular measure              total image storage).
+used to compare perceptual image similarity. For two               Summary: We showed that even with access to a small
+identical images SSIM value will be 1. Our results show            dataset, 10 classes and at most 200 images per class,
+                                                                   one can learn small CNNs and generate a universal per-
+               2
+
+         4  8  16          32  64
+
+               Block Size
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy                         95
+
+Fig. 11. Google Vision API face detection model performance on kRTIO images for k=3 and k=8.
+
+turbation with high transferability. This is in contrast      from our initial set S (this set is shown in Figure 20 in
+with Liu et al. [42] who train 4 large CNNs (with 1000        Appendix B). Similar to UEP evaluation, we selected
+classes each) using a training dataset (ILSVRC [61]) of       1000 images from the FaceScrub dataset uniformly at
+1.2M images to achieve only 76% transferability (over         random and applied k-RTIO perturbations that were
+200 test images) on Clarifai.com. Similarly, Moosavi-         generated using different values for  (mixing parame-
+Dezfooli et al. achieved only 70% fooling rate even af-       ter), k (number of overlay source images), and b (number
+ter using 4000 images to learn a universal perturbation.      of blocks in an overlay image).
+When using only 1000 images to learn a perturbation           Effectiveness of k-RTIO: Similar to UEP evaluation,
+they achieved less than 40% fooling rate (see Figure 6        to assess k-RTIO, we evaluated it against Google Vision
+in [48]). In contrast, UEP can learn an effective uni-        API's face detection model, online face detection and
+versal perturbation using only 200 images and achieve         recognition models of Clarifai.com, and face detection
+ 94% fooling rate.                                            and recognition models of DeepFace.
+                                                              k-RTIO vs. Google Vision API : Google Vision API de-
+     Our evaluation of UEP, on more than 1000 images          tected faces in less than 40% of original unperturbed
+and 3 different face detection and 2 different face recog-    images (here we did not crop the faces but rather sub-
+nition models, shows that fooling face detection models       mitted the original images). Then we perturbed those
+is harder than face recognition models. In other words,       images for which Google Vision API correctly detected
+face recognition models are more sensitive to pertur-         faces with k-RTIO approach. Note that unlike UEP that
+bations. Also, a  = 3 showed sufficient fooling capa-         needs to resize images to apply perturbation, k-RTIO
+bility on face recognition models while keeping the im-       does not need to resize the main image (just overlay im-
+ages recognizable. Our UEP method also has less loss          ages should be resized to main image's size). As shown
+compared to other transferable perturbation generation        in Figure 11, Google Vision API only can detect faces
+approaches because perturbation is added in the arc-          in less than 35% of images when k = 3 and   0.5 for
+tangent hyperbolic space of the images instead of di-         small block sizes (less than 10). Increasing  value or
+rectly to their pixel values.                                 number of overlay images (k) leads face detection suc-
+                                                              cess rate to increase. This is because a larger  value
+6.2 k-RTIO Performance                                        implies more of the original image is present in the
+                                                              perturbed image and thus can increase recognizability
+k-RTIO Simulation Setup: Recall that k-RTIO re-               for both humans and automated classifiers. This can
+quires a set S of initial overlay images. We observed em-     be seen in Figure 9 where the image becomes clearer
+pirically that the choice of this set of images did not sig-  for higher  values for every block size. Increasing the
+nificantly alter the fooling performance of k-RTIO. How-      number of overlay images used (k) leads k-RTIO pertur-
+ever, we felt that including images with human faces          bation to look like random noise as the different overlay
+may reduce recognizability. So we chose a set of 30 ran-      images are averaged, and therefore the perturbation be-
+dom images from the Internet that did not include faces
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  96
+
+comes ineffective. This is evident from Figure 10 where       sive especially with hardware instruction set support.
+for k values greater than 4 images become easy to per-        For example, generating a permutation for 500 blocks
+ceptually recognize for all block sizes. Interestingly, both  takes 9 × 10-5 milliseconds and permuting an overlay
+Figures 9 and 10 show that smaller block sizes seem to        image with 625 blocks of 40 × 40 pixels each took less
+produce less obfuscated images for humans while still         5 × 10-4 milliseconds (wall-clock time) with no special
+thwarting automated classifiers.                              optimizations or effort. Further, creation of unique over-
+k-RTIO vs. Clarifai.com: Clarifai.com's face detection        lays can easily be parallelized when perturbing multiple
+model was able to detect faces in all original images         images. End users need only store the secret key (128
+sampled from the FaceScrub dataset. Clarifai.com's face       bits) and a small image set S used in the creation of
+recognition model was able to recognize  82% of the           unique overlays to recover the original images. Thus,
+celebrities in these images. To evaluate the k-RTIO           storage costs remain constant irrespective of the num-
+performance on face recognition model, we used only           ber of images that are perturbed.
+the images that were recognized by Clarifai.com's face        Summary: Similar to the case of UEP, we find that
+recognition model. As shown in the top row of Fig-            fooling face detection models is harder than fooling face
+ure 12, similar to Google Vision API, for small values of     recognition models. As shown in Figures 11 and 12, face
+  0.45 and small block sizes clarifai.com's face recog-       detection models can detect faces better for larger block
+nition model is able to detect faces in very few images       sizes (i.e., smaller number of blocks (b)) even at lower
+(< 7%) even when face detection model is able to detect        values. However, k-RTIO is able to effectively thwart
+faces in more than 80% of images successfully.                face recognition models. For small block sizes (4 × 4 or
+k-RTIO vs. DeepFace Models: We also evaluated k-              8 × 8), face recognition models recognize 15% of faces
+RTIO against DeepFace face detection and recognition          at best for   0.5. For lower alpha values, say  =
+models. As in the case of UEP, we selected more than          0.4, face recognition rate does not go above 15% for
+1000 images from FaceScrub dataset that DeepFace clas-        any block size. Thus, the mixing parameter  and the
+sified correctly. We perturbed the selected images us-        number of blocks b are critical factors that impact face
+ing k-RTIO with different  values and block sizes and         recognition. Similarly, as shown in Figures 10 and 11,
+tested them against DeepFace. As shown in the bottom          number of overlay images used is also a critical factor
+row of Figure 12, both models showed low performance          as using more overlays leads to a final perturbation that
+for k-RTIO perturbed images with a small block size           looks like random noise and therefore ineffective.
+(even for larger  values).
+Recoverability/Reversibility: We can always regenerate        6.3 Potential Attacks Against UEP and
+the exact overlay image that was added to original im-             k-RTIO
+ages using the secret key. However, k-RTIO still needs
+to round up the pixel values after adding overlay images      We explore different countermeasures that can poten-
+leading to some loss. However, this loss is not perceptu-     tially be deployed against the proposed perturbation
+ally recognizable. To measure the perceptual similarity,      approaches. We show that using one perturbation for
+we again used SSIM to evaluate the similarity between         several images provides adversaries with an opportunity
+the original and recovered images. Our results show that      to estimate the perturbation and recover classifiable im-
+SSIM measure between original and recovered images            ages (if not original images). This is a downside of using
+averaged over the 1000 tested images is 0.96 (SD=0.07).       a single semantic perturbation for multiple images and
+A distribution of SSIM values k-RTIO recovered images         led to the k-RTIO approach which uses a unique per-
+is shown in Figure 13. k-RTIO recovered images tend to        turbation per image. We also explore a countermeasure
+exhibit lower SSIM values as the perturbation is applied      where the target CNNs learns on perturbed images.
+to the whole image and not just the faces as is done for      Perturbation Estimation and Removal: Let us as-
+UEP. For this experiment, we set the k-RTIO parame-           sume that the perturbation is added directly to images
+ters as k = 3, block-size= 8 and  = 0.45 (a sweet spot        (xi = xi + ) and an adversary wants to find  given
+for fooling unknown face recognition models).                 only the perturbed images. Adversaries can treat  as
+Computational Costs of k-RTIO: Unlike transfer-               the main signal and the images as noise added to the
+able perturbation generation, the k-RTIO method is            main signal. In this case, the noise signal is not indepen-
+computationally much more efficient. While it does in-        dent or zero mean (but rather images of faces). However,
+volve (k×b)+k AES invocations for generating a unique         target CNNs do not need to recover the exact pertur-
+overlay for each image, AES is computationally inexpen-
+              On the (Im)Practicality of Adversarial Perturbation for Image Privacy  97
+
+Clarifai.com
+
+DeepFace
+
+Fig. 12. Clarifai.com (online) and DeepFace (offline) face recognition and detection models on k-RTIO perturbed images for k = 3.
+
+                                                            Fig. 14. UEP perturbation estimation and removal. The first
+                                                            image is the perturbed image, the second one is median of 200
+                                                            perturbed images. The third image is inverted median and the
+                                                            final image is the recovered image by an adversary ( = 0.42).
+
+Fig. 13. SSIM histogram for recovered UEP and k-RTIO im-    the inverted median to a perturbed image as a new layer
+ages. In contrast to k-RTIO, UEP only perturbs faces in an  (x =  × xi + (1 - ) × inv( )).
+image, therefore it has larger SSIM on average.
+                                                                 As shown in Figure 14, using this approach a tar-
+bation as they do not have to recover the exact original    get CNN can obtain an image close to the original and
+image. They only need to recover enough of a likeness       that seems to be sufficient for recognition. We have
+to the original image to be able to classify the image      assessed 200 images after removing the perturbation
+correctly. To get a rough estimate of the perturbation,     with median estimation method and submitted it to
+a target CNNs can compute the median of pixels in all       the clarifai.com's celebrity face detection model. As
+perturbed images to approximate the . It can then add       shown in Figure 15, clarifai.com's success rate for
+                                                            different values of  (0.40 to 0.56) is as high as 70% (for
+                                                              [0.44, 0.48]) - more than tenfold improvement! In the
+                                                            worst case scenario, if we assume that the target CNN
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  98
+
+Fig. 15. Target CNN can recover 60% of the images by using Perturbation Estimation and Removal method just with 5 images
+using the same perturbation. By setting  value to 0.48, an adversary can improves its success rate to 70%.
+
+can know when it classified correctly then it can vary     provement on k-RTIO perturbed images when one trains
+for every image and reach an accuracy as high as 80.5%     a CNN both on benign and k-RTIO perturbed images.
+with access to only 35 images modified using the same
+perturbation. Thus, using a single UEP perturbation             For this, we selected TinyImageNet [39] with 200
+for several images may allow target classifiers to esti-   classes, 100000 training-set images, and 10000 test-set
+mate the perturbation and recover classifiable images.     images as the target CNN. We trained an Xception
+As shown in the Figure 15, an automated classifier can     Convolutional Neural Network [14] on this dataset. In
+improve their classification accuracy to 70% by estimat-   100 training epochs, this CNN achieved 65.42% accu-
+ing perturbation using as few as 10 perturbed images.      racy on the test-set images. We then added 100000 and
+                                                           10000 k-RTIO perturbed images to training and test re-
+     Unlike UEP that uses a single perturbation for sev-   spectively, and retrained the Xception CNN. We used
+eral images, k-RTIO generates a unique perturbation        the same learning rate and same random seed num-
+for each image, hence this perturbation estimation and     ber to initialize the CNN weights. The robust Xception
+removal approach is not effective against k-RTIO.          CNN achieved 68.50% accuracy on benign test-set im-
+Robust CNNs: Many methods have been proposed to            ages and 32.1% accuracy on average on k-RTIO images
+detect and reject adversarial examples (e.g., [3, 4, 47,   (  {0.45, 0.5}, block - size  {4, 8, 16, 64}).
+67, 80]). These methods are suitable for safety sensitive
+application such as disease recognition and autonomous          As shown in Figure 16, learning on k-RTIO images
+cars in which making wrong decision may cause huge         can improve accuracy. However, the accuracy on images
+consequences. However, such approaches are not useful      with low alpha values  = {0.4, 0.45} was still less than
+as defenses against UEP or k-RTIO as those methods         29% and 39% respectively. In other words, robust CNNs
+want to detect and reject perturbed images as much as      can improve their accuracy on k-RTIO perturbed im-
+possible which aligns with our goal of preventing auto-    ages but not significantly for small  values. Note that
+mated classifiers from correct classification. Other pro-  we used the same overlay set for perturbing images in
+posed methods tend to make learning white-box attacks      the training and test sets to evaluate the robust CNN.
+harder for an adversary [5, 56]. However, such defenses    This simulates a situation when the target CNN has
+are still vulnerable to black-box attacks in which an ad-  access to a user's overlay set S.
+versary learns highly transferable perturbations on us-    Noise Reduction Techniques: Adversarial training
+ing local CNNs. Another approach is to train robust        showed good performance against adversarial examples
+CNNs that are able to classify adversarial images cor-     for small CNNs, but this approach has been shown to be
+rectly [43] by re-training the network on both benign      computationally expensive at large scale [5] and not a
+and adversarial images. However, it has been shown that    desirable solution for dealing with adversarial samples.
+this approach does not make CNNs robust against all
+kinds of adversarial examples even for small CNNs [64].         Approaches to recover classifiable images from per-
+Here we aim to assess the classification accuracy im-      turbed ones using different filtering techniques have
+                                                           been explored [15]. Note that CNNs do not need to re-
+                                                           cover original images to classify them correctly. They
+                                                           only need to reduce the impact of the perturbation to
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  99
+
+Fig. 16. The accuracy of the CNN of TinyImageNet on perturbed images by k-RTIO images for k = 3 (left) for the original CNN
+learned on benign images, and (right) robust CNN which is learned on the k-RTIO images.
+
+obtain a correct classification. Here, we explore filter-    image-specific perturbations need to be developed be-
+ing approaches that can reduce perturbation noise suf-       fore learning-based perturbation approaches can become
+ficiently to make them recognizable for CNNs. To eval-       practical defense tools against automated classification.
+uate robustness of k-RTIO, we applied different filters      Alternatively, if multiple independent universal pertur-
+such as Blurring [60], Median Filter [30], Grayscale Fil-    bations can be computed and used, it may be possible
+ter and Gaussian Filter to reduce noise or distortion. As    to leverage them to thwart the perturbation estimation
+shown in Figure 17, none of these methods could im-          approach discussed in Section 6.3. Both these remain
+prove image quality for DeepFace face recognition clas-      open problems.
+sifier significantly.                                        Efficiency of Semantic Perturbations: In contrast
+                                                             to adversarial-learning approaches such as UEP, our
+7 Discussion and Future Work                                 semantic approach k-RTIO reduces the efficiency of a
+                                                             CNN in recognizing features, by reducing the similar-
+Adversarial perturbation is being studied as a way to        ity of adjacent pixels. k-RTIO is as a better choice
+address privacy concerns with scalable automated face        than UEP, given that k-RTIO is both computationally
+recognition by CNNs [20, 31, 63]. In this work, we pro-      cheaper and found to be more effective. We are en-
+posed some practical requirements for such defenses and      couraged by the feasibility to find cheaper techniques
+proposed two perturbation schemes, UEP and k-RTIO,           to thwart recognition by existing classifiers. While our
+that meet those requirements. However, these schemes         initial evaluation shows k-RTIO is robust against com-
+have their limitations.                                      mon filtering techniques, it is not an exhaustive list and
+Downside of Universal Perturbation: UEP gener-               further work is needed in this direction.
+ates a single transferable perturbation that can be used
+on multiple image to successfully fool an unknown CNN.            Re-training a CNN on adversarial examples has
+The rationale for designing UEP, a universal transfer-       been shown to improve the CNN's robustness against
+able perturbation scheme, was to amortize the cost of        such examples [43] and is a potential defense against k-
+learning a perturbation across multiple images, and to       RTIO. Although this approach is not computationally
+be able to reverse the perturbation with a low storage       feasible for large scale datasets [5], we did evaluate its ef-
+cost of just storing one perturbation. However, the use      fectiveness against k-RTIO using TinyImagenet dataset
+of a single perturbation across multiple images opens        to train a CNN on both clean and k-RTIO perturbed
+up the possibility of a target CNN estimating or learn-      images. Our evaluation showed that for small values of
+ing this perturbation by observing multiple perturbed        , this robust CNN's accuracy on perturbed images has
+images. Indeed, as described in Section 6.3, we show         not improved significantly (< 30% and 40% for  = 0.4
+that it is possible to filter the perturbation sufficiently  and 0.45, respectively).
+enough to allow correct classification. This leads us to     Recognizability: Our findings indicate a sweet spot
+observe that cost-efficient approaches to learn and store    for k-RTIO parameters (k = 3,  = 0.45, and b < 20)
+                                                             where classifiers have low success while the images re-
+                                                             main visually recognizable (see Figure 9). However, it
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy                                          100
+
+Fig. 17. Filtering results on DeepFace face detection and celebrity recognition models for  = 0.45 and k = 3.
+
+would be good to empirically evaluate the recognizabil-      just UEP or k-RTIO but seems to be true for adversarial
+ity of k-RTIO perturbed images through user studies          perturbation based defenses in general. This is an open
+and to characterize the boundaries for human recogni-        question that needs to be explored for image perturba-
+tion in terms of parameter values for k, , and b.            tion based privacy defenses to become practical.
+Lack of Strong Guarantees: Besides learning a ro-
+bust CNN, online service providers may also be able               Finally, while problems that are hard for AI and
+to rely on other channels of information other than the      easier for humans have been explored in the context of
+image itself to infer information that can help them clas-   distinguishing between humans and robots on the web
+sify correctly, such as where, when, and with whom the       (e.g., CAPTCHAs), there seems to be a need to revisit
+image was shared. Further, an adversary may be able          such a paradigm for privacy against automated classi-
+to use the structure present in overlay images to re-        fiers.
+duce their effort required to recreate the unique over-
+lay image. While this can be done using visual clues         8 Conclusion
+manually, it may also be feasible to automate this al-
+though we are not aware of a specific way to efficiently     Given that users tend to store and share photos with
+achieve that. Similarly, it may be possible to find a        friends and family using cloud-based platforms with
+smoothing filter that allows an adversary to correctly       weak access control options, the emergence of scalable
+classify a k-RTIO image without reversing the pertur-        and automated image classification is a serious threat
+bation. In other words, unlike traditional privacy mech-     to user privacy. In this work we explored two reversible
+anisms like encryption, perturbation-based defenses are      image perturbation techniques that can thwart classifi-
+not yet able to provide provable guarantees. This is es-     cation and tracking by automated classifiers while at the
+pecially the case as it is hard to quantify the information  same time allowing recognition by humans. We showed
+leaked by perturbed images (especially since we require      that our k-Randomized Transparent Image Overlays
+it to be sufficient enough for human recognition). At        (k-RTIO) approach is not only very effective but also
+least in the case of ideal TPE schemes [74] the leaked       computationally cheaper in contrast to learning-based
+bits can be succinctly characterized. While differential-    perturbation methods. However, more work is needed
+privacy based perturbation approaches are emerging           before perturbation based approaches can truly become
+(e.g., [17, 18]) they are currently not reversible. Pertur-  practical.
+bation schemes that thwart one pre-specified classifier
+while allowing another pre-specified classifier to classify  Acknowledgements. The authors would like to thank
+correctly (e.g., [31, 79]) have also been proposed. How-     the anonymous reviewers and our shepherd for their
+ever, those approaches are also not reversible. Further,     constructive feedback. This research received no specific
+it is not clear how they fare against an unknown clas-       grant from any funding agency in the public, commer-
+sifier. This lack of defined guarantees is not specific to   cial, or not-for-profit sectors.
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  101
+
+References                                                                  International Conference on Knowledge Discovery & Data
+
+[1] An app that encrypts your photos from camera to cloud.                  Mining, pages 196­204. ACM, 2018.
+      https://www.wired.com/story/pixek-app-encrypts-photos-          [16] B. Driessen and M. Dürmuth. Achieving Anonymity against
+      from-camera-to-cloud/. Accessed: 2019-11-30.
+                                                                            Major Face Recognition Algorithms, pages 18­33. Springer
+[2] Planet selfie. https://www.businessinsider.com/were-now-                Berlin Heidelberg, Berlin, Heidelberg, 2013.
+      posting-a-staggering-18-billion-photos-to-social-media-         [17] L. Fan. Image pixelization with differential privacy. In Data
+      every-day-2014-5. Accessed: 2019-11-30.                               and Applications Security and Privacy XXXII - 32nd Annual
+
+[3] M. Abbasi, A. Rajabi, C. Gagné, and R. B. Bobba. Towards                IFIP WG 11.3 Conference, DBSec 2018, Bergamo, Italy, July
+      Dependable Deep Convolutional Neural Networks (CNNs)
+      with Out-distribution Learning. Workshop on Dependable                16-18, 2018, Proceedings, pages 148­162, 2018.
+      and Secure Machine Learning, 2018.                              [18] L. Fan. Practical image obfuscation with provable privacy. In
+
+[4] N. Akhtar and A. Mian. Threat of adversarial attacks on                 Proceedings of IEEE International Conference on Multimedia
+      deep learning in computer vision: A survey. IEEE Access,
+      6:14410­14430, 2018.                                                  and Expo (ICME), 2019, 2019.
+                                                                      [19] R. A. Fisher, F. Yates, et al. Statistical tables for biologi-
+[5] A. Athalye, N. Carlini, and D. A. Wagner. Obfuscated gra-
+      dients give a false sense of security: Circumventing defenses         cal, agricultural and medical research. Statistical tables for
+      to adversarial examples. In J. G. Dy and A. Krause, editors,          biological, agricultural and medical research., (6th ed), 1963.
+      Proceedings of the 35th International Conference on Ma-         [20] C. Gao, V. Chandrasekaran, K. Fawaz, and S. Jha.
+                                                                            Face-off: Adversarial face obfuscation. arXiv preprint
+      chine Learning, ICML 2018, Stockholmsmässan, Stockholm,               arXiv:2003.08861, 2020.
+                                                                      [21] E.-J. Goh, H. Shacham, N. Modadugu, and D. Boneh. Sir-
+      Sweden, July 10-15, 2018, volume 80 of Proceedings of Ma-             ius: Securing remote untrusted storage. In NDSS, volume 3,
+      chine Learning Research, pages 274­283. PMLR, 2018.                   pages 131­145, 2003.
+[6] S. Baluja and I. Fischer. Adversarial transformation net-         [22] I. Goodfellow, Y. Bengio, and A. Courville. Deep learning.
+      works: Learning to generate adversarial examples. arXiv               MIT press, 2016.
+      preprint arXiv:1703.09387, 2017.                                [23] I. Goodfellow, J. Shlens, and C. Szegedy. Explaining and
+[7] M. Bertalmio, G. Sapiro, V. Caselles, and C. Ballester. Im-             harnessing adversarial examples. In International Conference
+      age inpainting. In Proceedings of the 27th Annual Con-                on Learning Representations, 2015.
+      ference on Computer Graphics and Interactive Techniques,        [24] R. Gross, E. Airoldi, B. Malin, and L. Sweeney. Integrat-
+      SIGGRAPH '00, pages 417­424, New York, NY, USA, 2000.                 ing utility into face de-identification. In Proceedings of the
+      ACM Press/Addison-Wesley Publishing Co.                               5th International Conference on Privacy Enhancing Tech-
+[8] D. Bitouk, N. Kumar, S. Dhillon, P. Belhumeur, and S. K.
+      Nayar. Face swapping: Automatically replacing faces in                nologies, PET'05, pages 227­242, Berlin, Heidelberg, 2006.
+      photographs. ACM Trans. Graph., 27(3):39:1­39:8, Aug.                 Springer-Verlag.
+      2008.                                                           [25] R. Gross, L. Sweeney, J. Cohn, F. Torre, and S. Baker. Face
+[9] C. Bourez. Course 2: build deep learning neural networks                de-identification. Protecting Privacy in Video Surveillance,
+      in 5 days only, 2018. http://christopher5106.github.io/               pages 129­146, 2009.
+      deep/learning/2018/10/20/course-two-build-deep-learning-        [26] K. Hill. The Secretive Company That Might End Privacy as
+      networks.html".                                                       We Know It, 1/182020.
+[10] J. F. Cardoso. Blind signal separation: statistical principles.  [27] S. Hill, Z. Zhou, L. Saul, and H. Shacham. On the
+      Proceedings of the IEEE, 86(10):2009­2025, Oct 1998.                  (in)effectiveness of mosaicing and blurring as tools for doc-
+[11] N. Carlini and D. Wagner. Towards evaluating the robust-               ument redaction. Proc. Privacy Enhancing Technologies,
+      ness of neural networks. In Security and Privacy (SP), 2017           2016(4):403­17, Oct. 2016.
+      IEEE Symposium on, pages 39­57. IEEE, 2017.                     [28] H. Hosseini and R. Poovendran. Semantic adversarial ex-
+[12] F. Carmo, J. Assis, V. Estrela, and A. Coelho. Blind signal            amples. In The IEEE Conference on Computer Vision and
+      separation and identification of mixtures of images. pages            Pattern Recognition (CVPR) Workshops, 2018.
+      337 ­ 342, 12 2009.                                             [29] H. Hosseini, B. Xiao, A. Clark, and R. Poovendran. At-
+[13] K. Chinomi, N. Nitta, Y. Ito, and N. Babaguchi. Prisurv:               tacking automatic video analysis algorithms: A case study
+      Privacy protected video surveillance system using adaptive            of google cloud video intelligence API. In R. A. Hallman,
+      visual abstraction. In Proceedings of the 14th International          K. Rohloff, and V. I. Chang, editors, Proceedings of the
+      Conference on Advances in Multimedia Modeling, MMM'08,                2017 on Multimedia Privacy and Security, MPS@CCS 2017,
+      pages 144­154, Berlin, Heidelberg, 2008. Springer-Verlag.
+[14] F. Chollet. Xception: Deep learning with depthwise separable           Dallas, TX, USA, October 30, 2017, pages 21­32. ACM,
+      convolutions. In Proceedings of the IEEE conference on                2017.
+      computer vision and pattern recognition, pages 1251­1258,       [30] T. Huang, G. Yang, and G. Tang. A fast two-dimensional
+      2017.                                                                 median filtering algorithm. IEEE Transactions on Acoustics,
+[15] N. Das, M. Shanbhogue, S.-T. Chen, F. Hohman, S. Li,                   Speech, and Signal Processing, 27(1):13­18, 1979.
+      L. Chen, M. E. Kounavis, and D. H. Chau. Shield: Fast,          [31] S. Joon Oh, M. Fritz, and B. Schiele. Adversarial image per-
+      practical defense and vaccination for deep learning using             turbation for privacy protection ­ a game theory perspective.
+      jpeg compression. In Proceedings of the 24th ACM SIGKDD               In The IEEE International Conference on Computer Vision
+                                                                            (ICCV), Oct 2017.
+                                                                      [32] A. Jourabloo, X. Yin, and X. Liu. Attribute preserved face
+                                                                            de-identification. In 2015 International Conference on Bio-
+                                                                            metrics (ICB), pages 278­285, May 2015.
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy  102
+
+[33] M. Kallahalla, E. Riedel, R. Swaminathan, Q. Wang, and         [50] E. M. Newton, L. Sweeney, and B. Malin. Preserving pri-
+      K. Fu. Plutus: Scalable secure file sharing on untrusted            vacy by de-identifying face images. IEEE transactions on
+      storage. In Fast, volume 3, pages 29­42, 2003.                      Knowledge and Data Engineering, 17(2):232­243, 2005.
+
+[34] A. C. Kokaram, R. D. Morris, W. J. Fitzgerald, and P. J. W.    [51] H.-W. Ng and S. Winkler. A data-driven approach to clean-
+      Rayner. Interpolation of missing data in image sequences.           ing large face datasets. In 2014 IEEE international con-
+      IEEE Transactions on Image Processing, 4(11):1509­1519,             ference on image processing (ICIP), pages 343­347. IEEE,
+      Nov 1995.                                                           2014.
+
+[35] A. Krizhevsky, I. Sutskever, and G. E. Hinton. Imagenet        [52] G. Oded. Foundations of Cryptography: Volume 2, Basic
+      classification with deep convolutional neural networks. In          Applications. Cambridge University Press, USA, 1st edition,
+      Advances in neural information processing systems, pages            2009.
+      1097­1105, 2012.
+                                                                    [53] S. J. Oh, R. Benenson, M. Fritz, and B. Schiele. Faceless
+[36] A. Kurakin, I. Goodfellow, and S. Bengio. Adversarial ex-            Person Recognition: Privacy Implications in Social Media,
+      amples in the physical world. Workshop Track of the Inter-          pages 19­35. Springer International Publishing, Cham, 2016.
+      national Conference on Learning Representations (ICLR),
+      2017.                                                         [54] T. Orekondy, B. Schiele, and M. Fritz. Towards a visual pri-
+                                                                          vacy advisor: Understanding and predicting privacy risks in
+[37] K. Lander, V. Bruce, and H. Hill. Evaluating the effective-          images. In IEEE International Conference on Computer Vi-
+      ness of pixelation and blurring on masking the identity of          sion, ICCV 2017, Venice, Italy, October 22-29, 2017, pages
+      familiar faces. Applied Cognitive Psychology, 15(1):101­116,        3706­3715. IEEE Computer Society, 2017.
+      2001.
+                                                                    [55] A. B. Pande and S. Prabha. Image blind signal separa-
+[38] S. Lawrence, C. L. Giles, A. C. Tsoi, and A. D. Back. Face           tion algorithm based on fast ica. In IJCA Proceedings on
+      recognition: A convolutional neural-network approach. IEEE          International Conference on Advances in Communication
+      transactions on neural networks, 8(1):98­113, 1997.
+                                                                          and Computing Technologies 2012, number 3, pages 21­24.
+[39] Y. Le and X. Yang. Tiny imagenet visual recognition chal-            Citeseer, 2012.
+      lenge. CS 231N, 2015.                                         [56] N. Papernot, P. McDaniel, I. Goodfellow, S. Jha, Z. B. Ce-
+                                                                          lik, and A. Swami. Practical black-box attacks against ma-
+[40] T. Li and L. Lin. Anonymousnet: Natural face de-                     chine learning. In Proceedings of the 2017 ACM on Asia
+      identification with measurable privacy. In The IEEE Confer-         Conference on Computer and Communications Security,
+      ence on Computer Vision and Pattern Recognition (CVPR)              pages 506­519. ACM, 2017.
+                                                                    [57] O. M. Parkhi, A. Vedaldi, and A. Zisserman. Deep face
+      Workshops, June 2019.                                               recognition. In British Machine Vision Conference, 2015.
+[41] Y. Lin, S. Wang, Q. Lin, and F. Tang. Face swapping under      [58] M.-R. Ra, R. Govindan, and A. Ortega. P3: Toward privacy-
+                                                                          preserving photo sharing. In Presented as part of the 10th
+      large pose variations: A 3d model based approach. In 2012           USENIX Symposium on Networked Systems Design and
+      IEEE International Conference on Multimedia and Expo,
+      pages 333­338, July 2012.                                           Implementation (NSDI 13), pages 515­528, Lombard, IL,
+[42] Y. Liu, X. Chen, C. Liu, and D. Song. Delving into trans-            2013. USENIX.
+      ferable adversarial examples and black-box attacks. arXiv     [59] A. RachelAbraham, A. Kethsy Prabhavathy, and J. Devi
+      preprint arXiv:1611.02770, 2016.                                    Shree. A Survey on Video Inpainting. International Journal
+[43] A. Madry, A. Makelov, L. Schmidt, D. Tsipras, and                    of Computer Applications, 56(9):43­47, Oct. 2012.
+      A. Vladu. Towards deep learning models resistant to ad-       [60] E. Reinhard, W. Heidrich, P. Debevec, S. Pattanaik,
+      versarial attacks. arXiv preprint arXiv:1706.06083, 2017.           G. Ward, and K. Myszkowski. High dynamic range imag-
+[44] B. Marohn, C. V. Wright, W.-c. Feng, M. Rosulek, and                 ing: acquisition, display, and image-based lighting. Morgan
+      R. B. Bobba. Approximate thumbnail preserving encryption.           Kaufmann, 2010.
+      2017.                                                         [61] O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh,
+[45] M. Mathias, R. Benenson, M. Pedersoli, and L. Van Gool.              S. Ma, Z. Huang, A. Karpathy, A. Khosla, M. Bernstein,
+      Face detection without bells and whistles. In European              A. C. Berg, and L. Fei-Fei. ImageNet Large Scale Visual
+      Conference on Computer Vision, pages 720­735. Springer,             Recognition Challenge. International Journal of Computer
+      2014.                                                               Vision (IJCV), 115(3):211­252, 2015.
+[46] R. McPherson, R. Shokri, and V. Shmatikov. Defeat-             [62] S. Sengupta and K. J. O'Brien. Facebook can id faces, but
+      ing image obfuscation with deep learning. arXiv preprint            using them grows tricky. The New York Times, September
+      arXiv:1609.00408, 2016.                                             2012.
+[47] D. Meng and H. Chen. Magnet: a two-pronged defense             [63] S. Shan, E. Wenger, J. Zhang, H. Li, H. Zheng, and B. Y.
+      against adversarial examples. In Proceedings of the 2017            Zhao. Fawkes: Protecting personal privacy against unautho-
+      ACM SIGSAC Conference on Computer and Communica-                    rized deep learning models. arXiv preprint arXiv:2002.08327,
+                                                                          2020.
+      tions Security, pages 135­147. ACM, 2017.                     [64] Y. Sharma and P.-Y. Chen. Attacking the madry defense
+[48] S.-M. Moosavi-Dezfooli, A. Fawzi, O. Fawzi, and                      model with l_1-based adversarial examples. arXiv preprint
+                                                                          arXiv:1710.10733, 2017.
+      P. Frossard. Universal Adversarial Perturbations. In Pro-     [65] Y. Shoshitaishvili, C. Kruegel, and G. Vigna. Portrait of a
+      ceedings of the IEEE Conference on Computer Vision and              privacy invasion. Proceedings on Privacy Enhancing Tech-
+                                                                          nologies, 2015(1):41­60, 2015.
+      Pattern Recognition (CVPR), pages 1765­1773, 2017.
+[49] S. M. Moosavi-Dezfooli, A. Fawzi, and P. Frossard. Deep-
+
+      fool: A simple and accurate method to fool deep neural
+      networks. In 2016 IEEE Conference on Computer Vision and
+      Pattern Recognition (CVPR), pages 2574­2582, June 2016.
+On the (Im)Practicality of Adversarial Perturbation for Image Privacy                                                   103
+
+[66] K. Simonyan and A. Zisserman. Very deep convolutional           [80] W. Xu, D. Evans, and Y. Qi. Feature squeezing: Detecting
+      networks for large-scale image recognition. International            adversarial examples in deep neural networks. Network and
+      Conference on Learning Representations(ICLR), 2015.                  Distributed System Security Symposium, 2018.
+
+[67] N. Srivastava, G. Hinton, A. Krizhevsky, I. Sutskever, and      [81] Q. A. Zhao and J. T. Stasko. The awareness-privacy trade-
+      R. Salakhutdinov. Dropout: A simple way to prevent neural            off in video supported informal awareness: A study of image-
+      networks from overfitting. The Journal of Machine Learning           filtering based techniques. Technical report, Goergia Tech,
+      Research, 15(1):1929­1958, 2014.                                     http://hdl.handle.net/1853/3452, 1998.
+
+[68] Z. Stone, T. Zickler, and T. Darrell. Autotagging facebook:     [82] Zhou Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simon-
+      Social network context improves photo annotation. In 2008            celli. Image quality assessment: from error visibility to struc-
+      IEEE Computer Society Conference on Computer Vision and              tural similarity. IEEE Transactions on Image Processing,
+                                                                           13(4):600­612, 2004.
+      Pattern Recognition Workshops, pages 1­8, June 2008.
+[69] Q. Sun, A. Tewari, W. Xu, M. Fritz, C. Theobalt, and            A Adversarial Attacks
+
+      B. Schiele. A hybrid model for identity obfuscation by face    Here, we introduce the well-known methods for generat-
+      replacement. In V. Ferrari, M. Hebert, C. Sminchisescu,
+      and Y. Weiss, editors, Computer Vision ­ ECCV 2018, pages      ing adversarial examples for a given image for a known
+      570­586, Cham, 2018. Springer International Publishing.
+[70] Y. Sun, X. Wang, and X. Tang. Deep convolutional network        CNNs.
+      cascade for facial point detection. In Computer Vision and
+      Pattern Recognition (CVPR), 2013 IEEE Conference on,           Fast Gradient Sign [23]: This method aims to min-
+      pages 3476­3483. IEEE, 2013.
+[71] Z. Sun, L. Meng, and A. Ariyaeeinia. Distinguishable de-        imize the maximum changes in each pixel for a target
+      identified faces. In Automatic Face and Gesture Recognition
+      (FG), 2015 11th IEEE International Conference and Work-        attack. More precisely, it tends to minimize L. There-
+                                                                     fore, it uses the sign of gradient of loss function as fol-
+      shops on, volume 04, pages 1­6, May 2015.
+[72] L. Sweeney. K-anonymity: A model for protecting privacy.        lows:
+
+      Int. J. Uncertain. Fuzziness Knowl.-Based Syst., 10(5):557­           xnew = x - .sign(J(F (x, ), y ))            (6)
+      570, Oct. 2002.
+[73] C. Szegedy, W. Zaremba, I. Sutskever, J. Bruna, D. Erhan,       In that, y is the target label and is a constant small
+      I. Goodfellow, and R. Fergus. Intriguing properties of neural
+      networks. In International Conference on Learning Represen-    coefficient which controls the maximum changes of pix-
+      tations, 2014.
+[74] K. Tajik, A. Gunasekaran, R. Dutta, B. Ellis, R. B. Bobba,      els. This method is fast but not efficient. Also, in [36],
+      M. Rosulek, C. V. Wright, and W. Feng. Balancing im-
+      age privacy and usability with thumbnail-preserving encryp-    an iterative variants of FGS, called IFGS, has been pro-
+      tion. In 26th Annual Network and Distributed System Se-
+      curity Symposium, NDSS 2019, San Diego, California, USA,       posed to increase its efficiency.
+
+      February 24-27, 2019, 2019.                                    Fig. 18. VGG-16 Convolutional Neural Network [9].
+[75] S. Tansuriyavong and S.-i. Hanaki. Privacy protection by
+                                                                     L-BFGS [73]: This method is a fast method to find a
+      concealing persons in circumstantial video image. In Pro-      targeted or untargeted attack. This method minimizes
+      ceedings of the 2001 Workshop on Perceptive User Inter-        following equation by L-BFGS method.
+
+      faces, PUI '01, pages 1­4, New York, NY, USA, 2001. ACM.              min c.  2 + J(F (x, )), x +   [0, 1]d       (7)
+[76] M. Tierney, I. Spiro, C. Bregler, and L. Subramanian.                  
+
+      Cryptagram: Photo privacy for online social media. In Pro-     where c is constant coefficient which leads  has small
+      ceedings of the First ACM Conference on Online Social Net-     value if it has the large value. This parameter controls
+                                                                     the amount of changes in a given image.
+      works, COSN '13, pages 75­88, New York, NY, USA, 2013.
+      ACM.
+[77] L. Wolf, T. Hassner, and I. Maoz. Face recognition in un-
+      constrained videos with matched background similarity. In
+      Computer Vision and Pattern Recognition (CVPR), 2011
+
+      IEEE Conference on, pages 529­534. IEEE, 2011.
+[78] C. V. Wright, W.-c. Feng, and F. Liu. Thumbnail-preserving
+
+      encryption for jpeg. In Proceedings of the 3rd ACM Work-
+      shop on Information Hiding and Multimedia Security,
+      IH&#38;MMSec '15, pages 141­146, New York, NY, USA,
+      2015. ACM.
+[79] Z. Wu, Z. Wang, Z. Wang, and H. Jin. Towards privacy-
+      preserving visual recognition via adversarial training: A pi-
+      lot study. In V. Ferrari, M. Hebert, C. Sminchisescu, and
+      Y. Weiss, editors, Computer Vision ­ ECCV 2018, pages
+      627­645, Cham, 2018. Springer International Publishing.
+                              On the (Im)Practicality of Adversarial Perturbation for Image Privacy                               104
+
+Fig. 19. Using a convolutional layer with stride value of (2, 2)  Carlini Attack [11]: In contrast to previous meth-
+and kernel values of 0.25, one can implement a thumbnail func-    ods, this method does not use loss function to find a
+tion to reduce the size of an image to 25% of original size.      perturbation. Authors of [11] introduced a new objec-
+                                                                  tive function based on minimum difference between the
+                                                                  probabilities assigned to the true class and other classes
+                                                                  such that the objective function has lower value if a
+                                                                  CNN misclassifies the image with higher confidence as
+                                                                  follows:
+
+                                                                     f (x) = max(max{Y (x)j : j = y} - Y (x)y , -) (8)
+
+                                                                  where Y (x) is the probability vector assigned by CNN
+
+Deepfooling [49]: Unlike the fast gradient sign                   to the input(x). Also, y and  denote the real label of
+method, this method is for untargeted attack. This
+method is a fast and efficient method to find a small             the input and confidence parameter, respectively. Larger
+perturbation for a given image. Similar to L-BFGS, it
+minimizes  2. This method is based on an iterative                value for confidence parameter leads the classifiers to as-
+linearization of the loss function.
+                                                                  sign the image to a new class different from the true one
+
+                                                                  with higher probability such that the difference between
+
+                                                                  the probability of the new class and others is  at least.
+
+                                                                  Moreover, previous methods add perturbation directly
+
+Table 1. Table of Notations.                                      to images. Therefore, finding a perturbation that keeps
+
+                                                                  the final value of images in acceptable rage [0, 1] is dif-
+
+   Notation      Description                                      ficult. To simplify the problem, they suggested using
+      CNN        Convolutional Neural Network
+      UEP        Universal Ensemble Perturbation                  the  alternative  term  of  1  (tanh(z  )  +  1)  whose  value  is  al-
+                 k Randomized Transparent Image Overlays                                      2
+    k-RTIO       Learning adversarial perturbation on known
+  White-Box      and accessible CNNs                              ways in [0, 1]. More precisely, the perturbation  is added
+                 Learning adversarial perturbation locally for
+     Attack      unknown CNNs                                     to arc-tangent hyperbolic value of an image instead of
+  Black-Box      A single perturbation which works on several
+                 images                                           added directly images. As one can see in equation 4, the
+     Attack      Ability of a perturbation to fool unknown
+   Universal     CNNs                                             user does not add the noise () to her images directly.
+ perturbation    Blind Signal Separation
+Transferability  A function representing a CNN that returns       The variable  can get any values from [-, ].
+                 a probability vector. x is the input image and
+      BSS         are weights of the CNN.                         B Overlay Images
+    F (x, )      Probability vector returned by a CNN
+                 (F (x, ) = Y (x), i Y (x)i = 1)                  We used different images of objects, landscape etc. in
+     Y (x)       Loss function (e.g., entropy)                    our set S (initial set of overlay images). We did not
+                 Adversarial perturbation                         have any constraints on selecting the images except not
+      J (.)      Mixing parameter in kRTIO                        having human faces in there. Because using an image
+                 Number of overlay images in k-RTIO               with faces in there may reduce the recognizability of
+                 Number of blocks in k-RTIO                       the images by end users.
+        k        Misclassification confidence: minimum differ-
+        b        ence between confidence of the target class           Set of overlay images used in our experiments are
+                 and the true class.                              shown in Figure 20.
+                 UEP perturbation weighting factor
+                 True label of a given input                      C Neural Networks
+       y         (t) = 1 if t is true otherwise (t) = 0
+      (t)        Universal perturbation misclassification rate    We trained small convolutional neural networks on lim-
+        p        Mixing parameter in perturbation and estima-     ited faces (10 classes of faces). To minimize the network
+                 tion removal                                     dependencies, we utilized two different CNNs structures
+                 1-                                               trained on different images sizes.
+    inv()                                                         VGG16:
+
+                                                                  model = Sequential ()
+           On the (Im)Practicality of Adver2sarial Perturbation for Image Privacy                                         105
+
+                                                                               input_shape=shape_image ) )
+                                                                model . add ( LeakyReLU ( alpha =.01))
+                                                                model . add ( MaxPooling2D ( pool_size =(2 ,2)))
+                                                                model . add ( Conv2D ( 6 4 , ( 3 , 3 ) ) )
+                                                                model . add ( LeakyReLU ( alpha =.01))
+                                                                model . add ( MaxPooling2D ( pool_size =(2 , 2 ) ) )
+                                                                model . add ( Dropout ( 0 . 5 ) )
+                                                                model . add ( Conv2D ( 1 2 8 , ( 3 , 3 ) ) )
+                                                                model . add ( LeakyReLU ( alpha =.01))
+                                                                model . add ( MaxPooling2D ( pool_size =(2 , 2 ) ) )
+                                                                model . add ( Dropout ( 0 . 5 ) )
+                                                                model . add ( Flatten ( ) )
+                                                                model . add ( Dense (200))
+                                                                model . add ( LeakyReLU ( alpha =.01))
+                                                                model . add ( Dropout ( 0 . 5 ) )
+                                                                model . add ( Dense ( s e l f . num_classes ))
+
+Fig. 20. Set S of the overlay images used in generating k-RTIO        Blind Signal Separation
+
+images
+
+                                                 D
+
+model . add ( Conv2D ( 1 2 8 , ( 5 , 5 ) ,Recovered             Blind signal separation (BSS) is used to extract inde-
+       input_shape=shape_image ) )                              pendent signals X = [xT1 , · · · , xTn ] which are mixed to-
+Perturbed                                                       gether by a mixing matrix (Am×n) from the resulting
+model . add ( Activation ( ' r e l u ' ))                       signals B = A × X. The solution would be easy if the
+model . add ( MaxPooling2D ( pool_size =(2 ,2) ,Original        adversary knows the mixing matrix (Am×n). However,
+                                                                this matrix is unknown. The adversary can use blind
+        s t r i d e s = ( 2 , 2 ) , padding= ' v a l i d ' ) )  signal separation method to recover the original signal
+model . add ( Conv2D ( 2 5 6 , ( 3 , 3 ) ) )                    only by considering the correlation between the signals
+model . add ( Activation ( ' r e l u ' ))                       B.
+model . add ( MaxPooling2D ( pool_size =(2 , 2) ,               Let, I = [I1, · · · , Im] be a set of original images where
+                                                                we want to add the image I as a new layer with the
+        s t r i d e s = ( 2 , 2 ) , padding= ' v a l i d ' ) )  weight of  (bj = Ij + (1 - )Ij). The user first con-
+model . add ( Conv2D ( 5 1 2 , ( 3 , 3 ) ) )                    verts the images to raw data in the form that a signal
+model . add ( Activation ( ' r e l u ' ))                       is represented by as follows:
+model . add ( MaxPooling2D ( pool_size =(2 , 2) ,
+                                                                                         
+        s t r i d e s = ( 2 , 2 ) , padding= ' v a l i d ' ) )
+model . add ( Conv2D ( 5 1 2 , ( 2 , 2 ) ) )                            I11 . . . I1n                0 0 . . . 1 - 
+model . add ( Activation ( ' r e l u ' ))
+model . add ( MaxPooling2D ( pool_size =(2 , 2 ) ) )                    I21  ...   I2n              0           0    . . . 1 - 
+model . add ( Conv2D ( 5 1 2 , ( 2 , 2 ) ) )                                  ...   ...                    ...  ...
+model . add ( Activation ( ' r e l u ' ))                                                
+model . add ( MaxPooling2D ( pool_size =(2 , 2) ,               X  =    ...                ,  A  =    ...            ...  
+                                                                                                                          
+        s t r i d e s = ( 2 , 2 ) , padding= ' v a l i d ' ) )                                                            
+model . add ( Flatten ( ) )                                           
+model . add ( Dropout ( 0 . 5 ) )
+model . add ( Dense (200))                                            Im1 . . . Imn                   0 0 ...  1-
+model . add ( Activation ( ' r e l u ' ))
+model . add ( Dropout ( 0 . 5 ) )                                       I11 . . . I1n
+model . add ( Dense ( s e l f . num_classes ))
+                                                                                                                          (9)
+FaceScrub:
+                                                                and then creates matrix A. The user obtains the per-
+model = Sequential ()
+model . add ( Conv2D ( 3 2 , ( 3 , 3 ) ,                        turbed images by multiplying matrix X by A.
+
+                                                                   The adversary only has access to the mixed signal
+
+                                                                B and wants to recover the original images.
+
+                                                                   As shown in Figure 21a, we used FastICA [12, 55]
+
+                                                                method (variant of BSS for images) to recover the I
+
+                                                                or the images. As shown in this Figure, the adversary
+
+                                                                can easily recover the original images from the mixed
+
+                                                                images. Because this method initializes the correlation
+                                                       On the (Im)Practicality of Adversarial Perturbation for Image Privacy  106
+
+matrix randomly, the final recovered images are differ-
+ent. But it is possible to recover one of the pictures well.
+It is obvious that just by having one image, we can re-
+cover the other images easily. However, in k-RTIO we
+apply different overlay images for each original image.
+Further, we also select uniformly at random k overlay
+images used for any given image from a larger pool of S
+overlay images which makes finding blocks overlaid with
+same k blocks difficult. Therefore, BSS is not effective
+against k-RTIO.
+
+Input1         Input3              Input2              Input1
+                          Input2            Input3
+
+Mixed1         Mixed3 Mixed2       MixedM2 ixed3       Mixed1
+
+Restored1      RestoreRde3stored2  RestorReeds2tored3  Restored1
+
+(a) Naive TOT                      (b) k-RTIO
+
+Fig. 21. Blind Signal Separation can recover perturbed images
+by transparent overlays technique. Generating overlay images
+by permuting the original overlay images' blocks randomly leads
+BSS to not be able to recover images.
+

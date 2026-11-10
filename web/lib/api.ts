@@ -9,12 +9,21 @@ function authHeaders(token: string): HeadersInit {
 }
 
 async function readError(res: Response, fallback: string): Promise<Error> {
+  const body = await res.text().catch(() => "");
   try {
-    const data = await res.json();
-    return new Error(data.detail || fallback);
+    const data = JSON.parse(body);
+    return new Error(data.detail || `${fallback}（HTTP ${res.status}）`);
   } catch {
-    return new Error(fallback);
+    const detail = body.trim().slice(0, 240);
+    return new Error(detail ? `${fallback}（HTTP ${res.status}）：${detail}` : `${fallback}（HTTP ${res.status}）`);
   }
+}
+
+function explainChatTurnError(cause: unknown): string {
+  if (cause instanceof TypeError && /fetch/i.test(cause.message)) {
+    return `无法连接调研服务 ${API_BASE}。请确认后端已启动、前端 API 地址正确，然后重试。`;
+  }
+  return cause instanceof Error ? cause.message : "发送消息失败";
 }
 
 export interface UserInfo {
@@ -188,11 +197,18 @@ export type ResearchEvent =
   | { type: "clarification"; message: string; directions?: string[] }
   | { type: "answer"; content: string; sources: { title: string; file_id?: string; excerpt?: string }[] }
   | ({ type: "plan"; sub_questions: { label: string; question: string }[] } & StreamMeta)
-  | ({ type: "research"; question: string; preview: string; tool_call_counts: Record<string, number> } & StreamMeta)
+  | ({ type: "research"; question: string; preview: string; note?: string; research_trace?: ResearchTraceItem[]; tool_call_counts: Record<string, number> } & StreamMeta)
   | ({ type: "review"; round: number; review_summary: { question: string; verdict: string; failed: Record<string, boolean>; evidence?: Record<string, string> }[]; missing_dimensions?: string } & StreamMeta)
-  | ({ type: "write"; report: string; report_file_id?: string; version_id?: string; report_version_id?: string; title?: string } & StreamMeta)
+  | ({ type: "write"; report: string; report_file_id?: string; version_id?: string; report_version_id?: string; version_number?: number; title?: string } & StreamMeta)
   | ({ type: "stats"; total_calls: number; prompt_tokens: number; completion_tokens: number; total_tokens: number } & StreamMeta)
   | { type: "error"; message: string; task_id?: string; run_id?: string };
+
+export interface ResearchTraceItem {
+  tool: string;
+  arguments: Record<string, unknown>;
+  raw_result?: string;
+  result: string;
+}
 
 interface StreamMeta {
   task_id?: string;
@@ -265,7 +281,7 @@ export function startChatTurn(
   sessionId: string | null,
   onEvent: (event: ResearchEvent) => void,
   token: string,
-  options: { taskId?: string | null; reportVersionId?: string | null } = {},
+  options: { taskId?: string | null; reportVersionId?: string | null; turnId?: string } = {},
   onComplete?: () => void,
 ): () => void {
   if (MOCK) {
@@ -287,6 +303,7 @@ export function startChatTurn(
     headers: authHeaders(token),
     body: JSON.stringify({
       message,
+      turn_id: options.turnId,
       session_id: sessionId,
       ...(options.taskId ? { task_id: options.taskId } : {}),
       ...(options.reportVersionId ? { report_version_id: options.reportVersionId } : {}),
@@ -328,7 +345,7 @@ export function startChatTurn(
     })
     .catch((cause: unknown) => {
       if (!active || (cause instanceof Error && cause.name === "AbortError")) return;
-      onEvent({ type: "error", message: cause instanceof Error ? cause.message : "发送消息失败" });
+      onEvent({ type: "error", message: explainChatTurnError(cause) });
       onComplete?.();
     });
 

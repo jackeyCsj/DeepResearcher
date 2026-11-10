@@ -1,0 +1,123 @@
+ISO/IEC 30136 Performance Testing of Template Protection Schemes
+Marta Gomez-Barrero BioML lab, RI CODE, Universität der Bundeswehr München Int. Face and Fingerprint Performance Conf., 2025-04-01
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+BioML: Biometrics & Machine Learning
+
+Ø Since 2023 (before @UAM, h_da, HSAN)
+Ø Research on (but not limited to!):
+v Different biometric modalities, and multi-biometrics v Biometric Template Protection and Attack Detection v Synthetic data v Explainability
+Ø Chair BIOSIG
+Ø Involved in EAB and ISO/IEC SC 37
+
+Ø More details on: https://www.unibw.de/bioml-en https://www.marta-gomez-barrero.com marta.gomez-barrero@unibw.de
+
+IFPC, 2025-04-01
+
+2
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+Introduction
+
+IFPC, 2025-04-01
+
+3
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Biometrics & Privacy
+
+Ø Biometric data is classified as sensitive personal data by the European Data Protection Regulation (GDPR)
+Ø Different legislations across the globe, adding more protection:
+v Japan Act on the Protection of Personal Information (APPI) also includes extra-territorial protection since 2022
+v Australian Privacy Act is undergoing reforms v The California Consumer Privacy Act (CCPA), based on the GDPR, aims
+to empower consumers with new rights in order to protect their privacy v...
+
+IFPC, 2025-04-01
+
+4
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Inverse biometrics attacks
+
+Ø It was a common belief that the stored templates revealed no information about the biometric characteristics:
+
+Ø However, biometric samples can be recovered from the stored unprotected templates
+
+IFPC, 2025-04-01
+
+5
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Inverse biometrics attacks: Hill-Climbing
+
+Ø Based on the HC algorithms, we can reconstruct biometric samples:
+
+Tface
+
+Thand
+
+Tiris
+
+!
+[M. Gomez-Barrero et al., Int. Conf. on Biometrics, 2012] [M. Gomez-Barrero et al., Information Sciences, 2014] [J. Galbally, et al., Computer Vision & Image Understanding, 2013]
+
+IFPC, 2025-04-01
+
+6
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Linkage attacks
+
+Ø We can enroll with a single instance in different applications
+Tmail
+
+Tbank
+
+Tjob Tfacebook
+
+Same person??
+
+Tlinkedin
+
+Templates need to be protected, so that no one can find out on which applications we are enrolled
+
+IFPC, 2025-04-01
+
+7
+
+Marta Gomez-Barrero
+ISO/IEC 30136 BTP Evaluation
+
+Protecting the subject's privacy
+[ISO/IEC IS 24745 on Biometric Information Protection]
+
+Female, white, 30s...
+
+Irreversibility
+
+=?
+
+Unlinkability
+
+Renewability
+K1
+
+Kn
+Accuracy, template size and verification speed must be preserved.
+
+IFPC, 2025-04-01
+
+8
+
+

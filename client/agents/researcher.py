@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 MAX_TOOL_RESULT_CHARS = 20000
 MAX_DENOISE_RESULT_CHARS = 10000
+MAX_TRACE_RAW_RESULT_CHARS = 20000
 
 
 class Researcher(AgentBase):
@@ -48,9 +49,11 @@ class Researcher(AgentBase):
         self.user_prompt_template = user_prompt_template
         self.denoise_system_prompt = denoise_system_prompt
         self.compress_system_prompt = compress_system_prompt
+        self._research_trace: list[dict] = []
 
     def run(self, sub_question: str, note_feedback: str | None = None) -> str:
         logger.info("[Researcher:%s] run: retry=%s", self.name, bool(note_feedback))
+        self._research_trace = []
 
         if not note_feedback:
             prompt = self.user_prompt_template.format(sub_question=sub_question)
@@ -146,6 +149,9 @@ class Researcher(AgentBase):
 
         return result, dict(tool_call_counts)
 
+    def get_research_trace(self) -> list[dict]:
+        return [dict(entry) for entry in self._research_trace]
+
     def _compress(self, raw_research: str) -> str:
         messages = [
             {"role": "system", "content": self.compress_system_prompt},
@@ -159,17 +165,20 @@ class Researcher(AgentBase):
         
         return compress_response.content
 
-    def _execute_tool(self, name: str, parameters: dict, tool_call_id: str, sub_question: str):
+    def _execute_tool(self, name: str, parameters: dict, tool_call_id: str, sub_question: str) -> str:
         logger.info("[Researcher:%s] 调用工具: %s, 参数: %.200s", self.name, name, json.dumps(parameters, ensure_ascii=False))
 
+        raw_tool_result = ""
         tool = self._tool_map.get(name)
         if tool is None:
-            tool_result = f"Error: tool '{name}' does not exist. Available tools: {list(self._tool_map.keys())}"
+            raw_tool_result = f"Error: tool '{name}' does not exist. Available tools: {list(self._tool_map.keys())}"
+            tool_result = raw_tool_result
             logger.warning("[Researcher:%s] 工具不存在: %s", self.name, name)
 
         else:
             try:
-                tool_result = tool.run_tool(parameters)
+                raw_tool_result = tool.run_tool(parameters)
+                tool_result = raw_tool_result
                 raw_len = len(tool_result)
 
                 if raw_len > MAX_TOOL_RESULT_CHARS:
@@ -189,12 +198,27 @@ class Researcher(AgentBase):
                     logger.info("[Researcher:%s] 工具结果: %s, %d 字符", self.name, name, raw_len)
 
             except ToolCallError as e:
-                tool_result = str(e)
+                raw_tool_result = str(e)
+                tool_result = raw_tool_result
                 logger.error("[Researcher:%s] 工具失败: %s - %s", self.name, name, tool_result)
+
+        trace_raw_result = raw_tool_result
+        if len(trace_raw_result) > MAX_TRACE_RAW_RESULT_CHARS:
+            trace_raw_result = (
+                trace_raw_result[:MAX_TRACE_RAW_RESULT_CHARS]
+                + f"\n\n[日志截断: 原始 {len(raw_tool_result)} 字符, 保留 {MAX_TRACE_RAW_RESULT_CHARS} 字符]"
+            )
+        self._research_trace.append({
+            "tool": name,
+            "arguments": parameters,
+            "raw_result": trace_raw_result,
+            "result": tool_result,
+        })
 
         self._history.append(Message(
             role="tool", content=tool_result, tool_call_id=tool_call_id,
         ))
+        return tool_result
 
     def _parse_text_tool_call(self, content: str) -> list[tuple[str, dict]] | None:
         tool_names = "|".join(re.escape(name) for name in self._tool_map)

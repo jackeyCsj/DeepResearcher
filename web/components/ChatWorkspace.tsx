@@ -4,20 +4,33 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import ResearchProgress, { type ResearchStats } from "@/components/ResearchProgress";
 import StreamingText from "@/components/StreamingText";
-import { startChatTurn, type ChatSessionDetail, type ResearchEvent } from "@/lib/api";
+import UserMenu from "@/components/UserMenu";
+import { startChatTurn, type ChatSessionDetail, type ResearchEvent, type ResearchTraceItem, type UserInfo } from "@/lib/api";
+
+interface ReportReference {
+  taskId?: string | null;
+  versionId?: string | null;
+  reportFileId?: string | null;
+  versionNumber?: number;
+}
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  messageType?: string;
+  taskId?: string | null;
+  runId?: string | null;
   sources?: { title: string; file_id?: string; excerpt?: string }[];
   directions?: string[];
+  report?: ReportReference;
 }
 
 export default function ChatWorkspace({
   detail,
   token,
-  hasReport,
+  user,
+  onLogout,
   selectedTaskId,
   selectedReportVersionId,
   onSession,
@@ -28,14 +41,15 @@ export default function ChatWorkspace({
 }: {
   detail: ChatSessionDetail | null;
   token: string;
-  hasReport: boolean;
+  user: UserInfo;
+  onLogout: () => void;
   selectedTaskId: string | null;
   selectedReportVersionId: string | null;
   onSession: (sessionId: string) => void;
   onReport: (event: Extract<ResearchEvent, { type: "write" }>) => void;
   onStats: (stats: ResearchStats) => void;
   onTurnComplete: (sessionId: string | null) => void;
-  onOpenReport: () => void;
+  onOpenReport: (reference: ReportReference) => void;
 }) {
   const [sessionId, setSessionId] = useState<string | null>(detail?.id ?? null);
   const sessionIdRef = useRef(sessionId);
@@ -46,8 +60,11 @@ export default function ChatWorkspace({
   const [streaming, setStreaming] = useState(false);
   const [routeIntent, setRouteIntent] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [failedTurn, setFailedTurn] = useState<{ message: string; turnId: string } | null>(null);
   const abortRef = useRef<(() => void) | null>(null);
   const turnRef = useRef(0);
+  const failedRef = useRef(false);
+  const submittedRef = useRef<{ message: string; turnId: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -93,7 +110,16 @@ export default function ChatWorkspace({
         break;
       case "write":
         onReport(event);
-        appendAssistant("报告已生成，右侧已切换到最新版本。");
+        appendAssistant(`报告已生成${event.version_number ? `（第 ${event.version_number} 版）` : ""}。`, {
+          taskId: event.task_id,
+          runId: event.run_id,
+          report: {
+            taskId: event.task_id,
+            versionId: event.report_version_id || event.version_id,
+            reportFileId: event.report_file_id,
+            versionNumber: event.version_number,
+          },
+        });
         break;
       case "stats":
         onStats({
@@ -104,38 +130,53 @@ export default function ChatWorkspace({
         });
         break;
       case "error":
+        failedRef.current = true;
         setError(event.message);
-        appendAssistant(`处理失败：${event.message}`);
+        setFailedTurn(submittedRef.current);
         break;
     }
+  }
+
+  function startTurn(message: string, turnId: string, appendUser: boolean) {
+    setError("");
+    setFailedTurn(null);
+    setStreaming(true);
+    failedRef.current = false;
+    submittedRef.current = { message, turnId };
+    setRouteIntent(null);
+    setTurnEvents([]);
+    const nextTurn = turnRef.current + 1;
+    turnRef.current = nextTurn;
+    setTurnId(nextTurn);
+    if (appendUser) {
+      setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: message }]);
+    }
+    abortRef.current = startChatTurn(
+      message,
+      sessionIdRef.current,
+      (nextEvent) => handleEvent(nextTurn, nextEvent),
+      token,
+      { taskId: selectedTaskId, reportVersionId: selectedReportVersionId, turnId },
+      () => {
+        if (nextTurn !== turnRef.current) return;
+        setStreaming(false);
+        abortRef.current = null;
+        if (!failedRef.current) onTurnComplete(sessionIdRef.current);
+      },
+    );
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = draft.trim();
     if (!message || streaming) return;
-    setError("");
     setDraft("");
-    setStreaming(true);
-    setRouteIntent(null);
-    setTurnEvents([]);
-    const nextTurn = turnRef.current + 1;
-    turnRef.current = nextTurn;
-    setTurnId(nextTurn);
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: message }]);
-    abortRef.current = startChatTurn(
-      message,
-      sessionIdRef.current,
-      (nextEvent) => handleEvent(nextTurn, nextEvent),
-      token,
-      { taskId: selectedTaskId, reportVersionId: selectedReportVersionId },
-      () => {
-        if (nextTurn !== turnRef.current) return;
-        setStreaming(false);
-        abortRef.current = null;
-        onTurnComplete(sessionIdRef.current);
-      },
-    );
+    startTurn(message, crypto.randomUUID(), true);
+  }
+
+  function retryFailedTurn() {
+    if (!failedTurn || streaming) return;
+    startTurn(failedTurn.message, failedTurn.turnId, false);
   }
 
   function autoResize() {
@@ -157,16 +198,8 @@ export default function ChatWorkspace({
           {routeIntent && <p className="mt-0.5 text-[12px] text-muted-foreground">{intentLabel(routeIntent)}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {hasReport && (
-            <button
-              type="button"
-              onClick={onOpenReport}
-              className="rounded-md border border-foreground/12 bg-surface px-3 py-1.5 text-[12px] hover:bg-background"
-            >
-              查看报告
-            </button>
-          )}
           {streaming && <span className="text-[12px] text-accent">处理中</span>}
+          <UserMenu user={user} onLogout={onLogout} />
         </div>
       </header>
 
@@ -178,9 +211,26 @@ export default function ChatWorkspace({
               <p className="mt-2 text-[14px] text-foreground/60">可以先提一个问题，之后也能继续追问或补充研究。</p>
             </div>
           )}
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} onUseDirection={(value) => setDraft(value)} />
-          ))}
+          {messages.map((message) => {
+            const persistedEvents = message.runId && detail
+              ? buildPersistedRunEvents(detail, message)
+              : [];
+            return (
+              <div key={message.id} className="flex min-w-0 flex-col gap-3">
+                <MessageBubble
+                  message={message}
+                  onUseDirection={(value) => setDraft(value)}
+                  onOpenReport={onOpenReport}
+                />
+                {persistedEvents.length > 0 && (
+                  <div className="w-full">
+                    <p className="mb-1 pl-7 text-[12px] font-medium text-foreground/60">本轮调研过程</p>
+                    <ResearchProgress events={persistedEvents} onReport={() => undefined} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {streaming && !turnEvents.some((event) => event.type === "route" || event.type === "clarification" || event.type === "answer") && (
             <div className="flex justify-start">
               <div className="rounded-lg bg-surface px-4 py-3 text-[14px] text-foreground/65">
@@ -191,11 +241,25 @@ export default function ChatWorkspace({
           {hasResearchEvents && (
             <ResearchProgress
               key={turnId}
-              events={turnEvents}
+              events={turnEvents.filter((event) => event.type !== "error")}
               onReport={() => undefined}
             />
           )}
-          {error && <p role="alert" className="text-[13px] text-error">{error}</p>}
+          {error && (
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-t border-error/20 pt-3 text-[13px] text-error">
+              <p className="min-w-0 flex-1">{error}</p>
+              {failedTurn && (
+                <button
+                  type="button"
+                  disabled={streaming}
+                  onClick={retryFailedTurn}
+                  className="shrink-0 rounded-md border border-error/30 px-3 py-1.5 font-medium transition-colors hover:bg-error/5 disabled:opacity-50"
+                >
+                  再试一次
+                </button>
+              )}
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
       </div>
@@ -247,6 +311,15 @@ function toMessages(detail: ChatSessionDetail | null): ChatMessage[] {
     id: `${detail?.id}-${index}-${message.created_at}`,
     role: message.role === "user" ? "user" : "assistant",
     content: message.content,
+    messageType: message.message_type,
+    taskId: asString(message.extra?.task_id),
+    runId: asString(message.extra?.run_id),
+    report: message.message_type === "report" ? {
+      taskId: asString(message.extra?.task_id),
+      versionId: asString(message.extra?.report_version_id),
+      reportFileId: asString(message.extra?.report_file_id),
+      versionNumber: asNumber(message.extra?.version_number),
+    } : undefined,
     sources: Array.isArray(message.extra?.sources)
       ? message.extra.sources.filter(isSource).map((source) => ({
         title: source.title,
@@ -260,19 +333,131 @@ function toMessages(detail: ChatSessionDetail | null): ChatMessage[] {
   }));
 }
 
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
+function buildPersistedRunEvents(detail: ChatSessionDetail, message: ChatMessage): ResearchEvent[] {
+  if (!message.runId) return [];
+  const steps = detail.steps.filter((step) => step.extra?.run_id === message.runId);
+  const events: ResearchEvent[] = [];
+  for (const step of steps) {
+    const extra = step.extra || {};
+    const taskId = asString(extra.task_id) || message.taskId;
+    const meta = { ...(taskId ? { task_id: taskId } : {}), run_id: message.runId };
+    if (step.step_type === "plan" && Array.isArray(extra.sub_questions)) {
+      events.push({
+        type: "plan",
+        sub_questions: extra.sub_questions.filter(isSubQuestion),
+        ...meta,
+      });
+    } else if (step.step_type === "research") {
+      events.push({
+        type: "research",
+        question: step.content || asString(extra.question) || "",
+        preview: asString(extra.preview) || "",
+        note: asString(extra.note),
+        research_trace: Array.isArray(extra.research_trace)
+          ? extra.research_trace.filter(isResearchTrace)
+          : undefined,
+        tool_call_counts: isCountMap(extra.tool_call_counts) ? extra.tool_call_counts : {},
+        ...meta,
+      });
+    } else if (step.step_type === "review" && Array.isArray(extra.review_summary)) {
+      events.push({
+        type: "review",
+        round: asNumber(extra.round) || 1,
+        review_summary: extra.review_summary.filter(isReviewItem),
+        missing_dimensions: asString(extra.missing_dimensions),
+        ...meta,
+      });
+    }
+  }
+
+  const reportVersion = message.report?.versionId
+    ? detail.tasks?.flatMap((task) => task.versions).find((version) => version.id === message.report?.versionId)
+    : undefined;
+  if (message.messageType === "report") {
+    events.push({
+      type: "write",
+      report: reportVersion?.content || "",
+      report_file_id: message.report?.reportFileId || undefined,
+      report_version_id: message.report?.versionId || undefined,
+      version_id: message.report?.versionId || undefined,
+      task_id: message.report?.taskId || message.taskId || undefined,
+      run_id: message.runId,
+    });
+  } else if (message.messageType === "error" && message.runId) {
+    events.push({
+      type: "error",
+      message: message.content,
+      task_id: message.taskId || undefined,
+      run_id: message.runId,
+    });
+  }
+  return events;
+}
+
+function isSubQuestion(value: unknown): value is { label: string; question: string } {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return typeof item.label === "string" && typeof item.question === "string";
+}
+
+function isCountMap(value: unknown): value is Record<string, number> {
+  return !!value && typeof value === "object" && Object.values(value).every((item) => typeof item === "number");
+}
+
+function isReviewItem(value: unknown): value is Extract<ResearchEvent, { type: "review" }>['review_summary'][number] {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return typeof item.question === "string" && typeof item.verdict === "string" && !!item.failed && typeof item.failed === "object";
+}
+
+function isResearchTrace(value: unknown): value is ResearchTraceItem {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return typeof item.tool === "string" && typeof item.result === "string" && !!item.arguments && typeof item.arguments === "object";
+}
+
 function isSource(value: unknown): value is { title: string; file_id?: string; excerpt?: string } {
   if (!value || typeof value !== "object") return false;
   const source = value as Record<string, unknown>;
   return typeof source.title === "string";
 }
 
-function MessageBubble({ message, onUseDirection }: { message: ChatMessage; onUseDirection: (value: string) => void }) {
+function MessageBubble({
+  message,
+  onUseDirection,
+  onOpenReport,
+}: {
+  message: ChatMessage;
+  onUseDirection: (value: string) => void;
+  onOpenReport: (reference: ReportReference) => void;
+}) {
   const isUser = message.role === "user";
   return (
     <div className={isUser ? "flex justify-end" : "flex justify-start"}>
       <div className={`max-w-[88%] text-[14px] leading-relaxed ${isUser ? "rounded-lg bg-foreground/85 px-4 py-2.5 text-surface" : "w-full"}`}>
         {!isUser && <p className="mb-1 font-mono text-[10px] uppercase text-muted-foreground">Assistant</p>}
         <div className={!isUser ? "rounded-lg bg-surface px-4 py-3 whitespace-pre-wrap" : "whitespace-pre-wrap"}>{message.content}</div>
+        {message.report && (
+          <button
+            type="button"
+            onClick={() => onOpenReport(message.report!)}
+            className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-foreground/12 bg-surface px-3 py-1.5 text-[12px] font-medium text-foreground/75 transition-colors hover:border-accent/40 hover:text-foreground"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6M8 13h8M8 17h8" />
+            </svg>
+            查看报告{message.report.versionNumber ? ` · V${message.report.versionNumber}` : ""}
+          </button>
+        )}
         {!!message.sources?.length && (
           <div className="mt-2 space-y-1.5 px-2">
             {message.sources.map((source, index) => (

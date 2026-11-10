@@ -1,0 +1,1090 @@
+The Thirty-Sixth AAAI Conference on Artificial Intelligence (AAAI-22)
+
+Federated Learning for Face Recognition with Gradient Correction
+Yifan Niu, Weihong Deng
+Beijing University of Posts and Telecommunications nyf@bupt.edu.cn, whdeng@bupt.edu.cn
+
+Abstract
+With increasing appealing to privacy issues in face recognition, federated learning has emerged as one of the most prevalent approaches to study the unconstrained face recognition problem with private decentralized data. However, conventional decentralized federated algorithm sharing whole parameters of networks among clients suffers from privacy leakage in face recognition scene. In this work, we introduce a framework, FedGC, to tackle federated learning for face recognition and guarantees higher privacy. We explore a novel idea of correcting gradients from the perspective of backward propagation and propose a softmax-based regularizer to correct gradients of class embeddings by precisely injecting a cross-client gradient term. Theoretically, we show that FedGC constitutes a valid loss function similar to standard softmax. Extensive experiments have been conducted to validate the superiority of FedGC which can match the performance of conventional centralized methods utilizing full training dataset on several popular benchmark datasets.
+Introduction
+Face Recognition has been the prominent biometric technique for identity authentication and has been widely applied in many areas. Recently, a variety of data-driven approaches using Deep Convolutional Neural Networks (DCNNs) (Taigman et al. 2014; Kim, Park, and Shin 2020; Deng et al. 2020; Duan, Lu, and Zhou 2019; Marriott, Romdhani, and Chen 2021) have been proposed to improve the face identification and verification accuracy. A large scale dataset with diverse variance is crucial for discriminative face representation learning. Although existing datasets (Cao et al. 2018; Guo et al. 2016; Kemelmacher-Shlizerman et al. 2016; Wang et al. 2018a; Yi et al. 2014; Zhu et al. 2021) were created aiming to study the unconstrained face recognition problem, they are still biased compared with the real world data distribution. Considering privacy issue, we are not authorized to get access to mass face data in real world. Thus, it is vital to train a model with private decentralized face data to study the unconstrained face recognition problem in real world scene.
+Federated methods on object classification tasks are all under a common setting where a shallow network is adopted
+Copyright © 2022, Association for the Advancement of Artificial Intelligence (www.aaai.org). All rights reserved.
+
+as backbone and a shared fully-connected layer is applied for final classification, which is likely to lead to privacy leakage. Therefore, these methods are not applicable to face recognition. Once the private class embedding is obtained, one client's private high-fidelity face images can be easily synthesized by other clients via optimizing random noise, such as DeepInversion (Yin et al. 2020). Moreover, lots of GANbased face generation technics are also proposed to generate a frontal photorealethistic face image with face embeddings. On the other hand, existing federated methods are mainly focusing on shallow networks(e.g. 2 layer fully connected network), we found these methods may easily cause network collapsing when applied to deeper network structure on facial datasets. Thus, we rethink the federated learning problem of face recognition on privacy issues, and remodel conventional Federated Averaging algorithm (FedAvg) (McMahan et al. 2017) via ensuring each client holds a private fullyconnected layer which not only guarantees higher privacy but also contributes to network convergence.
+In general, each client commonly holds a small-scale nonIID local dataset. When we follow the above setting, onece the k-th client solves the optimization problem locally, the classification task is relatively uncomplicated and the network tends to overfit and suffers from degradation of generalization ability. It leads to a phenomenon that class embeddings (the parameters of last fully-connected layer) of the same client are almost orthogonal to each other, but part of class embeddings of different clients are highly similar.
+To solve aforementioned problem, we should constitute a new training strategy to train a model with private decentralized non-IID (Non Identically and Independently Distributed) facial data. In this work, we first propose FedGC, a novel and poweful federated learning framework for face recognition, which combines local optimization and cross client optimization injected by our proposed softmax regularizer. FedGC is a privacy-preserving federated learning framework which guarantees that each client holds private class embeddings. In face recognition, several variants of softmax-based objective functions (Deng et al. 2019; Deng, Zhou, and Zafeiriou 2017; Simonyan and Zisserman 2014; Sun, Wang, and Tang 2015; Taigman et al. 2014; Wang et al. 2018b; Wolf, Hassner, and Maoz 2011) have been proposed in centralized methods. Hence, we propose a softmaxbased regularizer aiming to correct gradients of local soft-
+
+1999
+
+max and precisely introduce cross-client gradients to ensure that cross-clients class embeddings are fully spread out and it can can be readily extended to other forms. Additionally, we give a theoretical analysis to show that FedGC constitutes a valid loss function similar to standard softmax. Our contributions can be summarized as follows:
+· We propose a federated learning framework, FedGC, for face recognition and guarantees higher privacy. It addresses the missing local optimization problems for facespecific softmax-based loss functions.
+· We start from a novel perspective of back propagation to correct gradients and introduce cross-client gradients to ensure the network updates in the direction of standard softmax. We also give a theoretical analysis to show the effectiveness and significance of our method.
+· Extensive experiments and ablation studies have been conducted and demonstrate the superiority of the proposed FedGC on several popular benchmark datasets.
+Related Work
+Face Recognition. Face Recognition (FR) has been the prominent biometric technique for identity authentication and has been widely applied in many areas (Wang and Deng 2018). Rcently, face reogintion has achieved a series of promising breakthrough based on deep face representation learning and perfromed far beyond human. Conventional face-recognition approaches are proposed such as Gabor wavelets (Liu and Wechsler 2002) and LBP (Ahonen, Hadid, and Pietikainen 2006). Schroff (Schroff, Kalenichenko, and Philbin 2015) proposed triplet loss to minimize intraclass variance and maximize inter-class variance. Various of softmax-based loss functions also emerged, such as LSoftmax (Liu et al. 2016), CosFace (Wang et al. 2018c), SphereFace (Liu et al. 2017), AM-Softmax (Wang et al. 2018b), Arcface (Deng et al. 2019). Circle Loss (Sun et al. 2020) proposed a flexible optimization manner via reweighting less-optimized similarity scores. GroupFace (Kim et al. 2020) proposed a novel face-recognition achitecture learning group-aware representations. However, these datadriven approaches aim to learn discriminative face representations on the premise of having the access to full private faical statistics. Public available training databases (Cao et al. 2018; Guo et al. 2016; Kemelmacher-Shlizerman et al. 2016; Wang et al. 2018a; Yi et al. 2014) are mostly collected from the photos of celebrities due to privacy issue, it is still biased. Furthermore, with increasing appealing to privacy issues in society, existing public face datasets may turn to illegal.
+Federated Learning. Federated Learning (FL) is a machine learning setting where many clients collaboratively train a model under the orchestration of a central server, while keeping the training data decentralized, aims to transfer the traditional deep learning methods to a privacypreserving way. Existing works seek to improve model performance, efficiency and fairness in training and communication stage. FegAvg (McMahan et al. 2017) was proposed as the basic algorithm of federated learning. FedProx
+
+(Li et al. 2018) was proposed as a generalization and reparametrization of FedAvg with a proximal term. SCAFFOLD (Karimireddy et al. 2019) controls variates to correct the 'client-drift' in local updates. FedAC (Yuan and Ma 2020) is proposed to improve convergence speed and communication efficiency. FedAwS (Yu et al. 2020) investigated a new setting where each client has access to the positive data associated with only a single class. However, most of them are mainly focusing on shallow networks and suffers from privacy leakage in face recognition. Recently, there also emerged some works (Bai et al. 2021; Aggarwal, Zhou, and Jain 2021) focusing on federated face recognition.
+
+Methodology
+In this section, we will first provide the formulation of the federated learning and its variant for face recognition. We start by analysing, and then illustrate how we are motivated to propose FedGC.
+
+Problem Formulation
+We consider a C class classification problem defined over a compact space X and a label space Y. Let K be the number of clients, suppose the k-th client holds the data {xki , yik} which distributes over Sk : Xk × Yk, and ensure the identity mutual exclusion of clients Yk  Yz = , where k, z  [K], k = z, such that S = k[K]Sk. In this work, we consider the following distributed optimization model:
+
+K
+
+min F (w)  pkFk(w),
+
+(1)
+
+w
+
+k=1
+
+where pk is the weight of the k-th client. Let the k-th client
+
+holds nk training data and number of data samples. We
+
+K k=1
+
+nk
+
+=
+
+define pk
+
+N as
+
+, where N is
+
+nk N
+
+,
+
+then
+
+we
+
+total have
+
+K k=1
+
+pk
+
+=
+
+1.
+
+Consider an "embedding-based" discriminative model,
+
+given an input data x  X , a neural network G : X  Rd
+
+parameterized by  embeds the data x into a d-dimensional
+
+vector G(x; )  Rd. Finally, the logits of an input data x in
+
+the k-th client fk(x)  RCk can be expressed as:
+
+fk(x) = WkT G(x; ),
+
+(2)
+
+where matrix Wk  Rd×Ck is the class embeddings of the
+
+k-th client. Then Eq. 1 can be reformulated as:
+
+K
+
+1 nk
+
+min
+W,
+
+F
+
+(W,
+
+)
+
+
+
+k=1
+
+pk
+
+nk
+
+k
+i=1
+
+fk(xki ), yik
+
+,
+
+(3)
+
+where k(·, ·) is the loss function of the k-th client, W = [W1, · · · , WK ]T . To provide a more strict privacy guarantee, we modifed FedAvg (McMahan et al. 2017) via keeping last fully-connected layer private in each client. We term this privacy-preserving version of FedAvg as Federated Averaging with Private Embedding (FedPE). In FedPE, each client only have access to its own final class embeddings and the shared backbone parameters. Note that differential privacy (Abadi et al. 2016) for federated methods can be readily employed in FedPE by adding noise to the parameters from each client to enhance security.
+
+2000
+
+Send   Send 
+
+
+
+backbone
+
+feature
+
+k,1 Client
+
+k,1
+
+aggregate
+
+z k
+
+Server
+
+
+
+Client k
+
+logit 
+
+shared
+
+k,2
+
+embedding
+
+k,3 k,2
+Within-Client Compactness
+
+...
+
+forward
+
+backward
+
+k,3
+
+1+1 ... +1
+
+Cross-Client Separability
+
+Send + Send +
+
+Figure 1: An illustration of our method. In communication round t, Server broadcast model parameters (t, Wkt) to the selected clients. Then clients locally compute an update to the model with their local data asynchronously, and send the new model t+1, Wkt+1 back. Finally, Server collects an aggregate of the client updates and applys cross-client optimization. (a)Client Optimization: clients seek to get more discriminative and more compact features. (b)Server Optimization: correct gradients and
+make cross-client embeddings spreadout.
+
+Observation and Motivation
+Softmax Loss. Softmax loss is the most widely used calssification loss function in face recognition. For convenience, we omit the bias bj. In the k-th client, the optimization objective is to minimize the following cross-entropy loss:
+
+1N
+
+eWkT,yi Xk,i
+
+L=-
+
+log
+
+N
+
+i=1
+
+, n
+
+WkT,j Xk,i
+
+e j=1
+
+(4)
+
+where Xk,i  Rd denotes the deep feature of the i-th sample, belonging to the yi-th class. In each individual client, the optimization objective is to minimize inter-class similarity
+and maximize intra-class similarity over the local class space Ck. We define this optimization in FedPE within client as local optimization. However, centralized training on the full
+training set solves the problem over the global class space C. We define the centralized method as global optimization.
+In local optimization, the local softmax is to force
+WkT,yi Xk,i > maxjCk,j= yi WkT,j Xk,i . However, in
+global optimization, the softmax is to force WyTi Xi > maxjC,j= yi WjT Xi . Thus, it is obvious that the model solving the classification problem as Eq. 3
+only apply within-client optimization and omit crossclient optimization, lacking constraint WkT,yi Xk,i > maxjCz,z=k WzT,j Xk,i .
+Therefore, this objective function as Eq. 3 leads the model
+to a convergence state where class embeddings of the same
+client are almost orthogonal to each other, but part of class
+embeddings of different clients may highly similar. And it
+results in overlapping of feature space among cross-client
+classes. Furthermore, only applying local optimization is
+more likely to cause overfitting on small-scale local datasets.
+
+Cross-Client Separability with Gradient Correction
+It is hard to mimic the global softmax with a set of local softmax. To address the missing optimization, as illustrated
+
+Algorithm 1: FedGC.
+
+1: Input. The K clients are indexed by k and hold local
+
+data distributes over Sk,  is learning rate. 2: Server initializes model parameters 0, W 0
+
+3: for each round t = 0, 1, ..., T - 1 do 4: Server initializes k-th client model with t, Wkt. 5: for each client k = 1, 2, ..., K do
+
+6:
+
+The k-th client computes local Softmax
+
+7:
+
+(kt+1, Wkt+1)  (t, Wkt) - k xki , yik ,
+
+8:
+
+and sends (kt+1, Wkt+1) to the server.
+
+9: end for
+
+10: Server aggregates the model parameters:
+
+11:
+
+t+1 
+
+K k=1
+
+nk n
+
+kt+1
+
+12:
+
+W~ t+1 = Wkt+1, . . . , WKt+1 T
+
+13: Server applys gradient correction:
+
+14:
+
+W t+1  W~ t+1 - W~ t+1 Reg W~ t+1
+
+15: end for 16: Output. T , W T
+
+in Fig. 1, a heuristic approach to minimize similarity among cross-client class embeddings is to constrain the cross-client embeddings with a regularization term. Considering the additivity of gradients and the unique properties of sofmax loss gradient, we are motivated to address this issue from a new perspective of back propagation. Following the form of softmax, we define a regularization term, namely softmax regularizer, on the class embeddings W  Rd×C as:
+
+K Ck
+
+eWkT,iWk ,i
+
+Reg (W ) = k=0 i=0 - log eWkT,iWk,i +
+
+z=k
+
+, Cz WzT,j Wk ,i e j=0
+
+(5)
+
+where Wk,i is the i-th class embedding of the k-th client, and (·) indicates the vector dosen't require gradient (the
+
+gradient is set to be zero). We precisely limit the gradient of
+
+loss function with softmax regularizer in order to push the
+
+2001
+
+network update towards the direction of standard Softmax.
+In addition to FedPE, the server performs an additional optimization step on the class embedding matrix W  Rd×C to ensure that cross-client class embeddings are separated from each other. The Federated Averaging with Gra-
+dient correction (FedGC) algorithm is summarized in Algorithm 1. In communication round t, Server broadcast model parameters (t, Wkt) to the k-th clients. Then clients locally compute an update with respect to local softmax loss func-
+tion with their local data asynchronously, and send the new model t+1, Wkt+1 back. Finally, Server collects an aggregate of the client updates and applys cross-client opti-
+mization. Note that differential privacy can also be applied
+to FedGC to prevent privacy leakage, like FedPE.
+We will theoretically analyze how FedGC works and how
+it pushes the network to update in the direction of global
+standard softmax. Note that FedGC effectively seeks to col-
+laboratively minimize the following objective with softmax regularizer Reg(W ):
+
+K
+
+1 nk
+
+F (W, )
+
+
+
+k=1 pk nk
+
+k
+i=1
+
+fk(xik), yik
+
++  · Reg (W ) . (6)
+
+For convenience, we assume that every client holds n1 =
+
+···
+
+=
+
+nC
+
+=
+
+N K
+
+data and c1
+
+=
+
+···
+
+=
+
+cK
+
+=
+
+C K
+
+,
+
+every
+
+class holds a1
+
+=
+
+···
+
+=
+
+aC
+
+=
+
+N C
+
+images, and 
+
+=
+
+1 C
+
+,
+
+the
+
+objective function can be reformulated as:
+
+1K F (W, ) =
+N
+
+eq fk(xik), yik
+
+k=1 (xi,yi)Sk
+
+1K
+
+eWkT,yi Xk,i
+
+=-
+
+log
+
+N
+
+k=1 (xi,yi)Sk
+
+e C
+
+WkT,j Xk,i
+
+j=1
+
+(7)
+
+
+
+eWkT,yi Wk ,yi
+
++ log eWkT,yi Wk,yi +
+
+z=k
+
+ . Cz e j=0
+
+WzT,j Wk ,yi
+
+Thus, FedGC objective Eq. 6 equals the empirical risk with respect to the loss function eq fk(xik), yik . Our analysis easily extends to unbalanced distribution by involving a
+
+weighted form.
+
+Considering the collaborative effect of all the terms in eq,
+
+we give a interpretation from the perspective of backward
+
+propagation. For standard softmax in global optimization,
+
+the computation of gradients
+
+L  Wyi
+
+and
+
+L Wj
+
+are listed as
+
+follows:
+
+L
+
+eWyTi Xi
+
+= Wyi
+
+C j=1
+
+eWjT
+
+Xi
+
+-1
+
+Xi,
+
+(8)
+
+L
+
+eWjT Xi
+
+= Wj
+
+C j  =1
+
+eWjT Xi
+
+Xi, wherej
+
+=
+
+yi.
+
+(9)
+
+Similarly, for FedGC we also calculate the gradient of eq.
+
+Then,
+
+, eq
+ Wk,j
+
+ eq  Wz,j
+
+and
+
+ eq  Wk,yi
+
+can be expressed as:
+
+k0,
+
+k,+ 2
+k,+ 1 k,
+
+(a)w/o correction
+
+k,+ 2 k0.,. . k, k,+ 1
+(b)with correction
+
+local gradient correction client update SGD
+
+Figure 2: Update steps of class embedings on a single client. (a) The divergence between FedPE and SGD becomes much larger w/o correction. (b) Gradient correction term ensures the update moves towards the true optimum.
+
+eq = Wk,j
+
+eWkT,j Xk,i
+
+X , Ck e j=1
+
+WkT,j Xk,i
+
+k,i
+
+(10)
+
+ e W eq
+
+WzT,j Wk,yi
+
+k,yi
+
+W = e + e , z,j
+
+WkT,yi Wk,yi
+
+z= k
+
+Cz j  =0
+
+WzT,j Wk,yi
+
+(11)
+
+eq =  Wk,yi
+
+eWkT,yi Xk,i - 1 Ck WkT,j Xk,i e j=1
+
+Xk,i.
+
+(12)
+
+Let Dk,i denote the distance between Wk,i and Xk, Dk,i = Wk,yi - Xk,i. We assume a well trained feature on local data due to it's easy convergence on local data, i.e.
+Dk,i  0, then we have Wk,yi  Xk,i. We can approximate:
+
+eq Wz,j
+
+
+
+e +e X e . WkT,yi Xk,i
+
+WzT,j Xk,i z=k
+
+k,i
+Cz j  =0
+
+WzT,j Xk,i
+
+(13)
+
+The
+
+parameters
+
+are
+
+updated
+
+by
+
+SGD
+
+as
+
+wk
+
+=
+
+wk
+
+-
+
+ eq wk
+
+,
+
+where  is step-size. Here for simplicity, we simplify Eq. 8
+
+as
+
+L  Wyi
+
+=
+
+Xi,
+
+Eq.
+
+9
+
+as
+
+L Wj
+
+= Xi, and Eq. 12 as
+
+ eq  Wk,yi
+
+=
+
+Xk,i. Eq.
+
+10
+
+as
+
+ eq  Wk,j
+
+= Xk,i Eq. 13 as
+
+ eq  Wz,j
+
+= Xk,i. We consider the direction of gradients, thus
+
+Eq. 12 will act as a substitute for Eq. 8 in within-client opti-
+
+mization, Eq. 10 will act as a substitute for Eq. 9 in within-
+
+client optimization. The collaborative effect of both terms
+
+act as local gradient in Fig. 2. The mismatch of the magi-
+
+tude can be alleviated by adjusting the learning rate of class
+
+embeddings.
+
+More importantly, Eq. 13 performs cross-client optimiza-
+
+tion and act as a correction term in Fig. 2 to correct gra-
+
+dient in cross-client optimization, introducing a gradient of
+
+cross-client samples to Eq. 10. And Eq. 13 has the same
+
+direction as Eq. 9. And for magitude, the denominator of
+
+Eq. 13 lacks term
+
+e Ck
+
+WkT,j Xk,i
+
+j=0,j= i
+
+compared
+
+to
+
+stan-
+
+dard SGD, but with a well done local optimization, we have
+
+e  Ck
+
+WkT,j Xk,i
+
+j=0,j=i
+
+z=k
+
+Cz j=0
+
+e . WzT,j Xk,i
+
+Therefore,
+
+magitude of Eq. 13 and Eq. 9 are approximately equal. Thus,
+
+2002
+
+Eq. 13 together with Eq. 11 can act as a substitute for Eq. 9,
+
+and add a missing cross-client item. Therefore, FedGC can
+
+push the class embeddings toward the similar dirction as
+
+standard SGD and guarantees higher privacy.
+
+Remark: Another simple way to introduce cross-client
+
+constraint is to minimize:
+
+z=k
+
+Cz j=0
+
+WzT,j
+
+Wk,i,
+
+we
+
+call
+
+it cosine regularizer. For particular Wz,j, cosine regularizer
+
+introduce gradient
+
+  Wz,j
+
+=
+
+z=k Wk,i. We show that our
+
+proposed softmax regularizer can act as a correction term for
+
+local softmax and also can be regarded as a weighted version
+
+of
+
+z= k
+
+Cz j=0
+
+WzT,j
+
+Wk,i
+
+from
+
+the
+
+perspective
+
+of
+
+backward
+
+propagation. Our proposed softmax regularizer generate gra-
+
+dient of larger magitude for more similar embeddings (hard
+
+example), thus it can also be regarded as a regularization
+
+term with hard example mining. In addition, we defined the
+
+softmax regularizer following the form of softmax. Thus,
+
+several loss functions which are the variants of softmax (e.g.
+
+ArcFace, CosFace ) can be obtained with minor modification
+
+on softmax regularizer.
+
+Extend FedGC to More General Case
+In the above analysis, we adopt identity mutual exclusion assumption Yk  Yz = . In fact, FedGC is to solve the problem of missing cross-client optimization. FedGC can also be applied to general case. We generalize the above mentioned situations, that is, some IDs are mutually exclusive and some IDs are shared. For example, there is an identity l shared by a client group Kl. After each round of communication, server takes the average of Wnt,l, n  Kl and apply our proposed softmax regularizer (only exclusive clients are introduced, in this case client K - Kl) to correct its gradient. In this way, we can get Wl updated in the direction similar to the standard softmax. With minor modifications to above analysis, we can prove the applicability of FedGC in general case.
+
+Relation to Other Methods
+
+Multi-task learning. Multi-task learning combines several
+
+tasks to one system aiming to improve the generalization
+
+ability (Seltzer and Droppo 2013). Considering a multi-
+
+task learning system with input data xi, the overall ob-
+
+jective function is a combination of several subobject loss
+
+functions, written as L = j Lj (, Wj, xi), where  is
+
+generic parameters and Wj, j  [1, 2, · · · ] are task-specific
+
+parameters. While in FedGC, Eq. 3 can also be regarded
+
+as a combination of many class-dependent changing tasks
+
+Lk
+
+=
+
+1 nk
+
+nk j=1
+
+k
+
+fk(xkj ), yjk
+
+,k
+
+ [1, · · · , K]. In gen-
+
+eral, multi-task learning is conducted end-to-end and train-
+
+ing on a single device. While in FedGC, the model is trained
+
+with class-exclusive decentralized non-IID data. Thus, our
+
+method can be also regarded as a decentralized version of
+
+multi-task learning.
+
+Generative Adversarial Nets (GAN). Based on the idea
+
+of game theory, GAN is essentially a two players minimax
+
+problem, minG maxD V (D, G) = Expdata (x)[log D(x)] +
+Ezpz(z)[log(1 - D(G(z)))], which converges to a Nash equilibrium. In FedGC, client optimization and server op-
+
+timization can be regarded as a process of adversary learn-
+
+ing, where clients tend to minimize the similarity of within-
+
+client class embeddings, Lk
+
+=
+
+1 nk
+
+nk j=1
+
+k
+
+fk(xkj ), yjk
+
+.
+
+But server tends to minimize the similarity of cross-client
+
+class embeddings and encourages within-client class embed-
+
+dings to be more compact, Reg(W ). By performing adver-
+
+sary learning similar to GAN, the network can learn more
+
+discriminative representations of class embeddings.
+
+Experiments
+Implementation Details
+Datasets. Considering that federated learning is extremely time-consuming, we employ CASIA-WebFace (Yi et al. 2014) as training set. CASIA-WebFace is collected from internet and contains about 1,000 subjects and 500,000 images. To simulate federated learning setting, we randomly divide training set into 36 clients. For test, we explore the verification performance of proposed FedGC on benchmark datasets ( LFW (Huang et al. 2008), CFP-FP (Sengupta et al. 2016), AgeDB-30 (Moschoglou et al. 2017), SLLFW (Deng et al. 2017), CPLFW (Zheng and Deng 2018), CALFW (Zheng, Deng, and Hu 2017), and VGG2FP (Cao et al. 2018)). We also explore on large-scale imagedatasets ( MegaFace (Kemelmacher-Shlizerman et al. 2016), IJB-B (Whitelam et al. 2017) and IJB-C (Maze et al. 2018)).
+Experimental Settings. In data preprocessing, we use five facial landmarks for similarity transformation, then crop and resize the faces to (112×112). We employ the ResNet34 (He et al. 2016) as backbone. We train the model with 2 synchronized 1080Ti GPUs on Pytorch. The learning rate is set to a constant of 0.1. The learning rate is kept constant without decay which is similar to the recent federated works. The batch size is set as 256. For fair comparison, the learning rate is also kept 0.1 in centralized standard SGD. We set momentum as 0.9 and weight decay as 5e-4.
+
+Ablation Study
+Fraction of participants. We compare the fraction of participants C  [0, 1]. In each communication round, there are C · K clients conduct optimization in parallel on LFW. Table 1 shows the impact of varying C for face recognition models. We train the models with the guidance of Softmax. It is shown that with the increasing of client participation C, the performance of the model also increased. And FedGC still ourperforms the baseline model by a notable margin.
+Regularizer multiplier . We perform an analysis of the learning rate multiplier of the softmax regularizer  on LFW. As shown in Table 2, FedGC achieves the best performance when  is 20. It is shown that a large multiplier also cause network collapsing, as it makes within-client class embeddings collapse to one point. When  is very small, then the model degenerates into baseline model FedPE.
+Balanced v.s. Unbalanced Partition. We compare the verification performance according to the partition of datasets. Here we constructed a unbalanced partition by logarithmic normal distribution: ln X  N (0, 1). We perform an analysis on the model with softmax loss functions on LFW. In table 3, it shows that unbalanced partition even improve the performance of network to some extent. We find
+
+2003
+
+Method
+
+C = 0.25 C = 0.5 C = 0.75 C = 1
+
+Softmax-FedPE 93.12 93.83 94.32 94.77
+
+Softmax-FedGC 97.07
+
+97.98
+
+98.13 98.40
+
+Table 1: Verification performance on LFW of different participance fraction C with softmax loss function.
+
+Method
+
+ = 1  = 20  = 50
+
+Softmax-FedGC 95.20 98.40 97.42
+
+Table 2: Verification performance on LFW of different learning rate multiplier  with softmax loss function.
+
+that the clients which holds larger scale dataset than aver-
+
+age contribute significantly to network and make it generate
+
+more discriminative representations. And FedGC still out-
+
+performs baseline model on both balanced and unbalanced
+
+datasets.
+
+Regularizer v.s. Fixed. It has been proved that random
+
+initialized vectors in high dimensional spaces (512 in this
+
+case) are almost orthogonal to each other. A na¨ive way to
+
+prevent the class embeddings from collapsing into a over-
+
+lapping space is keep the class embeddings fixed to initial-
+
+ization. Table 5 shows that proposed FedGC outperforms
+
+model with fully-connected layer fixed ("-Fixed"). For soft-
+
+max loss function, simply fixing the last fully-connected
+
+layer leads to a better accuracy. However, for Arcface and
+
+Cosface which introduce a more strict constraint, the perfor-
+
+mance of the model is even worse than baseline model. Intu-
+
+itively, random initialized orthogonal vectors lack semantic
+
+information, and it confuses the network in a more difficult
+
+classification task. Thus, it is shown that the performance is
+
+further increased with adaptive optimization (FedGC).
+
+Cosine v.s. Softmax Regularizer. We replace soft-
+
+max regularizer with cosine regularizer, namely FedCos:
+
+z=k
+
+Cz j=0
+
+WzT,j Wk,i,
+
+and
+
+guided
+
+by
+
+softmax
+
+loss
+
+func-
+
+tion. We show the verification result on LFW in Table 4.
+
+Although cosine regularizer shows a better accuracy than
+
+FedPE, it is still worse than FedGC. Because softmax reg-
+
+ularizer can be regarded as a hard sample mining version
+
+of cosine regularizer, and also match the gradient in stan-
+
+dard softmax. Thus, the superiority of softmax regularizer is
+
+proved experimentally.
+
+Visualization
+To show the effectiveness of FedGC, the visualization comparisons are conducted at feature level. We select four pairs of classes to compare FedGC and FedPE. In each pair, the two classes are from different clients and their corresponding class embeddings are highly similar in FedPE model. The features are extracted from softmax model and visualized by t-SNE (Maaten and Hinton 2008), as shown in Fig. 3(a) and Fig. 3(b), the representations of the 4 pairs tends to gather to a point and form 4 clusters in FedPE, but the representations tends to spreadout and clustered by themselves in FedGC. We also illustrate the angle distributions of all 8 selected cross-client classes. For each pair, we
+
+Method Balanced-FedPE Balanced-FedGC Unbalanced-FedPE Unbalanced-FedGC
+
+LFW 94.77 98.40 96.27 98.80
+
+CFP-FP 81.90 90.20 85.26 91.56
+
+AgeDB 78.38 85.85 81.22 88.78
+
+Table 3: Verification performance on LFW of different data partition with softmax loss function.
+FedPE FedCos FedGC LFW 94.77 96.63 98.40
+
+Table 4: Verification performance on LFW of different form of regularization with softmax loss function.
+
+calculate pair-wise cosine similarity of two classes' samples. In Fig. 3(c) and Fig. 3(d), we can clearly find that the cross-client class similarity significantly decreases in FedGC which encourage a larger cross-client class angle.
+Evaluations
+LFW, CALFW, CPLFW, CFP-FP, VGG2-FP SLLFW and AgeDB-30. In this section, we explore the performance of different loss functions (Softmax, Cosface (Wang et al. 2018c), Arcface (Deng et al. 2019)). We set the margin of Cosface (Wang et al. 2018c) at 0.35. For Arcface (Deng et al. 2019), we set the feature scale s to 64 and choose the angular margin m at 0.5. The performance of a model trained with federated learning algorithms is inherently upper bounded by that of model trained in the centralized fashion. Table 5 shows the experiments results, where "-X" means the dataset is trained by method "X". FedGC achieves the highest average accuracy for all loss functions (Softmax, Arcface , Cosface) and performs better on all of the above datasets. For ArcFace(m = 0.5), the centralized method even achieves a poor performance worse than FedPE. And FedGC can also match the performance of conventional centralized methods.
+MegaFace. The MegaFace dataset (KemelmacherShlizerman et al. 2016) includes 1M images of 690K different individuals as the gallery set and 100K photos of 530 unique individuals from FaceScrub (Ng and Winkler 2014) as the probe set. It measures TPR at 1e-6 FPR for verification and Rank-1 retrieval performance for identification. In Table 6, adopting FaceScrub as probe set and using the wash list provided by DeepInsight (Deng et al. 2019), FedGC outperforms the baseline model FedPE by a large margin in different loss functions on both verification and identification tasks. Some centralized methods (Softmax, ArcFace(m = 0.5)) even show a poor performance when the learning rate is 0.1. It shows that FedGC can match the performance of conventional centralized methods.
+IJB-B and IJB-C. The IJB-B dataset (Whitelam et al. 2017) contains 1, 845 subjects with 21.8K still images and 55K frames from 7, 011 videos. In total, there are 12, 115 templates with 10, 270 genuine matches and 8M impostor matches. The IJB-C dataset (Maze et al. 2018) is a further
+
+2004
+
+Method
+Softmax -FedPE -FedPE+Fixed -FedGC
+CosFace(m = 0.35) -FedPE -FedPE+Fixed -FedGC
+ArcFace(m = 0.5) -FedPE -FedPE+Fixed -FedGC
+
+LFW
+99.84 94.77 96.11 98.40 99.10 98.17 96.35 98.83 97.62 98.18 95.85 98.65
+
+CFP-FP
+89.39 81.90 83.67 90.20 90.79 86.90 73.01 88.60 90.50 87.23 64.43 87.77
+
+AgeDB
+87.62 78.38 80.28 85.85 91.37 86.28 81.77 90.00 83.37 86.13 79.15 89.27
+
+CALFW
+84.83 74.15 77.95 81.47 89.53 83.68 79.25 87.82 77.33 82.47 77.53 86.47
+
+CPLFW
+76.08 64.40 66.27 71.88 80.20 72.67 62.15 76.72 70.95 71.77 58.63 75.17
+
+SLLFW
+92.33 80.42 84.23 90.38 95.95 91.15 86.57 94.02 86.28 91.05 85.67 93.58
+
+VGG2-FP
+88.18 80.32 82.70 87.64 89.10 85.24 75.16 85.74 89.40 85.70 66.70 84.80
+
+Average
+88.32 79.19 81.60 86.55 90.86 86.30 79.18 88.82 85.06 86.08 75.42 87.96
+
+Table 5: Verification results (%) of different loss functions (Softmax, Cosface, Arcface) and method on 7 verification datasets. FedGC surpass others and enhance the average accuracy.  indicates the re-implementation by our code and  is constant 0.1.
+
+(a) FedPE
+
+(b) FedGC
+
+3000 2500 2000 1500 1000 500
+0 -0.2 0
+
+3000 2500 2000
+
+1500 1000
+
+0.2 0.4 0.6 0.8
+
+500 0 -0.2 0
+
+0.2 0.4 0.6 0.8
+
+(c) FedPE
+
+(d) FedGC
+
+Figure 3: Visualization of selected 8 classes from training set. (a)(b) t-SNE (Maaten and Hinton 2008) data distribution; (c)(d) Histogram of pairwise cosine similarity (horizontal axis: cosine similarity, vertical axis: number of pairs).
+
+extension of IJB-B, having 3, 531 subjects with 31.3K still images and 117.5K frames from 11, 779 videos. In total, there are 23, 124 templates with 19, 557 genuine matches and 15, 639K impostor matches. The verification TPR at 1e3 FPR and identification Rank-1 are reported in Table 7. FedGC shows significant improvements and surpasses all candidates by a large margin. Compared with centralized method on all of three loss functions, FedGC can match the performance of conventional centralized methods on both IJB-B and IJB-C datasets.
+Conclusion
+In this paper, we rethink the federated learning problem for face recognition on privacy issues, and introduce a novel face-recognition-specialized federated learning framework,
+
+Method Softmax
+-FedPE
+-FedGC CosFace(m = 0.35)
+-FedPE
+-FedGC ArcFace(m = 0.5)
+-FedPE
+-FedGC
+
+Ver.(%) 61.21 36.83 69.87 83.30 62.62 72.82 50.51 64.53 71.96
+
+Id.(%) 59.65 34.08 61.26 79.09 57.91 70.96 35.18 58.12 68.75
+
+Table 6: Verification TPR (@FPR=1e-6) and identification Rank-1 on the MegaFace Challenge 1.
+
+Method
+Softmax -FedPE -FedGC
+CosFace(m = 0.35) -FedPE -FedGC
+ArcFace(m = 0.5) -FedPE -FedGC
+
+IJB-B Ver.(%) Id.(%) 72.60 74.81 54.33 64.44 69.23 78.52 76.79 78.35 74.24 78.10 80.28 82.10 56.64 60.14 73.42 76.40 75.11 78.33
+
+IJB-C Ver.(%) Id.(%) 75.06 76.05 57.85 65.35 71.33 79.52 79.45 79.90 77.12 79.10 83.40 83.44 59.38 59.79 75.74 76.82 78.13 79.28
+
+Table 7: Verification TPR (@FPR=1e-3) and identification Rank-1 on the IJB-B and IJB-C benchmarks.
+
+FedGC, that consists of a set of local softmax and a softmaxbased regularizer to effectively learn discriminative face representtations with decentralized face data. FedGC can effectively enhance the discriminative power of cross-client class embeddings and enable the network to update towards the same direction as standard SGD. Extensive experiments have been conducted over popular benchmarks to validate the effectiveness of FedGC that can match the performance of centralized methods.
+Acknowledgments: This work was supported by the National Natural Science Foundation of China under Grant 61871052.
+
+2005
+
+References
+Abadi, M.; Chu, A.; Goodfellow, I.; McMahan, H. B.; Mironov, I.; Talwar, K.; and Zhang, L. 2016. Deep learning with differential privacy. In Proceedings of the 2016 ACM SIGSAC conference on computer and communications security, 308­318.
+Aggarwal, D.; Zhou, J.; and Jain, A. K. 2021. FedFace: Collaborative Learning of Face Recognition Model. arXiv preprint arXiv:2104.03008.
+Ahonen, T.; Hadid, A.; and Pietikainen, M. 2006. Face description with local binary patterns: Application to face recognition. IEEE transactions on pattern analysis and machine intelligence, 28(12): 2037­2041.
+Bai, F.; Wu, J.; Shen, P.; Li, S.; and Zhou, S. 2021. Federated Face Recognition. arXiv preprint arXiv:2105.02501.
+Cao, Q.; Shen, L.; Xie, W.; Parkhi, O. M.; and Zisserman, A. 2018. Vggface2: A dataset for recognising faces across pose and age. In 2018 13th IEEE International Conference on Automatic Face & Gesture Recognition (FG 2018), 67­ 74. IEEE.
+Deng, J.; Guo, J.; Liu, T.; Gong, M.; and Zafeiriou, S. 2020. Sub-center arcface: Boosting face recognition by large-scale noisy web faces. In European Conference on Computer Vision, 741­757. Springer.
+Deng, J.; Guo, J.; Xue, N.; and Zafeiriou, S. 2019. Arcface: Additive angular margin loss for deep face recognition. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, 4690­4699.
+Deng, J.; Zhou, Y.; and Zafeiriou, S. 2017. Marginal loss for deep face recognition. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops, 60­68.
+Deng, W.; Hu, J.; Zhang, N.; Chen, B.; and Guo, J. 2017. Fine-grained face verification: FGLFW database, baselines, and human-DCMN partnership. Pattern Recognition, 66: 63­73.
+Duan, Y.; Lu, J.; and Zhou, J. 2019. Uniformface: Learning deep equidistributed representation for face recognition. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 3415­3424.
+Guo, Y.; Zhang, L.; Hu, Y.; He, X.; and Gao, J. 2016. Msceleb-1m: A dataset and benchmark for large-scale face recognition. In European conference on computer vision, 87­102. Springer.
+He, K.; Zhang, X.; Ren, S.; and Sun, J. 2016. Deep residual learning for image recognition. In Proceedings of the IEEE conference on computer vision and pattern recognition, 770­778.
+Huang, G. B.; Mattar, M.; Berg, T.; and Learned-Miller, E. 2008. Labeled faces in the wild: A database forstudying face recognition in unconstrained environments. In Workshop on faces in'Real-Life'Images: detection, alignment, and recognition.
+Karimireddy, S. P.; Kale, S.; Mohri, M.; Reddi, S. J.; Stich, S. U.; and Suresh, A. T. 2019. Scaffold: Stochastic controlled averaging for federated learning. arXiv preprint arXiv:1910.06378.
+
+Kemelmacher-Shlizerman, I.; Seitz, S. M.; Miller, D.; and Brossard, E. 2016. The megaface benchmark: 1 million faces for recognition at scale. In Proceedings of the IEEE conference on computer vision and pattern recognition, 4873­4882.
+Kim, Y.; Park, W.; Roh, M.-C.; and Shin, J. 2020. GroupFace: Learning Latent Groups and Constructing Groupbased Representations for Face Recognition. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 5621­5630.
+Kim, Y.; Park, W.; and Shin, J. 2020. BroadFace: Looking at Tens of Thousands of People at Once for Face Recognition. In European Conference on Computer Vision, 536­ 552. Springer.
+Li, T.; Sahu, A. K.; Zaheer, M.; Sanjabi, M.; Talwalkar, A.; and Smith, V. 2018. Federated optimization in heterogeneous networks. arXiv preprint arXiv:1812.06127.
+Liu, C.; and Wechsler, H. 2002. Gabor feature based classification using the enhanced fisher linear discriminant model for face recognition. IEEE Transactions on Image processing, 11(4): 467­476.
+Liu, W.; Wen, Y.; Yu, Z.; Li, M.; Raj, B.; and Song, L. 2017. Sphereface: Deep hypersphere embedding for face recognition. In Proceedings of the IEEE conference on computer vision and pattern recognition, 212­220.
+Liu, W.; Wen, Y.; Yu, Z.; and Yang, M. 2016. Large-margin softmax loss for convolutional neural networks. In ICML, volume 2, 7.
+Maaten, L. v. d.; and Hinton, G. 2008. Visualizing data using t-SNE. Journal of machine learning research, 9(Nov): 2579­2605.
+Marriott, R. T.; Romdhani, S.; and Chen, L. 2021. A 3D GAN for Improved Large-pose Facial Recognition. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, 13445­13455.
+Maze, B.; Adams, J.; Duncan, J. A.; Kalka, N.; Miller, T.; Otto, C.; Jain, A. K.; Niggel, W. T.; Anderson, J.; Cheney, J.; et al. 2018. Iarpa janus benchmark-c: Face dataset and protocol. In 2018 International Conference on Biometrics (ICB), 158­165. IEEE.
+McMahan, B.; Moore, E.; Ramage, D.; Hampson, S.; and y Arcas, B. A. 2017. Communication-efficient learning of deep networks from decentralized data. In Artificial Intelligence and Statistics, 1273­1282. PMLR.
+Moschoglou, S.; Papaioannou, A.; Sagonas, C.; Deng, J.; Kotsia, I.; and Zafeiriou, S. 2017. Agedb: the first manually collected, in-the-wild age database. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition Workshops, 51­59.
+Ng, H.-W.; and Winkler, S. 2014. A data-driven approach to cleaning large face datasets. In 2014 IEEE international conference on image processing (ICIP), 343­347. IEEE.
+Schroff, F.; Kalenichenko, D.; and Philbin, J. 2015. Facenet: A unified embedding for face recognition and clustering. In Proceedings of the IEEE conference on computer vision and pattern recognition, 815­823.
+
+2006
+
+

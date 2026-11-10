@@ -134,6 +134,7 @@ function newMockSession(sessionId: string, firstMessage: string): ChatSessionDet
     steps: [],
     report: null,
     tasks: [],
+    active_task_id: null,
   };
 }
 
@@ -142,7 +143,7 @@ export function startMockTurn(
   existingSessionId: string | null,
   onEvent: (event: ResearchEvent) => void,
   onComplete?: () => void,
-  options: { taskId?: string | null; reportVersionId?: string | null } = {},
+  options: { taskId?: string | null; reportVersionId?: string | null; turnId?: string } = {},
 ): () => void {
   let cancelled = false;
   let researchAbort: (() => void) | null = null;
@@ -153,7 +154,13 @@ export function startMockTurn(
     session = newMockSession(sessionId, message);
     mockSessions.unshift(session);
   }
-  session.messages.push({ role: "user", message_type: "chat", content: message, created_at: new Date().toISOString() });
+  session.messages.push({
+    role: "user",
+    message_type: "turn",
+    content: message,
+    created_at: new Date().toISOString(),
+    extra: { client_turn_id: options.turnId },
+  });
   session.updated_at = new Date().toISOString();
 
   const hasReport = Boolean(session.tasks?.some((task) => task.versions.length > 0) || session.report);
@@ -183,7 +190,13 @@ export function startMockTurn(
         : "报告认为 Mamba 和 RWKV 以线性复杂度降低了长序列的计算开销；具体比较见报告的架构分析与对比章节。";
       const sources = [{ title: "当前研究报告", file_id: session?.report_file_id || undefined, excerpt: "长文本建模架构对比与复杂度分析" }];
       onEvent({ type: "answer", content, sources });
-      session?.messages.push({ role: "assistant", message_type: "answer", content, created_at: new Date().toISOString() });
+      session?.messages.push({
+        role: "assistant",
+        message_type: "answer",
+        content,
+        created_at: new Date().toISOString(),
+        extra: { sources, task_id: options.taskId || null },
+      });
       onComplete?.();
     }, 500);
   } else {
@@ -199,9 +212,59 @@ export function startMockTurn(
       versions: [],
     };
     if (!task) session.tasks?.push(targetTask);
+    session.active_task_id = taskId;
+    let stepSequence = Math.max(0, ...session.steps.map((step) => step.sequence));
     researchAbort = startMockResearch(message, (rawEvent) => {
       if (cancelled) return;
       let event = { ...rawEvent, task_id: taskId, run_id: runId } as ResearchEvent;
+      const now = new Date().toISOString();
+      const addStep = (
+        stepType: string,
+        title: string,
+        content: string | null,
+        extra: Record<string, unknown>,
+        reportFileId: string | null = null,
+      ) => {
+        stepSequence += 1;
+        session!.steps.push({
+          sequence: stepSequence,
+          step_type: stepType,
+          title,
+          content,
+          report_file_id: reportFileId,
+          created_at: now,
+          extra: { ...extra, task_id: taskId, run_id: runId },
+        });
+      };
+      if (rawEvent.type === "plan") {
+        addStep("plan", `分解出 ${rawEvent.sub_questions.length} 个子问题`, null, {
+          sub_questions: rawEvent.sub_questions,
+        });
+      } else if (rawEvent.type === "research") {
+        const fullNote = `${rawEvent.preview.replace(/\.\.\.$/, "")}
+
+具体结论与引用详见最终报告的对应章节。`;
+        const researchTrace = [{
+          tool: "mock_search",
+          arguments: { query: rawEvent.question },
+          raw_result: rawEvent.preview,
+          result: rawEvent.preview,
+        }];
+        event = { ...event, note: fullNote, research_trace: researchTrace } as ResearchEvent;
+        addStep("research", "资料收集完成", rawEvent.question, {
+          question: rawEvent.question,
+          preview: rawEvent.preview,
+          note: fullNote,
+          research_trace: researchTrace,
+          tool_call_counts: rawEvent.tool_call_counts,
+        });
+      } else if (rawEvent.type === "review") {
+        addStep("review", `审查 · 第 ${rawEvent.round} 轮`, null, {
+          round: rawEvent.round,
+          review_summary: rawEvent.review_summary,
+          missing_dimensions: rawEvent.missing_dimensions || "",
+        });
+      }
       if (rawEvent.type === "write") {
         const versionId = `version-${crypto.randomUUID()}`;
         const title = rawEvent.report.match(/^#\s+(.+)$/m)?.[1] || targetTask.title;
@@ -211,7 +274,24 @@ export function startMockTurn(
         session!.report_file_id = rawEvent.report_file_id || "mock-report.md";
         session!.report = { report_file_id: session!.report_file_id, title: targetTask.title, content: rawEvent.report };
         session!.status = "report_ready";
-        session!.messages.push({ role: "assistant", message_type: "report", content: "报告已生成，右侧已切换到最新版本。", created_at: new Date().toISOString() });
+        addStep("write", "报告已生成", null, {
+          report_file_id: session!.report_file_id,
+          report_version_id: versionId,
+          version_number: targetTask.versions.length,
+        }, session!.report_file_id);
+        session!.messages.push({
+          role: "assistant",
+          message_type: "report",
+          content: `报告已生成（第 ${targetTask.versions.length} 版）。`,
+          created_at: new Date().toISOString(),
+          extra: {
+            report_file_id: session!.report_file_id,
+            task_id: taskId,
+            run_id: runId,
+            report_version_id: versionId,
+            version_number: targetTask.versions.length,
+          },
+        });
       }
       session!.updated_at = new Date().toISOString();
       onEvent(event);

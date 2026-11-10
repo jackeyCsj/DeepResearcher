@@ -1,0 +1,70 @@
+[
+  {"claim_id": "SRC", "ref": 55, "verdict": "可达", "evidence": "NeurIPS 2023 正式论文 PDF，标题 Sun et al., Privacy Assessment on Reconstructed Images", "note": "论文真实存在，PDF 完整可读"},
+  {"claim_id": "55a", "ref": 55, "verdict": "支持", "evidence": "摘要：PSNR/SSIM 常用于重建攻击下隐私风险评估，越相似=泄露越多", "note": "报告表述与摘要一致"},
+  {"claim_id": "55b", "ref": 55, "verdict": "支持", "evidence": "图1 caption：PSNR/SSIM 高、MSE/LPIPS 低者反被人类判为泄露更少；提出 SemSim", "note": "反直觉发现为论文核心动机，明确含 LPIPS"},
+  {"claim_id": "55c", "ref": 55, "verdict": "支持", "evidence": "摘要：hand-crafted metrics 仅与人类评估弱相关且互相矛盾", "note": "同 55b 的重述，成立"},
+  {"claim_id": "55d", "ref": 55, "verdict": "支持", "evidence": "论文用 4 种攻击、14 个模型评估，指出指标在不同攻击/模型下不稳定", "note": "可作攻击模型不一致讨论背景"},
+
+  {"claim_id": "SRC", "ref": 56, "verdict": "可达", "evidence": "Sara et al., JCC 2019, Image Quality Assessment through FSIM/SSIM/MSE/PSNR", "note": "SCIRP 开放获取 PDF 完整"},
+  {"claim_id": "56a", "ref": 56, "verdict": "部分支持", "evidence": "文中 PSNR=10log10(peakval²/MSE)，SSIM 基于结构信息；但未提'滑动窗口'", "note": "PSNR 基于 MSE 成立；'SSIM 滑动窗口卷积'细节非该文表述"},
+
+  {"claim_id": "SRC", "ref": 57, "verdict": "可达", "evidence": "VideoProcessing.ai 博文 'Ways of cheating on popular objective metrics'", "note": "二手技术博客来源"},
+  {"claim_id": "57a", "ref": 57, "verdict": "支持", "evidence": "文称 'MSE (hence of the PSNR)'，SSIM 测结构失真，并列明两者适用边界与批评", "note": "二手来源，内容本身成立"},
+
+  {"claim_id": "SRC", "ref": 58, "verdict": "可达", "evidence": "iso.org 标准 53256 页面，ISO/IEC 30136:2018 摘要完整", "note": "官方页面可访问"},
+  {"claim_id": "58a", "ref": 58, "verdict": "支持", "evidence": "摘要：要求测量报告单次/多次成功攻击的理论与经验概率及模板被攻破后泄露信息量", "note": "与报告表述一致"},
+  {"claim_id": "58b", "ref": 58, "verdict": "支持", "evidence": "摘要：支持 accuracy/secrecy/privacy 评估，给出多样性与不可链接性测量指南", "note": "secrecy 即报告所指'保密性'"},
+
+  {"claim_id": "SRC", "ref": 59, "verdict": "可达", "evidence": "iso.org 西语镜像页（No disponible en español，内容同英文页）", "note": "ISO 页面镜像"},
+  {"claim_id": "59a", "ref": 59, "verdict": "支持", "evidence": "镜像页摘要与 58b 完全一致", "note": "镜像页面，内容一致"},
+  {"claim_id": "59b", "ref": 59, "verdict": "支持", "evidence": "生命周期显示 stage 90.92 (para revisar)，'Será reemplazada por' ISO/IEC DIS 30136", "note": "修订替代信息属实"},
+
+  {"claim_id": "SRC", "ref": 60, "verdict": "可达", "evidence": "Unidata 博客 '20 Best Face Recognition Datasets for ML in 2026'", "note": "二手博客来源"},
+  {"claim_id": "60a", "ref": 60, "verdict": "部分支持", "evidence": "博客仅称 '13K+ labeled images'，未给出 13,233/5,749/1,680 具体数字", "note": "规模数量级与用途（unconstrained verification、legacy model evaluation）相符，但精确数字不在该来源中"},
+  {"claim_id": "60b", "ref": 60, "verdict": "支持", "evidence": "MegaFace 1M distractors；CelebA 200K+、CelebA-HQ 1024×1024；VGGFace2 3.3M/9,131；WebFace42M 42M/2M", "note": "全部数字与博客原文一致"},
+
+  {"claim_id": "SRC", "ref": 61, "verdict": "可达", "evidence": "Kaggle LFW dataset 页面，jessicali9530/lfw-dataset", "note": "Kaggle 页面可抓取"},
+  {"claim_id": "61a", "ref": 61, "verdict": "支持", "evidence": "页面：'13,233 images of 5,749 people... 1,680... two or more distinct photos'，unconstrained face recognition", "note": "规模与用途均一致"},
+
+  {"claim_id": "SRC", "ref": 68, "verdict": "可达", "evidence": "PoPETs 2025(2):54-70 PDF，Le & Carlsson, DiffPrivate", "note": "官方 PDF 完整"},
+  {"claim_id": "68a", "ref": 68, "verdict": "支持", "evidence": "摘要：introduce DiffPrivate，基于 latent diffusion 的 Perturb/Edit 两种人脸隐私保护方式", "note": "与报告表述一致"},
+
+  {"claim_id": "SRC", "ref": 69, "verdict": "可达", "evidence": "BMVC 2024 workshop PDF，Leibl & Mayer, StablePrivacy", "note": "BMVA 存档 PDF 完整"},
+  {"claim_id": "69a", "ref": 69, "verdict": "支持", "evidence": "摘要：Stable Diffusion 引导的人脸数据集去标识化（de-identification）", "note": "与报告表述一致"},
+  {"claim_id": "69b", "ref": 69, "verdict": "支持", "evidence": "正文明确提 'the CCPA in California [34]'，其参考文献[34]即 'Assembly bill no. 375 — california consumer privacy act, 2018'", "note": "论文确实提及 CCPA 且引用的正是 AB No. 375 (2018)，报告引用成立"},
+
+  {"claim_id": "SRC", "ref": 70, "verdict": "可达", "evidence": "MDPI Entropy 2024, 26(6):479, You et al., DIFP 扩散模型人脸隐私保护", "note": "链接论文真实存在"},
+  {"claim_id": "70a", "ref": 70, "verdict": "支持", "evidence": "摘要：提出 Diffusion Models for Face Privacy Protection (DIFP)，生成可恢复的高分辨率保护人脸", "note": "与报告表述一致"},
+  {"claim_id": "70b", "ref": 70, "verdict": "不支持", "evidence": "链接论文为 You et al. Entropy 2024 扩散模型论文；TIFS 2024 论文（Osorio-Roig 等，vol.19, 4835-4850）是另一篇多生物特征索引论文", "note": "确认张冠李戴：引文[70]链接与报告所述 TIFS 条目非同一篇，链接不支撑该条目"},
+  {"claim_id": "70c", "ref": 70, "verdict": "不支持", "evidence": "同 70b：You et al. Entropy 2024 ≠ Osorio-Roig et al. IEEE TIFS 2024 (DOI 10.1109/TIFS.2024.3386310)", "note": "同一处张冠李戴的重述"},
+
+  {"claim_id": "SRC", "ref": 71, "verdict": "可达", "evidence": "arXiv:2504.07392v6，Tomašević et al., ID-Booth, FG 2025", "note": "arXiv 摘要与 HTML 全文可访问"},
+  {"claim_id": "71a", "ref": 71, "verdict": "支持", "evidence": "摘要：triplet identity training objective，增强小数据集并 'training of better-performing recognition models in a privacy-preserving manner'", "note": "与报告表述一致"},
+  {"claim_id": "71b", "ref": 71, "verdict": "部分支持", "evidence": "实验用 TFD/FFHQ/LFW/CA-LFW/CP-LFW/CFP-FP/AgeDB-30；全文未出现 CASIA-WebFace、WebFace260M", "note": "5 个数据集仅 3 个（LFW、CFP-FP、AgeDB）相符，另 2 个系报告误加"},
+
+  {"claim_id": "SRC", "ref": 72, "verdict": "受限", "evidence": "Springer 页面被浏览器验证拦截；经 OpenAIRE 镜像确认摘要", "note": "原 URL 不可直接抓取，替代来源核实摘要"},
+  {"claim_id": "72a", "ref": 72, "verdict": "部分支持", "evidence": "摘要确认综述覆盖 'leveraging generative models like GANs and diffusion models' 合成数据隐私替代；但 DCFace/Arc2Face/PortraitBooth 名称未在可及摘要中核实", "note": "主旨成立，具体方法名待核全文"},
+
+  {"claim_id": "SRC", "ref": 73, "verdict": "可达", "evidence": "arXiv:2303.02715v1，Rathgeb et al., Deep Learning in BTP: An Overview", "note": "arXiv 摘要完整"},
+  {"claim_id": "73a", "ref": 73, "verdict": "支持", "evidence": "摘要：深度学习影响 algorithmic fairness, vulnerability to attacks, template protection；提供 BTP 领域综述", "note": "与报告表述一致"},
+
+  {"claim_id": "SRC", "ref": 74, "verdict": "可达", "evidence": "arXiv:2302.13286v1，Shahreza et al., Benchmarking of Cancelable Biometrics for Deep Templates", "note": "arXiv HTML 全文可访问"},
+  {"claim_id": "74a", "ref": 74, "verdict": "支持", "evidence": "摘要：BioHashing/MLP Hashing/Bloom Filters/IoM-URP/IoM-GRP，评估 unlinkability/irreversibility/recognition performance，覆盖人脸、语音、指静脉、虹膜", "note": "与报告表述一致"},
+  {"claim_id": "74b", "ref": 74, "verdict": "不支持", "evidence": "论文列 ISO/IEC 24745 四项要求：Renewability/Irreversibility/Unlinkability/Performance preservation，无 confidentiality", "note": "ISO 24745 三大属性实为不可逆性、不可链接性、可更新性；'保密性'非该标准所列要求，报告表述无该文支撑"},
+
+  {"claim_id": "SRC", "ref": 75, "verdict": "受限", "evidence": "Wiley 页面仅返回标题；经检索确认摘要（USQ/ACM/IET 镜像）", "note": "原 URL 正文不可抓取，摘要经替代来源核实"},
+  {"claim_id": "75a", "ref": 75, "verdict": "支持", "evidence": "摘要：'This survey informs the progress, trend and challenges of feature extraction and learning for cancellable biometrics'", "note": "Yang et al., CAAI Trans. Intell. Technol. 9(1), 2024"},
+
+  {"claim_id": "SRC", "ref": 76, "verdict": "可达", "evidence": "PMC11398211，Huang et al., Sensors 2024, 24(17):5507", "note": "PMC 全文可访问"},
+  {"claim_id": "76a", "ref": 76, "verdict": "支持", "evidence": "引言原文：'most adversarial perturbations manifest as high-frequency signals... Neural networks... tend to overfit to low-frequency signals'", "note": "与报告表述逐句对应"},
+
+  {"claim_id": "SRC", "ref": 77, "verdict": "可达", "evidence": "arXiv:2410.16317v1，Wang et al., 物理对抗攻击综述，HTML 全文可访问", "note": "全文部分章节在抓取中截断"},
+  {"claim_id": "77a", "ref": 77, "verdict": "部分支持", "evidence": "'40 relevant papers... from 2016 to 2024' 属实；隐私保护仅引述文献[40]，'预测作用将增长'在可及内容中未见", "note": "论文数量与年份属实；隐私保护工具化论述仅一笔带过"},
+  {"claim_id": "77b", "ref": 77, "verdict": "支持", "evidence": "III 节讨论鲁棒性、跨环境/黑盒迁移、虚实转换信息损失等真实环境难点", "note": "稳定性难点明确，可检测性在防御章节涉及"},
+
+  {"claim_id": "SRC", "ref": 78, "verdict": "可达", "evidence": "PoPETs 2024(3) PDF，Le & Carlsson, StyleAdv", "note": "官方 PDF 完整"},
+  {"claim_id": "78a", "ref": 78, "verdict": "支持", "evidence": "表7：五 FRS top-1 均降至 0%；ArcFace(irse50) top-5 0.5%、top-100 7.0%；防御含 JPEG、total variance、feature squeezing、spatial smoothing", "note": "数字与防御实验均一致"},
+
+  {"claim_id": "SRC", "ref": 79, "verdict": "可达", "evidence": "arXiv:2404.04580v2，SDFR Competition, FG 2024", "note": "arXiv 摘要完整"},
+  {"claim_id": "79a", "ref": 79, "verdict": "支持", "evidence": "摘要：'crawling the Internet and without individuals' consent, raising legal, ethical, and privacy concerns'；竞赛研究合成数据训练 FR 模型", "note": "与报告表述一致"}
+]

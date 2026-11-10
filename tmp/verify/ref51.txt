@@ -1,0 +1,238 @@
+Privacy-Preserving Face Recognition with Learnable Privacy Budgets in Frequency Domain
+Jiazhen Ji1 , Huan Wang2 , Yuge Huang1 , Jiaxiang Wu1 , Xingkun Xu1 , Shouhong Ding1 , ShengChuan Zhang2 , Liujuan Cao2, and Rongrong Ji2
+1 Youtu Lab, Tencent 2 Xiamen University {royji, yugehuang, willjxwu, xingkunxu, ericding}@tencent.com, hanawh@stu.xmu.edu.cn, {zsc 2016, caoliujuan, rrji}@xmu.edu.cn
+Abstract. Face recognition technology has been used in many fields due to its high recognition accuracy, including the face unlocking of mobile devices, community access control systems, and city surveillance. As the current high accuracy is guaranteed by very deep network structures, facial images often need to be transmitted to third-party servers with high computational power for inference. However, facial images visually reveal the user's identity information. In this process, both untrusted service providers and malicious users can significantly increase the risk of a personal privacy breach. Current privacy-preserving approaches to face recognition are often accompanied by many side effects, such as a significant increase in inference time or a noticeable decrease in recognition accuracy. This paper proposes a privacy-preserving face recognition method using differential privacy in the frequency domain. Due to the utilization of differential privacy, it offers a guarantee of privacy in theory. Meanwhile, the loss of accuracy is very slight. This method first converts the original image to the frequency domain and removes the direct component termed DC. Then a privacy budget allocation method can be learned based on the loss of the back-end face recognition network within the differential privacy framework. Finally, it adds the corresponding noise to the frequency domain features. Our method performs very well with several classical face recognition test sets according to the extensive experiments. Code will be available at https://github.com/ Tencent/TFace/tree/master/recognition/tasks/dctdp.
+Keywords: Privacy-Preserving, Face Recognition, Differential Privacy
+1 Introduction
+With the rapid development of deep learning, face recognition models based on convolutional neural networks have gained a remarkable breakthrough in recent years. The extremely high accuracy rate has led to its application in many daily life scenarios. However, due to the privacy sensitivity of facial images and the unauthorized collection and use of data by some service providers, people have become increasingly concerned about the leakage of their face privacy. In
+
+2
+
+J. Ji, H. Wang, Y. Huang, and et al.
+
+Fig. 1. Comparison with different privacy-preserving methods. Left: ROC curves under IJB-C dataset, the closer to the upper left area, the better the performance. Right: Visualization of processed images using LFW dataset as examples. Compared with other methods, our method has good privacy-preserving performance.
+addition to these unregulated service providers, malicious users and hijackers pose a significant danger to privacy leakage. It is necessary to apply some privacypreserving mechanisms to face recognition.
+Homomorphic encryption [11] is an encryption method that encrypts the original data and performs inference on the encrypted data. It protects data privacy and maintains a high level of recognition accuracy. However, the introduction of the encryption process requires a great additional computation. Therefore, it is not suitable for large-scale and interactive scenarios.
+PEEP [6] is a very typical approach to privacy protection that makes use of differential privacy. It first converts the original image to a projection on the eigenfaces. Then, it adds noise to it by utilizing the concept of differential privacy to provide better privacy guarantees than other privacy models. PEEP has a low computational complexity, not to slow down the inference speed. However, it significantly reduces the accuracy of face recognition. As shown in Fig.1, the current face recognition privacy-preserving methods all perform poorly with large data sets and have relatively mediocre privacy-preserving capabilities.
+This paper aims to limit the face recognition service provider to learn only the classification result (e.g., identity) with a certain level of confidence but does not have access to the original image (even by some automatic recovery techniques). We propose a privacy-preserving framework to tackle the privacy issues in deep face recognition. Inspired by frequency analysis performing well in selecting the signal of interest, we deeply explored the utility of frequency domain privacy preservation. We use block discrete cosine transform (DCT) to transfer the raw facial image to the frequency domain. It is a prerequisite for separating information critical to visualization from information critical to identification. Next, we remove the direct component (DC) channel because it aggregates most of the energy and visualization information in the image but is not essential for identification. Meanwhile, we consider that elements at different frequencies of the input image do not have the same importance for the identification task. Therefore it is not reasonable to set precisely the same privacy budget for all
+
+Privacy-Preserving Face Recognition with Learnable Privacy Budgets
+
+3
+
+elements. We propose a method taking into account the importance of elements for identification. It only needs to set the average privacy budget to obtain the trade-off between privacy and accuracy. Then the distribution of privacy budgets over all the elements will be learned according to the loss of the face recognition model. Compared with PEEP, our approach to switching to the frequency domain is simpler, faster, and easier to deploy. Moreover, because we learn different privacy budgets for different features from the loss of face recognition, our recognition accuracy is also far better than SOTAs. The contributions of this paper are summarized as follows:
+­ We propose a framework for face privacy protection based on the differential privacy method. The method is fast and efficient and adjusts the privacypreserving capability according to the choice of privacy budget.
+­ We design a learnable privacy budget allocation structure for image representation in the differential privacy framework, which can protect privacy while reducing accuracy loss.
+­ We design various privacy experiments that demonstrate the high privacypreserving capability of our approach with marginal loss of accuracy.
+­ Our method can transform the original face recognition dataset into a privacypreserving dataset while maintaining high availability.
+
+2 Related Work
+2.1 Face Recognition
+The state-of-the-art (SOTA) research on face recognition mainly improve from the perspective of softmax-based loss function which aims to maximize the interclass discrepancy and minimize the intra-class variance for better recognition accuracy [8,22,29,33,18]. However, existing margin-based methods do not consider potential privacy leakage. In actual applications, raw face images of users need to be delivered to remote servers with GPU devices, which raises the user's concern about the abuse of their face images and potential privacy leakage during the transmission process. Our method takes masked face images rather than raw face images as the face recognition model's inputs, which reduces the risk of misuse of user images.
+
+2.2 Frequency Domain Learning
+Frequency analysis has always been widely used in signal processing, which is a powerful tool for filtering signals of interest. In recent years, Some works that introduced frequency-domain analysis have been proposed to tackle the various aspects of the problem.
+For instance, [13] trained CNNs directly on the blockwise discrete cosine transform (DCT) coefficients. [36] made an in-depth analysis of the selection of DCT coefficients on three different high-level vision tasks such as image classification, detection, and segmentation. [16] presented a frequency space domain
+
+4
+
+J. Ji, H. Wang, Y. Huang, and et al.
+
+randomization technique that achieved superior segmentation performance. In the field of deepfake, frequency is an essential tool to distinguish real from synthetic images (or videos) [10]. As for face recognition, [20] presents a new approach through a feature-level fusion of face and iris traits extracted by polar fast fourier transform. [34] splits the frequency domain channels of the image and selects only some of them for subsequent tasks. On the basis of these works, we firstly and deeply explored the utility of privacy-preserving in the frequency domain.
+
+2.3 Privacy Preserving
+Privacy-preserving research can be broadly categorized based on how to process input data, i.e., encryption or perturbation. The majority of data encryption methods fall under the Homomorphic Encryption (HE) and Secure Multiparty Computation (SMC) [2,12,19,21]. However, these data encryption methods are unsuitable for current SOTA face recognition systems due to their prohibitive computation cost. Data perturbation, in contrast, avoids the high cost of encryption by applying a perturbation to raw inputs. Differential privacy (DP) is a common-used perturbation approach. [6] applied perturbation to eigenfaces utilizing differential privacy that equally split the privacy budget to every eigenface resulting in a great loss of accuracy. In addition to DP, there are other methods for data disturbance. For instance, [17] used the Mixup [37] method to perturb data while it has been hacked successfully [5]. [25] presented a Gaussian noise disturbance method to suppress unimportant pixels before sending them to the cloud. Recently, some privacy-preserving methods have also appeared in the field of face recognition. [1] proposed federated face recognition to train face recognition models using multi-party data via federated learning to avoid privacy risks. K-same [27] is a de-identification approach by using K-anonymity for face images. Our method maintains accuracy to the greatest extent based on a learnable privacy budget.
+
+3 Method
+In this section, we describe the framework of our proposed privacy-preserving face recognition method. Our method consists of three main modules, a frequency domain transformation module, a perturbation module that utilizes differential privacy, and a face recognition module, as shown in Fig.2. Each input image is first converted to frequency domain features by the frequency domain transformation module. Furthermore, the differential privacy perturbation module will generate the corresponding noise and add it to the frequency domain features. Finally, the perturbed frequency domain features will be transferred to the face recognition model. Because the size of the perturbed frequency domain features is [H, W, C], we only need to change the input channels of the face recognition model from 3 to C to suit our input. In Section 3.1, we describe in detail the specific process of frequency-domain conversion. In Section 3.2, we first introduce
+
+Privacy-Preserving Face Recognition with Learnable Privacy Budgets
+
+5
+
+Fig. 2. Overview of our proposed method. It consists of three modules: frequencydomain transformation, differential privacy perturbation, and face recognition. The frequency-domain transformation module transforms the facial image to frequency domain features. The differential privacy perturbation module adds perturbations to frequency domain features. The face recognition module takes the perturbed features as input and performs face recognition.
+
+the background knowledge of differential privacy and then describe the specific improvements in our differential privacy perturbation module.
+
+3.1 Frequency-Domain Transformation Module
+
+[32] discovered that humans rely only on low-frequency information for im-
+
+age recognition while neural networks use low-and high-frequency information.
+
+Therefore, using low-frequency information as little as possible is very effective
+
+for image privacy protection. DCT transformation can be beneficial in separat-
+
+ing the low-frequency information that is important for visualization from the
+
+high-frequency information that is important for identification. In the frequency
+
+domain transformation module, inspired by the compression operation in JPEG,
+
+we utilized block discrete cosine transform (BDCT) as our basis of frequency-
+
+domain transformation. For each input image, we first convert it from RGB color
+
+spaces to YCbCr color spaces. We then adjust its value range to [-128, 127] to
+
+meet the requirement of BDCT input and then split it into
+
+H 8
+
+×
+
+W 8
+
+blocks with a
+
+size of 8 × 8. For a fairer comparison and as little adjustment as possible to the
+
+structure of the recognition network, we perform an 8-fold up-sampling on the
+
+facial images before BDCT. Then a normalized, two-dimensional type-II DCT
+
+is used to convert each block into 8 × 8 frequency-domain coefficients.
+
+At this time, we can see that the element in the upper left corner in Fig.3(b)
+
+has an extreme value. It defines the basic tone of the entire block, which we
+
+call the DC component. For elements in the same position in each block, we
+
+collect them together in the same channel and arrange them according to the
+
+relative position of the block in the original image. Here we have converted the
+
+original image with size [H, W, 3] into a frequency domain representation with
+
+size [H, W, 8, 8, 3]. As we can see in Fig.3(c), the most energy (91.6%) of facial
+
+images is concentrated in the DC channel. According to our experiment results
+
+in Tab.3, DC is crucial for visualization, while it has little impact on recognition.
+
+Thus it is removed before it enters the next module.
+
+6
+
+J. Ji, H. Wang, Y. Huang, and et al.
+
+Fig. 3. (a) One block of the Original image with size 8 × 8. (b) Frequency-domain features of the image block after DCT transformation. (c) Energies among different channels. DC channels take up most of the energy
+
+3.2 Differential Privacy (DP)
+
+Definition. DP [24] is known to be a privacy model that provides maximum privacy by minimizing the possibility of personal records being identified. By adding noise to the query information of the database, DP helps to ensure the security of personal information while obtaining comprehensive statistical information. For any two databases that differ by only one individual, we say they are adjacent.
+A randomized algorithm A satisfies -DP if for every adjacent pairs of database D1 and D2 and all Q  Range(A), Equation 1 holds.
+
+  Pr(\mathcal {A}(D_1) \in \mathcal {Q}) \leq e^\epsilon Pr(\mathcal {A}(D_2) \in \mathcal {Q}) \label {eqldp} 
+
+(1)
+
+DP for Generative Models. Since our goal is to protect facial privacy by scrambling the images after BDCT, we need to move from the database domain to the generative model representations domain. Under the generative model representation domain, query sensitivity and adjacency in the database domain are no longer applicable. Each input image should correspond to a separate database. Some methods [7] apply DP generalization to arbitrary secrets, where a secret is any numerical representation of the data.
+In our approach, we consider the BDCT representation of the facial image as a secret. The distance between secrets replaces the notion of adjacency between databases. We can control the noise by the distance metric to make similar (in visualization) secrets indistinguishable while keeping very different secrets that remain distinguishable. Thus, the recoverability is minimized while ensuring as much identifiability as possible. Therefore the choice of distance metric for secrets is critical. In our approach, each image is transformed to a BDCT representation with size [H, W, C]. Let Ri,j,k = [rmi,ji,nk, rmi,ja,kx] be the sensitivity of the element in the [i, j, k] position of representation. Then we define an element-wise distance as follows:
+
+  d_{i,j,k}(x_1, x_2) = \frac {|x_1 - x_2|}{r^{i,j,k}_{max} - r^{i,j,k}_{min}} ~~~~~~\forall x_1, x_2 \in R_{i,j,k} \label {bitdis} 
+
+(2)
+
+Privacy-Preserving Face Recognition with Learnable Privacy Budgets
+
+7
+
+Moreover, the distance between the whole representations are defined as follow:
+
+  \begin {aligned} d(X_1, X_2) &= \max _{i,j,k}(d_{i,j,k}(x_1, x_2)  \  \foral  X_1, &X_2 \in \mathb  {R}^{H,W,C} \end {aligned} \label {wholedis} 
+
+(3)
+
+Thus, the -DP protection can be guaranteed for mechanism K if for any representation X1, X2 and E  RH,W,C . Equation 4 satisfied:
+
+  \begin {aligned} Pr(\mathcal {K}(X_1) = E) &\leq e^{\epsilon d(X_1,X_2)} Pr(\mathcal {K}(X_2) = E)\\ \forall X_1, &X_2, E \in \mathbb {R}^{H,W,C} \end {aligned} \label {newdp} 
+
+(4)
+
+With the definition of distance between representations and DP for representations, we can claim
+Lemma 1. Any BDCT representation of image X  RH,W,C can be protected by -DP though the addition of a vector Y  RH,W,C where each Yi,j,k is an independent random variable following a Laplace distribution with a scaling parameter
+
+  \sigma _{i,j,k} = \frac {r^{i,j,k}_{max} - r^{i,j,k}_{min}}{\epsilon _{i,j,k}}, ~~~~~~{\rm where} \sum \limits _{i,j,k}\epsilon _{i,j,k} = \epsilon \label {dpdef} 
+
+(5)
+
+With the setting in Lemma 1, Equation 4 can be guaranteed. The proof has been attached in Appendix.
+
+Differential Privacy Perturbation Module. The size of the output of the
+
+frequency domain transformation module is [H, W, C]. We need a noise matrix
+
+of the same size to mask the frequency features. Due to the properties of DCT,
+
+most energies are gathered in small areas. Thus, the frequency features have very
+
+different importance for face recognition. In order to protect face privacy with
+
+the best possible face recognition accuracy, we use a learnable privacy budgets
+
+allocation method in the module. It allows us to assign more privacy budgets to
+
+locations that are important for face recognition.
+
+To achieve the idea of learnable privacy budgets, we utilize the setting in
+
+Lemma 1. We first initialize learnable privacy budget assignment parameters
+
+with the same size as the frequency features and put them into the softmax
+
+layer. Then, we multiply each element of the output of the softmax layer by .
+
+Because the sum of the output after the softmax layer is 1, no matter how the
+
+learnable budget assignment parameters are changed, the total privacy budget
+
+always equals . According to Lemma 1, if we add a vector Y  RH,W,C to the
+
+frequency features where each Yi,j,k is an independent random variable follow-
+
+ing
+
+a
+
+Laplace
+
+distribution
+
+with
+
+a
+
+scaling
+
+parameter
+
+i,j,k
+
+=
+
+, rm i,ja,xk -rm i,ji,nk
+i,j,k
+
+then
+
+we can ensure that this feature is protected by  - DP . To get the sensitivi-
+
+ties of the frequency features of facial images, we transferred all the images in
+
+8
+
+J. Ji, H. Wang, Y. Huang, and et al.
+
+VGGFace2 [4] and refined MS1MV2 into the frequency domain. Then we obtained the maximum values and minimum values at each position. Sensitivities will equal the value of MAX - MIN. By now, we have prepared all the scaling parameters of Laplace noise. We sample the Laplace distribution according to the parameters and add them to the frequency features. The masked frequency features will be the output of the differential privacy perturbation module and transmitted to the face recognition model. The learnable budget assignment parameters are learned based on the loss function of the face recognition model and get the best allocation scheme that guarantees recognition accuracy. For face recognition module, we use ArcFace [8] as loss function and ResNet50 [14] as backbone.
+
+4 Experiment
+4.1 Datasets
+We use VGGFace2 [4] that contains about 3.31M images of 9131 subjects for training. We extensively test our method on several popular face recognition benchmarks, including five small testing datasets and two general large-scale benchmarks. LFW [15] contains 13233 web-collected images from 5749 different identities. CFP-FP [30], CPLFW [38], CALFW [38] and AgeDB [26] utilize the similar evaluation metric of LFW to test face recognition with various challenges, such as cross pose, cross age.IJB-B [35] and IJB-C [23] are two general large-scale benchmarks. The IJB-B dataset contains 12, 115 templates with 10, 270 genuine matches and 8M impostor matches. The IJB-C dataset is a further extension of IJB-B, having 23, 124 templates with 19, 557 genuine matches and 15, 639K impostor matches.
+
+4.2 Implementation Details
+Each input face is resized to 112 × 112. After the frequency domain transformation, the input channel C is set to 189. We set the same random seed in all experiments. Unless otherwise stated, we use the following setting. We train the baseline model on ResNet50 [14] backbone. For our proposed model, we first convert the raw input RGB image to BDCT coefficients using some functions in TorchJPEG [9]. Secondly, we process the BDCT coefficients using the proposed method. We calculate the sensitivity among the whole training dataset. The initial values of the learnable budget allocation parameters are set to be 0 so that the privacy budget of each pixel is equal in the initial stage. The whole model is trained from scratch using the SGD algorithm for 24 epochs, and the batch size is set to be 512. The learning rate of the learnable budget allocation parameters and the backbone parameters is 0.1. The momentum and the weight-decay are set to be 0.9 and 5e-4, respectively. We conducted all the experiments on 8 NVIDIA Tesla V100 GPU with the PyTorch framework. We divide the learning rate by 10 at 10, 18, 22 epochs. For ArcFace [8], we set s = 64 and m = 0.4. For CosFace [31], we set s = 64 and m = 0.35.
+
+

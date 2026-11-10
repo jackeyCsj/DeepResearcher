@@ -53,6 +53,7 @@ class ResearchRequest(BaseModel):
 
 class TurnRequest(BaseModel):
     message: str = Field(min_length=1)
+    turn_id: str | None = None
     session_id: str | None = None
     task_id: str | None = None
     report_version_id: str | None = None

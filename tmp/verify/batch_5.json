@@ -1,0 +1,54 @@
+[
+  {"claim_id": "SRC", "ref": 44, "verdict": "可达", "evidence": "CACM 文章 Belt and Braces 抓取成功，Key Insights 与正文均含 FL 无形式化隐私保证、DLG、DP 小样本信噪比论述", "note": ""},
+  {"claim_id": "44a", "ref": 44, "verdict": "支持", "evidence": "Key Insights: FL avoids raw data exposure 'but it still lacks a rigorous privacy guarantee against indirect information inferences'", "note": ""},
+  {"claim_id": "44b", "ref": 44, "verdict": "支持", "evidence": "隐私攻击一节: DLG 'optimizes the dummy inputs and labels via minimizing the difference between the dummy and targeted gradients'", "note": ""},
+  {"claim_id": "44c", "ref": 44, "verdict": "支持", "evidence": "Key Insights: DP 'can mathematically formulate and limit the indirect privacy leakage' but 'may suffer from the low signal-to-noise ratio issue when having a small number of learning samples'", "note": ""},
+  {"claim_id": "44d", "ref": 44, "verdict": "支持", "evidence": "上述 FL 无保证/DLG/DP 小样本信噪比三点均为原文明确论述", "note": "表格式总结与原文一致"},
+
+  {"claim_id": "SRC", "ref": 45, "verdict": "可达", "evidence": "AAAI 2022 FedGC 论文 PDF 下载并以 pdftotext 提取全文核对", "note": ""},
+  {"claim_id": "45a", "ref": 45, "verdict": "支持", "evidence": "摘要: sharing whole parameters 'suffers from privacy leakage'; 'propose a softmax-based regularizer to correct gradients of class embeddings by precisely injecting a cross-client gradient term'; 'guarantees higher privacy'", "note": ""},
+  {"claim_id": "45b", "ref": 45, "verdict": "支持", "evidence": "引言: 共享全连接层类嵌入后 'one client's private high-fidelity face images can be easily synthesized... via DeepInversion'", "note": ""},
+
+  {"claim_id": "SRC", "ref": 46, "verdict": "可达", "evidence": "arXiv:2510.23931 HTML 抓取成功，摘要明确评估 DP-SGD/PDP-SGD 对抗 GLA", "note": ""},
+  {"claim_id": "46a", "ref": 46, "verdict": "支持", "evidence": "摘要: 'we investigate the effectiveness of Differential Privacy (DP) mechanisms — specifically, DP-SGD and a variant... (PDP-SGD) — as defenses against GLAs'", "note": ""},
+
+  {"claim_id": "SRC", "ref": 47, "verdict": "可达", "evidence": "MDPI Entropy 28(1):5 抓取成功，作者 Zhou, Li, Zhu, Zhou, Wu，非 Erkin et al.", "note": ""},
+  {"claim_id": "47a", "ref": 47, "verdict": "不支持", "evidence": "链接论文为 Zhou 等，方法是 FFCM 特征编码+对称同态加密，非 SMPC；Erkin et al. 仅作为相关工作被引用", "note": "报告张冠李戴：SMPC 论断对应 Erkin et al. 2009 经典 PPFR（IACR），与引文链接论文非同一研究"},
+  {"claim_id": "47b", "ref": 47, "verdict": "支持", "evidence": "原文: 'Sadeghi et al. [25]... 96.4%. In comparison, our scheme achieves an accuracy of 98.582%, which is 2% higher'", "note": "96.4% 系 Sadeghi et al.（HE 类 PPFR）在 ORL 上的数据，98.582% 为该文方案数据"},
+  {"claim_id": "47c", "ref": 47, "verdict": "支持", "evidence": "原文: 'their relatively small scale limits the statistical significance'; 'expand the evaluation scope to larger-scale and more diverse facial datasets, including... different ages, lighting conditions, and postures'", "note": ""},
+
+  {"claim_id": "SRC", "ref": 48, "verdict": "可达", "evidence": "Pattern Recognition 67 (2017) 149-163 PDF 下载并提取全文核对", "note": ""},
+  {"claim_id": "48a", "ref": 48, "verdict": "支持", "evidence": "§2.3: '[50], a secure iris BTP based on a combination of HE and GCs... handling encrypted iriscodes... Hamming Distances... reduced to a inequality comparison carried out with GCs'", "note": "该组合为相关工作 [50]，非本文自身方法"},
+
+  {"claim_id": "SRC", "ref": 49, "verdict": "可达", "evidence": "Biometric Update 2026-01 新闻抓取成功，内容与观点一致", "note": "二手来源（新闻报道）"},
+  {"claim_id": "49a", "ref": 49, "verdict": "支持", "evidence": "'BTP could be achieved with the help of homomorphic encryption, which does not traditionally fall into the BTP domain. In Norway... banking industry is testing homomorphic encryption from Mobai'", "note": "二手来源；通用方法不适用引自 Handbook 转述"},
+  {"claim_id": "49b", "ref": 49, "verdict": "支持", "evidence": "'methods used for generic data protection are usually unsuitable for protecting biometric templates... hashing, conventional encryption, distributed databases and smart cards... trusted execution environments'", "note": "二手来源（新闻报道）"},
+
+  {"claim_id": "SRC", "ref": 50, "verdict": "可达", "evidence": "NISTIR 8271 完整 PDF（29.5MB）下载并提取全文核对", "note": ""},
+  {"claim_id": "50a", "ref": 50, "verdict": "支持", "evidence": "FNIR(N,R,T) 定义页（N=enrolled subjects, R=candidates examined）；'False negative error rates in a particular scenario range from a few tenths of one percent to beyond fifty percent'；rank-50 与 FPIR=0.001 表均存在", "note": "范围约 0.001-0.5 与原文 'few tenths of one percent to beyond fifty percent' 及最优算法 rank-1 miss ~0.1% 相符"},
+  {"claim_id": "50b", "ref": 50, "verdict": "支持", "evidence": "执行摘要: 12.3M 人/26.6M 张照片库、127+76 个算法、'useful for comparison of face recognition algorithms'", "note": ""},
+
+  {"claim_id": "SRC", "ref": 51, "verdict": "可达", "evidence": "ECVA ECCV 2022 DCTDP 正式版 PDF 下载并提取全文核对", "note": ""},
+  {"claim_id": "51a", "ref": 51, "verdict": "支持", "evidence": "Tab.1 及 §4.3: LFW/CALFW 平均降 0.14%/0.65%；CFP-FP/AgeDB/CPLFW 平均降 2.5%；IJB-B/IJB-C 达 89.33% vs PEEP 5.82%、Cloak 33.58%、InstaHide 61.88%", "note": ""},
+  {"claim_id": "51b", "ref": 51, "verdict": "支持", "evidence": "§4.1 数据集 LFW/CFP-FP/CPLFW/CALFW/AgeDB/IJB-B/IJB-C；§4.4 攻击实验取平均隐私预算 0.5", "note": ""},
+  {"claim_id": "51c", "ref": 51, "verdict": "部分支持", "evidence": "论文用 PSNR 与 Feature Similarity 评估自身白盒(IDCT+去噪)与黑盒(UNet 解码器)重建攻击，但未讨论跨工作指标不一致/难以横向比较", "note": "'难以横向比较'系报告综合推断，非原文观点"},
+  {"claim_id": "51d", "ref": 51, "verdict": "支持", "evidence": "该文即 ECCV 2022 DCTDP 主线工作，与 §7.1 演进描述一致", "note": ""},
+  {"claim_id": "51e", "ref": 51, "verdict": "不支持", "evidence": "全文仅有 deepfake 处顺带提及 videos；无视频流传输云端/边缘或 GAN 智能模糊化内容；黑盒重建攻击用 UNet 解码器", "note": "DCTDP 论文与视频流 GAN 模糊化论断明显无关"},
+  {"claim_id": "51f", "ref": 51, "verdict": "支持", "evidence": "§3.1: DCT 分离可视化重要低频与识别重要高频，DC 通道聚合 91.6% 能量、对识别影响小故移除", "note": ""},
+
+  {"claim_id": "SRC", "ref": 52, "verdict": "可达", "evidence": "alphaXiv 镜像页抓取成功，AI Overview 与摘要内容与原文一致", "note": "二手来源（alphaXiv 镜像，arXiv:2207.07316）"},
+  {"claim_id": "52a", "ref": 52, "verdict": "支持", "evidence": "AI Overview: 'uniform budget distribution results in 65.966% accuracy on LFW, compared to 99.48% with learned allocation'，与原文 §4.6 一致", "note": "二手来源；数字已与 ECCV 原文核对一致"},
+  {"claim_id": "52b", "ref": 52, "verdict": "支持", "evidence": "镜像页摘要与 AI Overview 含 LFW/CFP-FP/AgeDB/IJB-B/IJB-C 等基准与实验设置描述", "note": "二手来源"},
+  {"claim_id": "52c", "ref": 52, "verdict": "支持", "evidence": "AI Overview: 'PEEP 5.82%, Cloak 33.58%, InstaHide 61.88%, proposed 89.33%'，与原文 Tab.1 一致", "note": "二手来源；数字已与 ECCV 原文核对一致"},
+
+  {"claim_id": "SRC", "ref": 53, "verdict": "可达", "evidence": "NIST IFPC 2025 演示页 PDF 下载并提取全文核对（Gomez-Barrero, 2025-04-01）", "note": "二手来源（会议演示页）"},
+  {"claim_id": "53a", "ref": 53, "verdict": "支持", "evidence": "第 29 页 'Main BTP Requirements [ISO/IEC IS 24745][ISO/IEC IS 30136]: IRREVERSIBILITY UNLINKABILITY RENEWABILITY'", "note": "二手来源（演示页）"},
+  {"claim_id": "53b", "ref": 53, "verdict": "支持", "evidence": "参考文献页: 'ISO/IEC 30136 on Performance testing of biometric template protection schemes - IN REVISION!!!'", "note": "演示页仅标注 IN REVISION，未明确 DIS 阶段；二手来源"},
+
+  {"claim_id": "SRC", "ref": 54, "verdict": "可达", "evidence": "arXiv:2311.04633 HTML 抓取成功，五个问题均逐句核对", "note": ""},
+  {"claim_id": "54a", "ref": 54, "verdict": "支持", "evidence": "摘要: local score-wise measure D↔(s) 基于似然比 + global measure D↔sys 独立于分数域，均落于闭区间；应用于 biometric salting/Bloom filters/HE/block re-mapping 四方案", "note": ""},
+  {"claim_id": "54b", "ref": 54, "verdict": "支持", "evidence": "§III 引 ISO/IEC IS 24745: 'cannot be linked to each other or to the subject(s) from which they were derived'；判定 T1、T2 是否隐藏同一生物实例", "note": ""},
+  {"claim_id": "54c", "ref": 54, "verdict": "部分支持", "evidence": "原文明确仅采用两种分布（mated/non-mated）：'In contrast to [13], where three score distributions are considered, here only two distributions will be analysed'；未引用 Kirchgasser & Uhl 2022", "note": "三组分布及 Kirchgasser & Uhl 引文应属 Ferrara et al. 或后续文献，引此文有偏差"},
+  {"claim_id": "54d", "ref": 54, "verdict": "支持", "evidence": "§I 原文: 'there is still no general metric, protocol or framework to assess, in an objective way, the unlinkability of biometric templates'；30136 项目未纳入标准化不可链接性度量", "note": ""},
+  {"claim_id": "54e", "ref": 54, "verdict": "支持", "evidence": "§I 引 [9]: 'a standardised benchmark protocol for biometric template protection schemes, in terms of recognition accuracy, security and privacy, is necessary for a further deployment'", "note": "该句为转引自 [9]，非作者本人观点"}
+]

@@ -1,0 +1,51 @@
+[
+  {"claim_id": "SRC", "ref": 1, "verdict": "可达", "evidence": "arXiv abs页+HTML全文v3均成功抓取", "note": "ECCV 2022正式版，arXiv:2207.07316"},
+  {"claim_id": "1a", "ref": 1, "verdict": "支持", "evidence": "§1: 'limit the face recognition service provider to learn only the classification result (e.g., identity) with a certain level of confidence but does not have access to the original image (even by some automatic recovery techniques)'", "note": ""},
+  {"claim_id": "1b", "ref": 1, "verdict": "支持", "evidence": "§2.3: 'categorized based on how to process input data, i.e., encryption or perturbation'；加密法'unsuitable for current SOTA face recognition systems due to their prohibitive computation cost'；'Differential privacy (DP) is a common-used perturbation approach'", "note": ""},
+  {"claim_id": "1c", "ref": 1, "verdict": "支持", "evidence": "§3.1引[32]: 'humans rely only on low-frequency information for image recognition while neural networks use low-and high-frequency information'", "note": ""},
+  {"claim_id": "1d", "ref": 1, "verdict": "支持", "evidence": "§3.1: 'using low-frequency information as little as possible is very effective for image privacy protection'", "note": ""},
+  {"claim_id": "1e", "ref": 1, "verdict": "支持", "evidence": "§3.1: 'DCT transformation can be beneficial in separating the low-frequency information that is important for visualization from the high-frequency information that is important for identification'", "note": ""},
+  {"claim_id": "1f", "ref": 1, "verdict": "支持", "evidence": "§3.1(Fig.3c): 'the most energy (91.6%) of facial images is concentrated in the DC channel'", "note": ""},
+  {"claim_id": "1g", "ref": 1, "verdict": "支持", "evidence": "§3.1: 'defines the basic tone of the entire block'；'DC is crucial for visualization, while it has little impact on recognition. Thus it is removed before it enters the next module'", "note": ""},
+  {"claim_id": "1h", "ref": 1, "verdict": "支持", "evidence": "§3.1: RGB→YCbCr、value range [−128,127]、H/8×W/8块8×8、8-fold up-sampling、normalized 2D type-II DCT、[H,W,3]→[H,W,8,8,3]", "note": ""},
+  {"claim_id": "1i", "ref": 1, "verdict": "支持", "evidence": "§3.2: softmax输出×ε且'the total privacy budget always equals ε'；σ_{i,j,k}=(r_max−r_min)/ε_{i,j,k}、Σε=ε；敏感度由VGGFace2与refined MS1MV2全部图像频域MAX−MIN获得；§4.2 ArcFace损失+ResNet50骨干", "note": ""},
+  {"claim_id": "1j", "ref": 1, "verdict": "支持", "evidence": "§1: HE 'protects data privacy and maintains a high level of recognition accuracy'，但'requires a great additional computation…not suitable for large-scale and interactive scenarios'", "note": ""},
+  {"claim_id": "1k", "ref": 1, "verdict": "支持", "evidence": "摘要: 'converts the original image to the frequency domain and removes the direct component termed DC…privacy budget allocation method can be learned based on the loss of the back-end face recognition network within the differential privacy framework…offers a guarantee of privacy in theory…loss of accuracy is very slight'", "note": ""},
+  {"claim_id": "1l", "ref": 1, "verdict": "支持", "evidence": "Tab.1: Ours(ArcFace, ε_mean=0.5) LFW 99.48、IJB-C(1e-4) 91.22；PEEP IJB-C 6.02、Cloak 33.82", "note": ""},
+  {"claim_id": "1m", "ref": 1, "verdict": "支持", "evidence": "论文为ECCV 2022频域+可学习DP预算+深度识别网络方法", "note": "定性演进定位，论文属性与描述一致"},
+  {"claim_id": "1n", "ref": 1, "verdict": "支持", "evidence": "摘要: 'face unlocking of mobile devices, community access control systems, and city surveillance…facial images often need to be transmitted to third-party servers…risk of a personal privacy breach'", "note": ""},
+  {"claim_id": "1o", "ref": 1, "verdict": "支持", "evidence": "摘要: 理论隐私保证+精度损失很小；§3.1 DCT分离可视化/识别信息并移除DC", "note": ""},
+
+  {"claim_id": "SRC", "ref": 2, "verdict": "可达", "evidence": "Biometric Update报道全文抓取成功（Chris Burt, 2025-05-16）", "note": "新闻报道，同时覆盖S&P 2024论文与Idiap arXiv:2411.03960论文"},
+  {"claim_id": "2a", "ref": 2, "verdict": "支持", "evidence": "'Face biometrics templates created with deep learning algorithms tend to extract and encode around 512 numerical values'", "note": ""},
+  {"claim_id": "2b", "ref": 2, "verdict": "支持", "evidence": "'would typically require at least 50,000 queries'（随机人脸生成+相似度筛选的传统方法）", "note": ""},
+  {"claim_id": "2c", "ref": 2, "verdict": "部分支持", "evidence": "'thousands of times faster'与100次查询出自S&P 2024论文；但'relatively limited computing power''preserve identity, but is agnostic to age''struggles with some expressions and sharp angles'描述的是同报道中Idiap的adapter论文", "note": "张冠李戴：算力有限/年龄不敏感/表情与角度局限属Idiap论文（arXiv:2411.03960），非IEEE S&P 2024论文"},
+  {"claim_id": "2d", "ref": 2, "verdict": "支持", "evidence": "'reconstruct facial images with reasonable accuracy thousands of times faster than previously thought possible'（S&P 2024非自适应方法）", "note": ""},
+  {"claim_id": "2e", "ref": 2, "verdict": "支持", "evidence": "同2d，报道明确'thousands of times faster than previously thought possible'", "note": "与2d同源重述"},
+
+  {"claim_id": "SRC", "ref": 3, "verdict": "可达", "evidence": "Frontiers in Imaging全文抓取成功（Bassit et al., 2025-05-12）", "note": "DOI 10.3389/fimag.2025.1476377"},
+  {"claim_id": "3a", "ref": 3, "verdict": "支持", "evidence": "聚焦'HE-based BTPs that compare and reveal inner product-based scores'；攻击者'use spoofed synthetic faces and lack direct access to the face recognition system'、'without requiring real data or training'；SP注入合成参考且'can be received in a single query'；缓解='performing the comparison with the threshold within the encrypted domain…only the final decision is transmitted in encrypted form'", "note": ""},
+
+  {"claim_id": "SRC", "ref": 4, "verdict": "可达", "evidence": "arXiv:2601.17620v1摘要页抓取成功（Rahimi, Osadchy, Dunkelman）", "note": "已被IJCB 2025接收"},
+  {"claim_id": "4a", "ref": 4, "verdict": "支持", "evidence": "摘要: 'reconstruct the biometric template by just observing the success/failure of the authentication attempt (given the ability to inject a sufficient amount of templates)…negligible template reconstruction loss…generative inversion…pipeline from binary scores to high-resolution facial images that successfully pass the system more than 98% of the time…applicable for any protection mechanism that maintains the accuracy of the recognition'", "note": ""},
+  {"claim_id": "4b", "ref": 4, "verdict": "支持", "evidence": "摘要同句：>98%通过率、适用于任何保持识别精度的保护机制", "note": ""},
+  {"claim_id": "4c", "ref": 4, "verdict": "支持", "evidence": "同4a摘要重述", "note": "与4a/4b同源重述"},
+
+  {"claim_id": "SRC", "ref": 5, "verdict": "受限", "evidence": "原URL(atvs.ii.uam.es)抓取失败；改用同作者镜像biometrics.eps.uam.es成功下载PDF", "note": "镜像实际为Information Sciences 370–371(2016)18–32期刊版（Gomez-Barrero等），与报告所标'2016 ICB'版本不同但同源同内容框架"},
+  {"claim_id": "5a", "ref": 5, "verdict": "部分支持", "evidence": "'fully linkable'四情景与D_sys^↔=1出自本文§3评估框架（Fig.1），D_sys^↔=1意为攻击者'with almost all certainty'可判断两模板是否同源", "note": "该定义是本文提出的评估框架而非ISO/IEC 24745标准定义；原文为'almost all certainty'而非'100%确定性'"},
+  {"claim_id": "5b", "ref": 5, "verdict": "部分支持", "evidence": "§1: 'In accordance with the ISO/IEC IS 24745, cancelable biometrics are required to meet the two major requirements of irreversibility and unlinkability'支撑两大要求归属", "note": "两条英文'标准原文'引句（cannot be used to determine any information…/should not be linkable across applications or databases）未出现在该版本中，疑直接引自标准或其他文献"},
+  {"claim_id": "5c", "ref": 5, "verdict": "支持", "evidence": "§1不可逆性定义: 'knowledge of a cancelable template C and corresponding key T can not be exploited to reconstruct a biometric signal M′ which positively matches the original biometric sample M…prevents the abuse of stored biometric data for launching spoof or replay attacks'", "note": ""},
+  {"claim_id": "5d", "ref": 5, "verdict": "支持", "evidence": "§3: 'D_sys^↔ ∈ [0,1] gives an estimation of the linkability of a system as a whole'；D_sys^↔=0表示fully unlinkable，越低越好", "note": ""},
+  {"claim_id": "5e", "ref": 5, "verdict": "部分支持", "evidence": "本文仅称ISO/IEC 24745要求'two major requirements of irreversibility and unlinkability'", "note": "renewability（可更新性）在该文中未作为24745要求提及，'三大要求'说法不能由该文献支撑"},
+  {"claim_id": "5f", "ref": 5, "verdict": "支持", "evidence": "摘要: 'we re-design the original scheme and propose an additional, easily integrable, processing step, which is referred to as structure-preserving feature re-arrangement…In order to generate cross-matching resistant protected templates'", "note": ""},
+
+  {"claim_id": "SRC", "ref": 6, "verdict": "可达", "evidence": "AAAI OJS PDF下载并提取文本成功（Zhong, Mi et al., Fudan+Tencent, AAAI 2025）", "note": ""},
+  {"claim_id": "6a", "ref": 6, "verdict": "支持", "evidence": "§4.5: 'Unlinkability. It requires that when generating different protective templates for the same person's identity, the generated templates cannot be associated with each other'", "note": ""},
+  {"claim_id": "6b", "ref": 6, "verdict": "支持", "evidence": "§3.2采用spherical linear interpolation（slerp）；§4.5: 'SlerpFace achieves D_sys^↔=0.05'", "note": ""},
+  {"claim_id": "6c", "ref": 6, "verdict": "支持", "evidence": "§4.5: SSWL D_sys^↔为'a [0,1] value…To achieve unlinkability, the distributions of mated and non-mated pairs should be close and with small D_sys^↔'，越低越好", "note": "度量引自Gomez-Barrero et al. (TIFS 2017)"},
+  {"claim_id": "6d", "ref": 6, "verdict": "支持", "evidence": "Fig.6(b): 'CFP-FP unprotected, D_sys^↔=0.94'与'CFP-FP protected(SlerpFace), D_sys^↔=0.05'；§4.5结论满足irreversibility, revocability, unlinkability（ISO/IEC 24745:2022）", "note": ""},
+
+  {"claim_id": "SRC", "ref": 7, "verdict": "可达", "evidence": "IDIAP镜像PDF下载并提取文本成功（Melzi, Otroshi Shahreza, Rathgeb等, IEEE ACCESS 2025）", "note": "DOI 10.1109/ACCESS.2025.3590989"},
+  {"claim_id": "7a", "ref": 7, "verdict": "支持", "evidence": "§I: 'biometric templates can reveal sensitive personal information like health conditions, emotions, and soft-biometric attributes'；摘要CB方案'often fail to preserve the privacy of soft-biometric information'", "note": ""},
+  {"claim_id": "7b", "ref": 7, "verdict": "支持", "evidence": "§I: 'Unlinkability can be obtained by introducing some randomness with keys or random parameters…When unlinkability is satisfied, compromised biometric templates can be revoked and substituted with new ones, providing template renewability'", "note": ""}
+]

@@ -1,0 +1,1171 @@
+RESEARCH Open Access
+© The Author(s) 2026. Open Access  This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International 
+License, which permits any non-commercial use, sharing, distribution and reproduction in any medium or format, as long as you give appropriate 
+credit to the original author(s) and the source, provide a link to the Creative Commons licence, and indicate if you modified the licensed material. 
+You do not have permission under this licence to share adapted material derived from this article or parts of it. The images or other third party 
+material in this article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit line to the material. If material 
+is not included in the article’s Creative Commons licence and your intended use is not permitted by statutory regulation or exceeds the permitted 
+use, you will need to obtain permission directly from the copyright holder. To view a copy of this licence, visit  h t t p : /  / c r e a  t i v e c o  m m o n  s . o r g  / l i c e  n s 
+e s / b  y - n c  - n d / 4 . 0 /.
+Chitrapu et al. Discover Computing          (2026) 29:132 
+https://doi.org/10.1007/s10791-026-09978-y
+*Correspondence:
+Mahesh Kumar Morampudi
+morampudimahesh@gmail.com
+1Department of Computer Science 
+and Engineering, School of 
+Engineering and Applied Sciences, 
+SRM University - AP , Neerukonda-
+Kuragallu Village, Mangalagiri, 
+Andhra Pradesh 522240, India
+Locality preserving and homomorphically 
+encrypted deep features for privacy-preserving 
+face recognition
+Pavani Chitrapu1, Hemantha Kumar Kalluri1, Mahesh Kumar Morampudi1* and Satya Krishna Nunna1
+1 Introduction
+As technology becomes increasingly integrated into everyday life, having a secure, user-
+friendly way to verify a person’s identity is more important than ever. Traditional meth -
+ods, such as passwords, PINs, and security tokens, are still commonly used; however, 
+they come with several drawbacks. Passwords may be weak, reused across platforms, 
+or forgotten, while tokens can be lost or stolen. These issues underline the need for 
+more secure and dependable authentication solutions. Biometric authentication offers 
+Discover Computing
+Abstract
+Face recognition (FR) has emerged as a vital biometric authentication method due 
+to its non-invasive nature and widespread applications in security, surveillance, 
+and identity verification. However, existing FR systems face significant challenges 
+in preserving user privacy, especially when deployed in cloud environments. 
+Traditional approaches lack robust encryption mechanisms, making sensitive facial 
+data vulnerable to breaches, adversarial attacks, and unauthorised access. This 
+study introduces a novel privacy-preserving face recognition (PPFR) framework that 
+leverages deep learning (DL) models, specifically FaceNet and ArcFace, for extracting 
+discriminative facial embeddings. The framework combines these models with 
+the Cheon–Kim–Kim–Song (CKKS) homomorphic encryption scheme to enable 
+secure computation on encrypted data without requiring decryption. Locality 
+Preserving Projection (LPP) is applied to compress high-dimensional features while 
+preserving the essential data structure, thereby enhancing performance and reducing 
+processing overhead. The proposed system was evaluated on four benchmark 
+datasets: CASIA3D, 105PinsFace, LFW, and Faces94. Among the models, ArcFace 
+showed the best performance, achieving high accuracy and low Equal Error Rates 
+(EER), with results of 99.30% accuracy on CASIA3D, 98.06% on 105PinsFace, 97.07% on 
+LFW, and 99.82% on Faces94 datasets. The experimental results demonstrate that the 
+proposed system is both effective and secure, making it suitable for real-world face 
+recognition applications with enhanced privacy protection.
+Keywords Face recognition, Privacy preserving, Facenet, Arcface, Facial embeddings, 
+CKKS homomorphic encryption
+
+Page 2 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+a stronger alternative by using unique physical traits—such as fingerprints, iris pat -
+terns, voice, or facial features—to verify identity [1]. Since these traits are unique to each 
+person, they are generally harder to steal or forge compared to traditional methods [ 2]. 
+Among various biometric methods, FR stands out due to its ease of use, non-intrusive 
+nature, and high accuracy [ 3]. The widespread availability of high-resolution cameras 
+and the rapid advancement of DL-based FR algorithms have enabled the deployment of 
+FR systems, particularly on personal devices such as smartphones and laptops [ 4]. How-
+ever, despite their popularity, current FR systems still face several significant challenges. 
+These include vulnerability to spoofing attacks [5], potential misuse of facial data if com-
+promised, and the inability to change one’s biometric traits once leaked. Additionally, 
+centralised databases of facial templates present attractive targets for attackers [6].
+A typical biometric system consists of two main phases: enrolment and authentica -
+tion. During enrolment, biometric data is captured and processed using a feature extrac-
+tor to identify key characteristics. These features are used to create a reference template, 
+which is securely stored. During the authentication phase, new biometric data is cap -
+tured, and a query template is generated using the same feature extractor. This template 
+is then compared to the stored reference. If the templates match, access is granted; oth -
+erwise, it is denied. The reliability of this process depends heavily on the quality of the 
+feature extractor and the secure handling of sensitive data. As more facial recognition 
+(FR) systems migrate to cloud environments, protecting facial data becomes a greater 
+concern [7]. Cloud platforms offer strong computing power and storage, but they also 
+create more chances for data leaks or misuse. While biometrics help reduce fraud, keep -
+ing templates safe from hackers remains a significant challenge [ 8]. To tackle this issue, 
+researchers have proposed various biometric template protection schemes, includ -
+ing cancellable biometrics [ 9], bio-cryptosystems [ 10], and homomorphic encryption 
+(HE) [11]. HE, in particular, enables computations on encrypted data without requiring 
+decryption, offering strong privacy guarantees. Based on their capabilities, HE schemes 
+can be classified as Partially Homomorphic Encryption (PHE) [ 12], Somewhat Homo -
+morphic Encryption (SHE) [ 13], and Fully Homomorphic Encryption (FHE) [ 14], with 
+FHE being the most powerful and suitable for secure biometric computations.
+1.1 Motivation
+Most privacy-preserving face recognition methods try to protect users by encrypting 
+the entire high-dimensional face feature vectors produced by deep neural networks. 
+However, these vectors are usually large; encrypting such large data with homomorphic 
+encryption produces large ciphertexts and slows matching, which is a problem for real-
+time or low-resource systems. Even though face recognition technology has improved 
+significantly, many systems still do not keep data encrypted from end to end. At some 
+point in the pipeline, sensitive features may be exposed in plain form, creating privacy 
+risks. This shows the need for a practical system that fully protects privacy without sac -
+rificing accuracy or usability. To solve this, the proposed system uses a deep-learning 
+model together with the CKKS homomorphic encryption scheme. CKKS can perform 
+arithmetic operations on encrypted real-valued data, making it suitable for working with 
+feature vectors from CNNs. By keeping the data encrypted throughout the entire pro -
+cess, the system aims to provide strong privacy protection while still maintaining reliable 
+face recognition performance.
+Page 3 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+1.2 Objectives
+  • To build a privacy-aware face recognition system based on deep learning and 
+homomorphic encryption.
+  • To implement Locality Preserving Projection (LPP) of dimensionality reduction of 
+deep face embedding to reduce the dimensions, To compare the effects of various 
+template sizes (e.g., 512-D and smaller dimensions) on the recognition accuracy and 
+the cost of encrypted computation.
+  • To create face matching at the encrypted domain without exposing the face features.
+  • To minimize the size of the ciphertext and the computation time, but still have a 
+reliable performance on recognition.
+  • To test the proposed framework with a number of data sets in different conditions.
+1.3 Contributions
+The proposed system offers a secure and reliable face recognition system. The contribu -
+tions of the proposed system are as follows:
+  • A privacy-preserving face recognition framework is developed by integrating 
+FaceNet/ArcFace embeddings, Locality Preserving Projection (LPP), and CKKS 
+homomorphic encryption to enable encrypted feature matching without revealing 
+facial information.
+  • LPP is applied to deep facial embeddings to reduce feature dimensionality from 
+512-D to 256-D while maintaining local geometric structure. This reduction reduces 
+ciphertext size and improves the efficiency of encrypted computation with minimal 
+impact on recognition accuracy.
+  • CKKS encryption parameters are systematically analysed and optimised to achieve 
+an effective balance between precision, security level, and computational cost.
+  • The proposed framework is evaluated on four diverse datasets covering both 
+controlled and uncontrolled settings, demonstrating strong adaptability and 
+robustness under varying conditions.
+  • A comprehensive ablation study is conducted to compare encrypted matching 
+using 512-D and 256-D embeddings, showing that LPP significantly enhances 
+computational efficiency while maintaining reliable recognition performance.
+The rest of the paper is structured as follows: Section  2 reviews related work on DL-
+based privacy-preserving face recognition. Section  3 explains our proposed FHE-based 
+method. Section 4 presents results and comparisons. Section  5 concludes with key find-
+ings and future directions.
+2 Related work
+Face recognition (FR) is widely used across security, finance, and healthcare. Many deep 
+learning methods, especially CNN-based models, have improved accuracy under chal -
+lenging conditions such as poor lighting and occlusions. However, most focus only on 
+performance and ignore privacy concerns. Since biometric data is sensitive, there is a 
+growing need for privacy-preserving methods. Techniques like HE allow secure process-
+ing without exposing the data. While some privacy-focused FR systems exist, achiev -
+ing both high accuracy and strong data protection is still difficult. This challenge has 
+Page 4 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+motivated our work on a secure biometric authentication system. A summary of related 
+works, including key methods and Limitations, is provided in the Table 1
+Chouchane et al. [ 16] proposed the HOSVD+EFM method. It utilises MB-LPQ fea -
+tures from depth images, which are shaped as third-order tensors. They applied HOSVD 
+with an Enhanced Fisher Model (EFM). This method achieved 98.60% accuracy on the 
+CASIA-3D dataset. It worked without pose-specific training. Bessaoudi et al. [ 19] intro-
+duced MEFDA. It supports multilinear discriminant analysis and preserves the structure 
+of tensor data. DL has recently shown great promise in biometric systems. Convolu -
+tional neural networks (CNNs) are widely used and successful. Tamilselvi et al. [ 24] pro-
+posed the HRPSM_CNN model. It helps face recognition in poor lighting and occlusion. 
+This model is designed for real-time applications, such as assistive devices. Abuzneid 
+et al. [18] used Back Propagation Neural Networks (BPNN) with LBPH descriptors and 
+multi-KNN. They improved training using preprocessing and LBP-based local feature 
+extraction. Pranav et al. [ 20] used a CNN model. It achieved 98.75% accuracy on the 
+ORL dataset.
+Aliradi et al. [36] introduced the LGBQ descriptor. It combines Gabor filters, LBP , and 
+LPQ features. Chen et al. [ 30] used CNNs to convert 2D images into depth maps. They 
+achieved 96.75% accuracy on CASIA-3D. This method helped expand DL use in biomet -
+ric tasks. Li et al. Li et al. [ 38] developed a disentangled representation transformer net -
+work for 3D face reconstruction and robust dense alignment. Their approach separates 
+identity and expression features, improving the network’s robustness to occlusions and 
+Table 1 Summary of related work with methods and limitations
+Author(s) Method/technique Limitations
+Ma et al. [15] DL with HE for secure verification Requires more scalability testing
+Chouchane et al. [16] HOSVD + EFM with MB-LPQ features No pose-specific training; lacks privacy 
+focus
+Boddeti et al. [17] Batching and dimensionality reduction with 
+FHE
+Resource-intensive despite 
+optimizations
+Abuzneid et al. [18] LBPH + BPNN + multi-KNN Improved robustness; lacks privacy
+Bessaoudi et al. [19] MEFDA for tensor structure preservation Does not address privacy concerns
+Pranav et al. [20] CNN-based recognition Limited dataset
+Ali et al. [21] SVM with SqueezeNet Moderate accuracy; no privacy
+Miakshyn et al. [22] FaceNet + OpenFace Low accuracy; lacks privacy features
+Khan et al. [23] Encrypted FR with Local Ternary Patterns Limited to handcrafted descriptors
+Tamilselvi et al. [24] HRPSM_CNN for robust recognition No security layer; focused on real-time 
+use
+Alirezazadeh et al. [25] ACML + DenseNet121 Strong results; limited scalability 
+analysis
+Albraikan et al. [26] ResNet152v2 with transfer learning Task-specific; lacks privacy protection
+Lee et al. [27] FHE with DL-based FR Secure but computationally heavy
+Ke et al. [28] LocalFace with facial attention Works with occlusions; lacks privacy
+Huang et al. [29] Lightweight feature restoration network Enhances visibility; no privacy model
+Chen et al. [30] CNN to convert 2D to depth map Effective, but no secure processing
+Cheema et al. [31] DNDR with joint loss Handles disguise; complex training
+Xie et al. [32] Local differential privacy for edge-based FR Lightweight; no deep model 
+integration
+Yang et al. [33] HeadPose-Softmax with curriculum learning Pose handling; lacks encryption
+Mi et al. [34] FHE with DL for encrypted embeddings Secure but slow
+Sharma et al. [35] Lightweight CNN model Decent accuracy; lacks encryption
+Aliradi et al. [36] LGBQ: Gabor + LBP + LPQ Feature fusion; lacks privacy protection
+Chen et al. [37] HEFDIVS with FaceNet + ISOMAP + CKKS FHE Dual encryption
+Page 5 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+pose variations. This enhances the accuracy and reliability of facial analysis, even under 
+challenging conditions, and contributes to the development of more resilient FR models.
+Ke et al. [ 28] proposed LocalFace. This model focuses on key facial regions. It works 
+well even with occlusions like masks or sunglasses. Attention modules help improve 
+accuracy. Huang et al. [ 29] solved the low-light problem in FR. They introduced a light -
+weight feature restoration network. It improves facial details before recognition. Their 
+method does not need large datasets or heavy computation. Ali et al. [ 21] used SVM 
+with SqueezeNet. They reported 93.39% accuracy on the 105PinsFace dataset. Miakshyn 
+et al. [22] used FaceNet and OpenFace. They achieved 83.53% accuracy on the 105Pins -
+Face dataset. Yang et al. [33] proposed HeadPose-Softmax. It is a loss function based on 
+curriculum learning. It helps the model learn better from difficult poses. It also improves 
+multi-view face detection. Sharma et al. [ 35] used a lightweight CNN. This method 
+reached 89.38% accuracy on the 105PinsFace dataset. CNNs now play a big role in FR. 
+They extract complex features and improve performance.
+Cheema et al. [31] proposed the DNDR network. It helps detect disguised faces in dif -
+ferent image types. Their method uses deep feature differences, joint loss, and multi-
+stage training. This improves both speed and accuracy. Alirezazadeh et al. [ 25] and 
+Albraikan et al. [26] proposed methods for masked FR and emotion detection. They used 
+ACML, DenseNet121, and ResNet152v2. These models showed strong results. However, 
+validation on large datasets remains limited. FR in cloud systems raises privacy issues. 
+FHE helps protect data. However, it is often slow. Many FR systems prioritise accuracy 
+over privacy. This puts user data at risk. Privacy-preserving FR can fix this. It keeps the 
+data safe at every stage using encryption. Mi et al. [ 27, 34] used FHE with DL-based FR. 
+They enabled the encrypted computation of facial features. Boddeti et al. [ 17] improved 
+performance using batching and dimensionality reduction. This made FHE more practi -
+cal for real-world use.
+Ma et al. [ 15] demonstrated the success of combining homomorphic encryption (HE) 
+and deep learning (DL). But more work is needed to check scalability and usability. Xie 
+et al. [32] proposed a framework for edge-based FR. It used local differential privacy to 
+protect face images and training models. Khan et al. [ 23] secured the feature extraction 
+process. They used an encrypted system based on Local Ternary Pattern (LTP). Chen 
+et al. [ 37] proposed HEFDIVS, which combines FaceNet, ISOMAP , and CKKS-based 
+FHE with hybrid encryption. It achieves fast, accurate verification (95–97%), but the 
+dual encryption and additional processing add complexity, making it less suitable for 
+resource-limited devices. Hu et al. [ 39] proposed a privacy-preserving face recognition 
+system that supports different models like MobileFaceNet, ResNet-18, and ResNet-50. It 
+uses a simple encryption method to protect facial features. Wang et al. [ 40] introduced 
+a privacy-preserving face generation method for robust authentication by creating syn -
+thetic faces that hide identity information. However, balancing privacy and accuracy 
+requires high computational power.
+Face recognition systems have made significant progress in terms of accuracy; how -
+ever, many still lack robust privacy and security measures. In most existing methods, 
+face images or features are processed without encryption, which exposes sensitive user 
+data to risk, particularly in cloud-based applications. While FHE enables recognition of 
+encrypted data without revealing it, it is often slow and requires significant computa -
+tion. This makes it challenging to use in real-time systems or on devices with limited 
+Page 6 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+resources. Some newer methods try to combine deep learning with encryption, but 
+these are often too complex or not scalable for practical use. In addition, only a few sys -
+tems utilise advanced deep models, such as FaceNet or ArcFace, within a fully secure 
+and privacy-preserving framework. Due to these challenges, there is a clear need for face 
+recognition methods that protect user data through efficient encryption while maintain -
+ing high recognition performance.
+Girdhar et al. [ 41] provide an overview of recent progress in biomedical trait-based 
+human identification, showing how technologies such as machine learning and advanced 
+sensors have improved biometric systems used in security and authentication. Chowd -
+hury et al. [42] focus on the challenge of protecting images stored in the cloud and intro-
+duce the PwLMµ-TPE encryption method, which keeps image thumbnails visible for 
+easy use while still protecting the full image through strong encryption. Dhar et al. [ 43] 
+review both digital and quantum watermarking techniques and explain how quantum 
+approaches, based on principles such as superposition and entanglement, can provide 
+stronger protection against tampering than traditional methods. T ogether, these studies 
+highlight ongoing efforts to improve security, privacy, and data protection across differ -
+ent digital applications.
+2.1 Notation
+Table 2 refers to the notations used in this system
+3 Privacy-preserving face recognition via HE and deep learning
+The proposed system employs a client–server setup, as illustrated in Fig. 1, which pro -
+vides an overview of the enrollment and verification stages. The system ensures secure 
+face authentication using FHE while maintaining user privacy. The system has three 
+main components: the client device, the Trusted Authenticator (TA), and the Cloud 
+Server. During enrolment, the client device captures the user’s face image and extracts 
+facial features using a Deep Convolutional Neural Network (DCNN), such as FaceNet 
+or ArcFace. These models are chosen for their proven ability to produce compact, highly 
+discriminative embeddings. These extracted features are then sent to the TA, who 
+applies LPP to reduce dimensionality, making the features more efficient for storage and 
+comparison. The reduced features, known as RLpp, are encrypted using FHE and stored 
+on the Cloud Server as E(R) along with the user’s ID.
+Table 2 Notations used in the proposed framework
+Notation Description
+Plpp Probe template stored
+Rlpp Reference template
+Pk Public key
+Sk Secret key
+Pi Plaintext
+E Encryption
+D Decryption
+Dt Distance between templates
+T Matching threshold
+E(P) Encrypted probe template
+E(R) Encrypted reference template
+N Polynomial modulus degree
+s Coefficient modulus bits
+Page 7 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+During the verification phase, the user provides a new face image, which is then pro -
+cessed on the client device using the same feature extraction process. The extracted 
+feature vector is sent to the TA, where LPP is applied to obtain PLpp, which is then 
+encrypted to form E(P). This encrypted probe embedding is sent to the cloud server for 
+matching. The Cloud Server retrieves the corresponding E(R) from storage and com -
+putes the Euclidean distance between E(R) and E(P). The encrypted distance value, Dt, is 
+forwarded to the TA, which decrypts it using a secret key. Finally, the system compares 
+the decrypted value (D) with a predefined threshold (T) to determine whether authenti -
+cation is successful. If D is below the threshold, the user is accepted; otherwise, authen -
+tication is denied. This architecture ensures that face data remains protected throughout 
+the process, preventing unauthorised access while maintaining efficient and accurate 
+authentication.
+3.1 Assumptions
+In the proposed approach, the following are the assumptions:
+  • The client device is considered fully trusted during both the enrollment and 
+authentication phases.
+  • The keys are securely stored in the trusted authenticator’s local memory throughout 
+enrollment and authentication.
+  • The cloud server follows an honest-but-curious model, meaning it performs the 
+required computations-such as calculating the Euclidean distance-accurately but 
+may attempt to learn information from the data it processes. However, the computed 
+distances remain correct and reliable.
+Fig. 1 Overview of the enrollment and verification phases in the proposed face authentication system
+ 
+Page 8 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+  • The keys are generated and stored inside a trusted authenticator. The client never 
+keeps keys.
+  • All communications between the client, the trusted authenticator, and the cloud 
+server occur over secure, trusted channels. As part of the authentication process, 
+the client device transmits feature embeddings to the trusted authenticator via this 
+secure connection.
+3.2 Preparation of face images for feature extraction
+Before extracting facial features using deep learning models, all input images are prepro-
+cessed to ensure consistency and improve recognition performance. Preprocessing helps 
+the models focus on the actual facial characteristics by reducing variations caused by 
+background, lighting, and pose. The first step is face detection, where the facial region is 
+identified and cropped from the original image. This ensures that only the relevant part 
+of the image is used for analysis. Following this, face alignment is performed using key 
+facial landmarks such as the eyes and nose. Alignment standardises the face’s orienta -
+tion, reducing the impact of head tilts or rotations.
+Once aligned, the images are resized to match the input size expected by the models. 
+For example, FaceNet requires images of size 160 × 160 pixels, while ArcFace typically 
+uses 112 × 112 pixels. The final step is normalisation, where pixel values are scaled to 
+the range of − 1 to 1 to minimise the impact of lighting variations and ensure consistent 
+model performance across images. These preprocessing steps, illustrated in Fig. 2, are 
+essential for improving the quality of the extracted features and ensuring that face recog-
+nition models perform effectively.
+3.3 Generation of facial embedding vectors
+The proposed system leverages two well-established deep learning models, FaceNet [ 44] 
+and ArcFace [45], to extract robust and discriminative facial features for face recognition 
+(FR) tasks. These models are selected due to their performance on large-scale face verifi -
+cation benchmarks and their learning strategies.
+FaceNet [17, 44] is based on the InceptionResNetV1 architecture and was pre-trained 
+on the VGGFace2 dataset. While the original FaceNet architecture was designed to 
+output 128-dimensional embeddings for efficient processing, the FaceNet model used 
+in the proposed system produces 512-dimensional embeddings. This expanded embed -
+ding size enables the model to capture more fine-grained facial details, thereby improv -
+ing recognition accuracy, especially when working with large, diverse datasets. The 
+model employs triplet loss to ensure that embeddings from the same identity are closer 
+together, while embeddings from different identities are pushed apart. Triplet-based 
+Fig. 2 Illustration of the face preprocessing pipeline using FaceNet on the CASIA-3D Face dataset. The process 
+includes face detection, alignment, resizing, and feature embedding extraction
+ 
+Page 9 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+learning focuses on preserving global distance relationships in Euclidean space. All 
+extracted features are L2-normalised, making them suitable for Euclidean-based similar-
+ity comparisons.
+Unlike existing FaceNet-based privacy-preserving approaches that operate directly on 
+raw or PCA-reduced embeddings, the proposed system introduces Locality Preserving 
+Projection (LPP) on deep embeddings before encryption. This step preserves local mani -
+fold structure while significantly reducing dimensionality, enabling compact encrypted 
+templates and improving the efficiency of CKKS-based matching. The integration of 
+FaceNet with LPP and optimised CKKS encryption has not been explored in prior work, 
+representing a key novelty of the proposed framework.
+ArcFace is integrated through the FaceAnalysis module from the InsightFace frame -
+work. It is built on a ResNet backbone and trained using the MS-Celeb-1  M dataset. 
+ArcFace outputs 512-dimensional embeddings by default and applies an additive angu -
+lar margin loss to enhance intra-class compactness and inter-class separability in the 
+embedding space, thereby enhancing class separation on a hypersphere. This loss for -
+mulation yields highly discriminative embeddings that perform well under challenging 
+conditions, such as variations in pose, illumination, and facial expression. Employing 
+both models provides flexibility in embedding strategies and enables comparative per -
+formance analysis across datasets and conditions.
+ArcFace is used in the proposed system due to its additive angular-margin formula -
+tion produces highly discriminative and well-separated embeddings, and its implemen -
+tation within the InsightFace framework [ 46–48] provides stable performance on both 
+balanced and imbalanced datasets. This robustness arises from ArcFace’s feature and 
+weight normalisation on the hypersphere, combined with a consistent angular margin 
+that reduces bias toward classes with more samples and maintains uniform decision 
+boundaries across identities. Earlier margin-based approaches, such as SphereFace [ 49] 
+and CosFace [ 50], also contributed to improving face recognition, but each presents 
+limitations: SphereFace uses a multiplicative angular margin that can lead to optimisa -
+tion instability, while CosFace applies a cosine margin in the similarity space rather than 
+directly in the angular domain, resulting in less consistent geometric separation. ArcFace 
+addresses these issues by enforcing a clean and geometrically intuitive additive angular 
+margin, enabling more stable optimisation, stronger inter-class separability, and reliable 
+embedding quality even under dimensionality reduction and encrypted matching.
+3.4 Projection of high-dimensional embeddings
+LPP is particularly effective for dimensionality reduction in FR systems, as it preserves 
+local neighbourhood structures while reducing the dimensionality of high-dimensional 
+feature embeddings from models such as FaceNet and ArcFace. In comparison, Princi -
+pal Component Analysis (PCA) [ 51] captures global variance but may lose fine-grained 
+local details, Linear Discriminant Analysis (LDA) [ 52] requires class labels and priori -
+tises inter-class separability, and Independent Component Analysis (ICA) [ 53] assumes 
+statistical independence among features. Unlike these techniques, LPP [ 54] retains geo-
+metric locality and the intrinsic manifold structure of the data, ensuring a discriminative 
+and compact feature space for robust FR. By preserving intrinsic relationships within 
+the data, LPP effectively handles variations in pose, lighting, and expression, enhancing 
+computational efficiency while maintaining the manifold structure of facial images for 
+Page 10 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+accurate analysis. The procedure for reducing the dimensionality of feature embeddings 
+is described in Algorithm 1.
+Algorithm 1 Locality preserving projection (LPP)
+In the proposed system, an ϵ-neighbourhood approach is used to define local relation -
+ships among data points. Data points are treated as neighbours if the Euclidean distance 
+between them is less than or equal to ϵ =0 .5. This threshold was empirically chosen 
+to balance graph sparsity and connectivity, allowing only locally relevant data to influ -
+ence the projection matrix. T o quantify similarity between neighbours, the heat kernel 
+weighting function is utilised:
+Wij = exp
+(
+− ∥xi − xj ∥2
+t
+)
+ (1)
+where t is a scaling parameter that governs the smoothness of the weight decay. The 
+use of this continuous kernel ensures that closer points have a stronger influence on 
+the local graph structure, enhancing the algorithm’s sensitivity to fine local variations in 
+facial features.
+Following the construction of the weight matrix and graph Laplacian, LPP solves a 
+generalised eigenvalue problem of the form:
+X⊤LXa = λX⊤DXa  (2)
+Here, L = D − W  is the graph Laplacian, and D is the diagonal matrix containing the 
+sum of weights for each node. The solution yields a set of eigenvectors corresponding to 
+the smallest eigenvalues, which are used to construct a projection matrix. This matrix 
+is then applied to map the original high-dimensional deep features into a lower-dimen -
+sional space.
+Page 11 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+In our experiments, the 512-dimensional deep features generated by FaceNet and Arc-
+Face are reduced to 256 dimensions. This dimensionality was selected based on exten -
+sive empirical evaluation, offering a trade-off between recognition performance and 
+computational efficiency. The resulting compressed vectors reduce storage and pro -
+cessing overhead. By preserving local geometric structures, LPP ensures that the most 
+informative aspects of facial features are retained, even after significant dimensionality 
+reduction, as depicted in Fig. 3.
+3.4.1 Rationale for using LPP
+Instead of Direct 256-dimensional Embeddings, FaceNet and ArcFace are trained on 
+large-scale face datasets and naturally output 512-dimensional embeddings. This repre -
+sentation is well validated for generalisation across different datasets. Modifying these 
+deep models to produce 256-dimensional vectors would require extensive retraining 
+on millions of images, which is computationally expensive and may reduce generalisa -
+tion performance. LPP provides a training-free and structure-preserving dimensionality 
+reduction method. It reduces the embeddings to 256 dimensions while maintaining the 
+local geometric relationships between samples. This is important for face recognition 
+because the discriminative structure of the feature space must be preserved even after 
+encryption. Reducing the feature dimension also has practical benefits in the encrypted 
+Fig. 3 Visualisation of the locality preserving projection (LPP) pipeline. The figure illustrates the transformation of 
+the input feature matrix into a lower-dimensional space while preserving local neighbourhood structures. Subfig-
+ures show the step-by-step process: a Distance matrix capturing pairwise similarities, b Weight matrix representing 
+local affinities, c Degree matrix showing node connectivity, d Graph Laplacian encoding the geometric structure, e 
+Eigenvalues from decomposition, and f Final projected data Y in the reduced space
+ 
+Page 12 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+domain. Encrypting a 256-dimensional vector requires less memory and computation 
+than encrypting a 512-dimensional vector. This leads to smaller ciphertext sizes and 
+faster encrypted distance computation. Therefore, using 512-D pretrained embeddings 
+followed by LPP offers a good balance between accuracy, privacy, and efficiency.
+3.5 Homomorphic encryption of facial features
+FHE ensures that sensitive facial information stays secure and private throughout the 
+process. Even if someone accesses the data during processing, they cannot understand 
+it because it remains encrypted. After dimensionality reduction using LPP , complex 
+numbers are often encountered, which can be efficiently handled using CKKS FHE. This 
+capability makes CKKS FHE particularly suitable for privacy-preserving FR systems, as 
+it supports operations on encrypted data, including computations involving complex 
+numbers. Its ability to perform encrypted computations without decryption ensures 
+end-to-end security, making it an ideal choice for systems that require both high-level 
+privacy and robust computational capabilities. By addressing the challenges posed by 
+complex numbers and ensuring the secure handling of sensitive information, FHE sig -
+nificantly enhances the reliability and security of FR systems.
+3.5.1 FHE
+FHE schemes enable computation on encrypted data without decryption. Several 
+schemes exist, each with strengths and limitations. The Brakerski–Gentry–Vaikuntana -
+than (BGV) scheme [ 55] and its variants like BFV (Fan–Vercauteren, an FHE scheme, 
+a variant of BGV) excel at integer arithmetic but contend with noise growth. Similarly, 
+the Fan–Vercauteren (FV) scheme [56] faces limitations due to noise growth. The CKKS 
+scheme [57] specialises in approximate arithmetic on real and complex numbers, mak -
+ing it suitable for applications like machine learning and signal processing, and particu -
+larly advantageous for tasks involving complex-valued data like FR and medical image 
+analysis. While efficient for approximate computations, CKKS, like the closely related 
+HEAAN scheme [ 58]. The TFHE scheme [ 59] is optimised for binary operations, excel -
+ling in logic-based computations but potentially limited in applicability to other data 
+types. Among these, the CKKS scheme stands out for its ability to handle approximate 
+arithmetic on real and complex numbers. This makes CKKS particularly well-suited for 
+modern applications, such as privacy-preserving machine learning, where fixed-point 
+operations are essential. CKKS introduces the concept of packed computations, enabling 
+multiple plaintext values to be processed in parallel, which significantly enhances 
+efficiency.
+3.5.2 CKKS-based secure embedding and distance computation
+The CKKS HE scheme allows approximate arithmetic operations to be performed 
+directly on encrypted real-valued vectors.
+Let e1,e 2 ∈ Rd be two facial embeddings extracted from deep learning models. Each 
+embedding is encrypted using the CKKS scheme to produce corresponding ciphertexts 
+C1 and C2 as follows:
+Ci = Encrypt(ei,P k),i ∈{ 1, 2} (3)
+where Pk denotes the public key used for encryption.
+Page 13 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+To compute the similarity between these encrypted embeddings, the squared Euclid -
+ean distance is approximated homomorphically. First, the difference between the 
+encrypted vectors is computed:
+∆C = C1 − C2 (4)
+Then, the element-wise square is performed in the encrypted domain:
+Denc =∆ C · ∆C (5)
+Since the ciphertext size grows after multiplication, a relinearization operation is applied 
+to maintain computational efficiency:
+Denc ← Relinearize(Denc) (6)
+The result Denc is a ciphertext containing the squared element-wise differences between 
+the original embeddings. This encrypted output is then decrypted and decoded using 
+the secret key Sk:
+˜D = Decrypt(Denc,S k)  (7)
+D = Decode( ˜D)  (8)
+The decrypted vector D ∈ Rd approximates the squared differences of the original 
+embeddings. The Euclidean distance between e1 and e2 is then computed as:
+Distance(e1,e 2) ≈
+/radicaltp/radicalvertex/radicalvertex√ d∑
+j=1
+Dj  (9)
+This approach ensures that facial templates remain encrypted throughout the match -
+ing process, significantly enhancing the privacy and security of the proposed system. By 
+leveraging the properties of CKKS, secure and efficient similarity comparisons can be 
+performed without ever exposing sensitive data.
+3.5.3 Justification and rationale
+The CKKS homomorphic encryption scheme is used because it supports approximate 
+computations over encrypted real numbers, making it suitable for encrypting facial fea -
+ture data. The polynomial modulus degree n = 8192 strikes a balance between strong 
+security and reasonable computation time. The modulus chain bits [60, 40, 40, 60] pro-
+vide sufficient space to perform multiple encrypted operations, such as addition and 
+multiplication, while keeping noise levels low. The scale factor s =2 40 helps keep pre -
+cision when encoding decimal numbers, flattening the feature vectors before encryp -
+tion allows efficient vector operations with CKKS. After multiplication, a relinearization 
+step reduces ciphertext size and noise, improving the accuracy and speed of encrypted 
+distance calculations. Finally, decryption and decoding with the secret key recover the 
+approximate distance value in plaintext. These choices enable the secure computa -
+tion of face recognition distances on encrypted data, without exposing sensitive face 
+information.
+Page 14 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+Several parameter choices for the CKKS scheme were assessed to analyse their perfor -
+mance, accuracy, and computational costs, as depicted in the Table 3. In particular, the 
+three levels of modulus bit sizes tested, 4096, 8192, and 16,384, three different types of 
+configurations were analysed: [60, 40, 40, 60], [40, 21, 21, 21, 21, 40], and [40, 20, 20, 40]. 
+The lower degree configuration (4096) had the fastest computation times and the small -
+est ciphertext size, but its security was about 80 bits. Increasing the polynomial modulus 
+degree to 8192 achieved a more balanced performance/precision trade-off, providing ( ∼ 
+128 bit) security with a moderate resource footprint. The 16,384 offered the best secu -
+rity level (∼ 192 bits), more precision, but a larger performance overhead and ciphertext 
+sizes. With respect to coefficient modulus bit-size variations, configurations that were 
+deeper at the bit level, such as [40, 21, 21, 21, 21, 40] and [40, 20, 20, 40], offered better 
+numerical accuracy at the cost of more latency. This tuning process highlights the need 
+for parameters that are reasonable in terms of precision, security, and performance.
+The effect of scaling factor choice in the CKKS scheme was studied here by testing 
+both 221 and 240 configurations using various polynomial modulus degrees and coeffi -
+cient modulus chains, which is depicted in the Table 4. It was found that using a smaller 
+scaling factor ( 221) resulted in faster execution and smaller ciphertext sizes. Still, it also 
+led to more noise growth and less consistent rescaling during homomorphic operations. 
+On the other hand, a higher scaling factor of 240 provided better numerical precision 
+and stable rescaling, which are essential for deeper computations on encrypted data. 
+The higher scaling factor was more expensive computationally, but the greater accuracy 
+and robustness made it a more logical choice. Thus, all subsequent assessments in the 
+encrypted space used 240 for the sake of reliability and security.
+4 Experimental setup and result analysis
+4.1 Datasets
+4.1.1 CASIA 3D face dataset
+The CASIA 3D Face dataset was collected from the Centre for Biometrics and Secu -
+rity Research (CBSR) [ 60]. It includes 4624 scans of 123 subjects taken with a 3D digi -
+tiser. The dataset encompasses variations in poses, expressions, and lighting conditions, 
+Table 3 CKKS parameter tuning and its effect on security and performance
+N Coeff mod bit sizes Security level (bits) Enc. (s)
+4096 [60, 40, 40, 60] ~ 80 0.016
+4096 [40, 21, 21, 21, 21, 40] ~ 80 0.032
+4096 [40, 20, 20, 40] ~ 80 0.033
+8192 [60, 40, 40, 60] ~ 128 0.046
+8192 [40, 21, 21, 21, 21, 40] ~ 128 0.059
+8192 [40, 20, 20, 40] ~ 128 0.065
+16,384 [60, 40, 40, 60] ~ 192 0.082
+16,384 [40, 21, 21, 21, 21, 40] ~ 192 0.097
+16,384 [40, 20, 20, 40] ~ 192 0.099
+Table 4 Comparison of CKKS scaling factors across different aspects
+Scaling factor Precision Noise growth Rescaling stability Performance
+221 Low High Less stable Fast
+240 High Low Stable Slower
+Page 15 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+combining these factors. People wearing glasses had additional samples taken. Each per -
+son’s dataset has 37 or 38 samples.
+4.1.2 105Pins face dataset
+The 105Pinsface Dataset was sourced from Kaggle [ 61]. This dataset comprises 17,534 
+facial images extracted from Pinterest, featuring 105 celebrities. The diverse origins of 
+these images provide both opportunities and challenges for FR tasks.
+4.1.3 Faces94 dataset
+The Faces94 dataset, a facial image collection designed for evaluating face recognition 
+models under controlled conditions, was downloaded from  h t t p : /  / c s w w  w . e s s e  x . a c  . u k / 
+m  v / a l l  f a c e s /  f a c e  s 9 4 . z i p or  h t t p s :  / / g i t  h u b . c o  m / c h  e n y i j  i a 1 9 9  7 / F a c e  - d a t  a s e t s. It contains 
+images of 153 individuals, comprising 133 males and 20 females, with 20 images per per-
+son. Each image has a fixed resolution of 180 × 200 pixels and features a uniform green 
+background to minimise background distractions. Although the images are captured 
+in a controlled setting, they include natural variations in facial expressions and slight 
+changes in head pose. These subtle differences make the dataset suitable for studying 
+intra-class variability.
+4.1.4 Labelled faces in the wild (LFW)
+The LFW dataset [ 62] is downloaded from Kaggle, and it is commonly used to test face 
+recognition algorithms in challenging, real-world settings. Developed by the University 
+of Massachusetts, Amherst, it includes 13,233 face images representing 5749 individuals. 
+These images were gathered from the internet and initially processed using the Viola–
+Jones face detection algorithm to ensure proper alignment and cropping. Although the 
+dataset contains many individuals with only one image, a subset of 1680 individuals has 
+at least two images, making it suitable for verification tasks. Among the available ver -
+sions, the deep-funnelled version provides better facial alignment and has been shown 
+to improve recognition accuracy. For this study, we use a filtered subset of the deep-fun-
+nelled images, consisting of 779 classes, each containing exactly two samples, to evaluate 
+the performance of the proposed privacy-preserving face recognition system.
+4.2 System configuration
+All experiments in the proposed approach were conducted on a Dell Precision 3660 
+workstation running Windows 10 Pro (64-bit). The system was equipped with an Intel 
+Core i7-12700 (12th generation) processor and 32 GB of RAM. It consists of an NVIDIA 
+GeForce RTX 3060 GPU with 12 GB of dedicated VRAM and an Intel UHD Graphics 
+770 integrated GPU. The software environment was set up using Python 8. The required 
+deep learning tools were installed using PyTorch (version 2.2.2) and Torchvision (ver -
+sion 0.17.2). The tenseal library with CKKS enabled was used for all homomorphic 
+encryption operations. This configuration formed the computational environment used 
+throughout all experimental stages of the proposed system.
+4.3 Performance metrics
+The performance of proposed system is evaluated using Eqs. (10)–(15),
+Page 16 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+False acceptance rate (FAR): The percentage of legitimate users (genuine) who are mis-
+takenly denied access by the system.
+FA R= No. of impostor scores above the TTotal no. of impostor scores . (10)
+False rejection rate (FRR) : The percentage of legitimate users (genuine) who are mis -
+takenly denied access by the system.
+FRR = No. of genuine scores below the TTotal no. of genuine scores . (11)
+Equal error rate (EER) : The rate at which both FAR and FRR are the same. A lower 
+EER signifies better accuracy of the biometric system.
+Accuracy: The percentage of correctly classified instances (both genuine and impos -
+tors) in the system.
+Accuracy = TP + TNTP + TN + FP + FN . (12)
+Precision: The proportion of correctly identified genuine instances out of all instances 
+classified as genuine.
+Precision = TPTP + FP . (13)
+Recall (sensitivity): The proportion of correctly identified genuine instances out of all 
+actual genuine instances.
+Recall = TPTP + FN . (14)
+F1 score: The harmonic mean of Precision and Recall.
+F1 Score =2 · Precision · RecallPrecision + Recall . (15)
+4.4 Results comparison
+The proposed system was evaluated using four benchmark datasets-CASIA 3D Face, 
+105 Pins Face, Faces94, and LFW-to test its accuracy, privacy preservation, and com -
+putational efficiency. Across all datasets, ArcFace consistently outperformed FaceNet, 
+especially at LPP dimension 256, making it the most balanced configuration in terms of 
+performance and efficiency.
+The CASIA 3D Face dataset contains depth and pose variations that challenge the 
+robustness of facial features. As reported in Table 5, ArcFace with 256-D achieved a 
+notably low EER of 0.0077%, reflecting strong decision boundary placement between 
+genuine and impostor pairs in the projected subspace. This dimension also delivered a 
+high recall of 99.17%, showing the system’s ability to correctly identify genuine matches 
+despite 3D distortions. FaceNet also benefited from the 256-D projection, achieving its 
+best accuracy (98.67%) and improved class separation due to the preserved geometric 
+structure provided by LPP . These results show that ArcFace effectively captures complex 
+Page 17 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+spatial features and maintains high performance even after dimensionality reduction 
+and encryption.
+The 105PinsFace dataset includes variations in illumination and expression across con-
+strained identities. As shown in Table 6, ArcFace achieved its best performance at 256 
+dimensions with an EER of 0.010%, an accuracy of 98.06%, and an F1-score of 93.99%. 
+This demonstrates its strong ability to distinguish genuine users from impostors in mod-
+erately unconstrained conditions. The results suggest that LPP at 256-D effectively pre -
+serves the discriminative structure of the data by maintaining intra-class compactness 
+and inter-class separation. FaceNet also reached its peak performance at this dimension, 
+confirming that 256-D provides an optimal balance between dimensionality reduction 
+and feature preservation for both models.
+Faces94, a relatively clean and controlled dataset, offers limited variation, making it 
+easier for models to achieve high performance across dimensions. However, at 256-
+D, FaceNet attained its highest accuracy of 99.61%, with consistently strong recall and 
+F1-score of 98.71%. The evaluation results can be found in Table 7. However, ArcFace at 
+256 dimensions achieved an accuracy of 99.82% with minimal EER 0.0059%. The preci -
+sion and F1-score values confirmed consistent, reliable performance. This demonstrates 
+that even in less challenging environments, ArcFace maintains superior feature repre -
+sentation and matching consistency.
+Table 5 Evaluation metrics of FaceNet and ArcFace on CASIA 3D face dataset
+Model LPP-D EER % Accuracy % Precision % Recall % F1-score % Enc. time (s) Comp. time (s)
+FaceNet 32 0.040 96.52 83.21 95.93 88.12 0.2071 0.3368
+64 0.040 96.47 82.14 95.12 88.09 0.4142 0.6736
+128 0.040 96.79 84.12 95.12 89.23 0.8285 1.3473
+256 0.040 98.67 89.25 95.12 92.08 1.6570 2.6947
+512 0.040 98.51 90.87 95.12 92.94 3.3141 5.3895
+ArcFace 32 0.032 96.73 85.22 96.69 90.52 0.2071 0.3368
+64 0.016 98.36 91.13 98.35 94.60 0.4142 0.6736
+128 0.0083 99.16 96.20 99.17 98.25 0.8285 1.3473
+256 0.0077 99.30 97.35 99.17 97.66 1.6570 2.6947
+512 0.0082 99.02 96.80 99.17 97.97 3.3141 5.3895
+Enc. time: Encryption time in seconds
+Comp. time: Distance computation time in seconds
+Table 6 Evaluation metrics of FaceNet and ArcFace on 105PinsFace dataset
+Model LPP-D EER % Accuracy % Precision % Recall % F1-score % Enc. time (s) Comp. time (s)
+FaceNet 32 0.110 91.47 66.18 85.71 74.73 0.2071 0.3368
+64 0.080 93.29 71.36 89.00 79.33 0.4142 0.6736
+128 0.060 93.54 74.50 93.30 82.91 0.8285 1.3473
+256 0.045 95.60 79.46 94.29 85.21 1.6570 2.6947
+512 0.050 95.60 77.49 94.29 86.27 3.3141 5.3895
+ArcFace 32 0.090 90.63 68.02 90.48 77.60 0.2071 0.3368
+64 0.070 93.00 72.65 92.38 81.37 0.4142 0.6736
+128 0.020 97.20 84.68 97.14 90.51 0.8285 1.3473
+256 0.015 98.06 90.17 98.10 93.99 1.6570 2.6947
+512 0.015 98.06 89.43 98.10 93.56 3.3141 5.3895
+Enc. time: Encryption time in seconds
+Comp. time: Distance computation time in seconds
+Page 18 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+The LFW dataset presents real-world challenges, including variations in lighting, 
+pose, and expression. As shown in Table 8, ArcFace achieved strong performance at 
+256 dimensions, with an accuracy of 97.07%, F1-score of 94.66%, and the lowest EER 
+of 0.034%, demonstrating its ability to generalise well under unconstrained conditions. 
+FaceNet also performed best at this dimensionality, reaching an accuracy of 95.72%.
+ArcFace with 256-D features consistently gave the best results across all datasets. It 
+preserved identity-specific information even after dimension reduction and data encryp-
+tion. This setup supports fast, secure, and accurate face recognition, making it ideal for 
+real-time and large-scale systems. The 256-dimensional features preserved important 
+local patterns in the data, helping the system match similar faces more accurately. Unlike 
+lower dimensions that lose useful details or higher ones that add extra noise, 256-D 
+offered the best balance, keeping the system fast, accurate, and privacy-friendly.
+The performance of the proposed system has been compared with several existing 
+methods, as illustrated in Table 9. The results clearly show the strength of the proposed 
+models—Facenet and ArcFace—in achieving high verification rates. On the CASIA-
+3D dataset, earlier methods, such as multi-scale FPFH with template matching and 
+handcrafted features such as LGBQ, Gabor, LBP , and LPQ, have achieved good perfor -
+mance, with the highest verification rate of 99.23% reported by Aliradi et al. However, 
+the proposed ArcFace model achieved 99.30%, slightly outperforming the existing best. 
+This shows that DL-based methods, especially ArcFace, are more effective for 3D FR. 
+Table 7 Evaluation metrics of FaceNet and ArcFace on Faces94 dataset
+Model LPP-D EER % Accuracy % Precision % Recall % F1-score % Enc. time (s) Comp. time (s)
+FaceNet 32 0.0064 99.39 91.03 99.35 94.99 0.2071 0.3368
+64 0.0058 99.44 92.71 99.41 95.95 0.4142 0.6736
+128 0.0059 99.46 93.22 99.41 96.21 0.8285 1.3473
+256 0.0059 99.61 98.03 99.41 98.71 1.6570 2.6947
+512 0.0059 99.61 94.48 99.41 96.89 3.3141 5.3895
+ArcFace 32 0.00583 99.42 92.07 99.42 95.59 0.2071 0.3368
+64 0.00582 99.43 92.31 99.41 95.72 0.4142 0.6736
+128 0.00581 99.43 92.45 99.41 95.81 0.8285 1.3473
+256 0.00590 99.82 93.75 99.41 96.51 1.6570 2.6947
+512 0.00590 99.82 91.03 99.41 94.99 3.3141 5.3895
+Enc. time: Encryption time in seconds
+Comp. time: Distance computation time in seconds
+Table 8 Evaluation metrics of FaceNet and ArcFace on LFW dataset
+Model LPP-D EER % Accuracy % Precision % Recall % F1-score % Enc. time (s) Comp. time (s)
+FaceNet 32 0.0840 91.61 86.92 91.53 89.16 0.2071 0.3368
+64 0.0720 92.89 89.13 92.68 90.87 0.4142 0.6736
+128 0.0680 93.33 89.94 93.07 91.48 0.8285 1.3473
+256 0.0652 95.72 92.49 95.12 93.79 1.6570 2.6947
+512 0.0652 95.72 91.91 93.32 92.61 3.3141 5.3895
+ArcFace 32 0.0730 94.20 87.62 91.78 89.66 0.2071 0.3368
+64 0.0440 95.60 89.33 95.51 92.32 0.4142 0.6736
+128 0.0380 96.79 91.34 96.15 93.68 0.8285 1.3473
+256 0.0344 97.07 92.86 96.53 94.66 1.6570 2.6947
+512 0.0344 97.10 91.27 96.53 93.83 3.3141 5.3895
+Enc. time: Encryption time in seconds
+Comp. time: Distance computation time in seconds
+Page 19 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+For the 105PinsFace dataset, which has greater variation and is considered more chal -
+lenging, traditional models achieved lower verification rates of 83.53–93.39%. The pro -
+posed models showed clear improvements, with Facenet achieving 95.60% and ArcFace 
+achieving 98.06%. This shows that the proposed system is capable of handling complex 
+and diverse face data more effectively. Overall, the results across all three datasets dem -
+onstrate that the proposed models-especially ArcFace-consistently outperform exist -
+ing methods. This confirms the effectiveness and generalisation ability of the proposed 
+approach for FR tasks.
+Compared with existing approaches, the proposed system demonstrated a notable 
+improvement on the Faces94 dataset, which comprises frontal face images with mini -
+mal variation. Existing methods that used FaceNet with CKKS encryption or hybrid 
+approaches achieved approximately 96–97% accuracy; however, the proposed models 
+significantly exceeded this. FaceNet and ArcFace both achieved 99.61% and 99.82%, 
+respectively, indicating that the proposed deep learning-based framework is not only 
+accurate but also efficient in scenarios where privacy is a concern.
+The proposed system demonstrated robust performance on the LFW dataset, 
+renowned for its high variability and real-world complexity. The accuracy of the existing 
+methods ranged from 95.45% to 96.67%, which is rather lower. The maximum accuracy 
+was 95.72% for the proposed FaceNet model and 97.07% for ArcFace. On LFW, Arc -
+Face outperformed most existing methods and remained competitive. In the proposed 
+approach, the ArcFace model consistently achieved the highest accuracy and EER across 
+all datasets examined-CASIA-3D, 105PinsFace, Faces94, and LFW-proving its superior -
+ity for privacy-preserving face recognition.
+Table 9 Comparison with existing methods
+Dataset Authors Model Acc. Prec. Recall F1
+CASIA-3D Chen et al. [30] CNN (2D → 3D) 96.75 – - –
+Aliradi et al. [36] LGBQ + Gabor, LBP , LPQ 99.23 – - –
+Proposed FaceNet 98.67 89.25 95.12 92.08
+Proposed ArcFace 99.30 97.35 99.17 97.66
+105PinsFace Ali et al. [21] SVM + Inception/SqueezeNet 93.08, 93.39 – - –
+Miakshyn et al. [22] FaceNet + OpenFace 85.53 90.67 58.12 70.84
+Sharma et al. [35] Lightweight CNN 89.38 – - –
+Najeeb et al. [63] CNN 91.29 – - –
+Proposed FaceNet 95.60 79.46 94.29 85.21
+Proposed ArcFace 98.06 90.17 98.10 93.99
+Faces94 Yang et al. [64] FaceNet + CKKS 96.74 – - –
+Hu et al. [39] MobileFaceNet/ResNet 96.15 – - –
+Chen et al. [37] FaceNet + Hybrid Enc. 96.98 – - –
+Proposed FaceNet 99.61 98.03 99.41 98.71
+Proposed ArcFace 99.82 93.75 99.41 96.51
+LFW Miakshyn et al. [22] FaceNet + OpenFace 91.73 85.71 87.18 86.44
+Yang et al. [64] FaceNet + CKKS 96.67 – - –
+Hu et al. [39] MobileFaceNet/ResNet 95.50 – - –
+Chen et al. [37] FaceNet + Hybrid Enc. 95.45 – - –
+Proposed FaceNet 95.72 92.49 95.12 93.79
+Proposed ArcFace 97.07 92.86 96.53 94.66
+Page 20 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+4.5 Computational cost analysis
+Table 10 presents the computational cost of the proposed system when using FaceNet 
+and ArcFace, evaluated with and without the LPP dimensionality-reduction step. The 
+total cost is divided into four stages: feature extraction, LPP processing, encryption, and 
+encrypted computation.
+When LPP is applied, the feature vectors are reduced in size, which lowers the com -
+putational load in the encryption and encrypted computation stages. The LPP step takes 
+0.09873 s for both models. In this case, encryption requires 1.6570 s and encrypted 
+computation takes 2.6947 s. The total processing time is therefore 4.49143 s for FaceNet 
+and 4.45853 s for ArcFace. The small difference comes from the feature extraction stage, 
+where ArcFace is slightly faster than FaceNet. Without LPP , the system processes full-
+dimensional embeddings, which increases the computational cost. Encryption time 
+increases to 3.3141 s and encrypted computation increases to 5.3890 s. As a result, the 
+total time becomes 8.7441 s for FaceNet and 8.7112 s for ArcFace, which is almost twice 
+the time required when LPP is used. The results show that the LPP step significantly 
+reduces the total computational cost of the system. Although ArcFace has slightly lower 
+feature extraction time, the main factor affecting overall efficiency is the use of dimen -
+sionality reduction, which makes the system more suitable for real-time privacy-pre -
+serving applications.
+4.6 Ablation study
+In this study, two experimental pipelines were designed to evaluate the influence of 
+embedding dimensionality on face recognition performance.
+First, the baseline FaceNet model, which originally outputs a 128-dimensional embed -
+ding, was implemented and evaluated. To explore whether higher-dimensional rep -
+resentations could improve performance, the architecture was modified to produce 
+a 256-dimensional embedding. The results obtained from both FaceNet-128D and 
+FaceNet-256D are summarised in Table 11. However, these models did not yield satisfac-
+tory performance across the evaluated datasets. Consequently, a higher-capacity vari -
+ant, FaceNet-512D, was adopted. From this model, a 512-dimensional embedding was 
+extracted, and dimensionality reduction was applied to generate compact representa -
+tions of 256D, 128D, 64D, and 32D. These reduced dimensions were chosen to facilitate 
+efficient template storage and enable cryptographic operations in the subsequent secure 
+system design.
+Second, the baseline ArcFace model, which integrates a CNN backbone, embedding 
+head, and margin-based loss function, was examined. Following the structure described 
+in the original framework, the model was modified to extract 128D and 256D embed -
+dings. The performance of these models, also reported in Table 11, did not meet the 
+desired accuracy thresholds. To address this limitation, the standard ArcFace-512D 
+embedding was utilised as the primary feature representation. Subsequently, Locality 
+Table 10 Computational cost of the proposed system for FaceNet and ArcFace
+Model FE time (s) LPP (s) Enc. time (s) Comp. time (s) Total time (s)
+FaceNet 0.0410 0.09873 1.6570 2.6947 4.49143
+ArcFace 0.0081 0.09873 1.6570 2.6947 4.45853
+FaceNet 0.0410 – 3.3141 5.389 8.7441
+ArcFace 0.0081 – 3.3141 5.389 8.7112
+Page 21 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+Preserving Projections (LPP) were applied to reduce the 512D feature vector to 256D, 
+128D, 64D, and 32D, thereby enabling compact and discriminative representations suit -
+able for secure matching and storage.
+To assess the impact of encryption and dimensionality reduction (LPP) on recogni -
+tion performance, an ablation study was conducted by comparing results with and with -
+out FHE using the CKKS scheme and with and without LPP , while keeping the reduced 
+dimensionality fixed at 256 for the LPP-enabled configurations. The evaluation was per -
+formed across four datasets-CASIA-3D, 105PinsFace, Faces94, and LFW-using both 
+FaceNet and ArcFace to clearly understand how each transformation affects verification 
+performance.
+In the Table 12, the behaviour of the models under plaintext and encrypted matching 
+is shown for different LPP and FHE settings. For the CASIA-3D dataset, both FaceNet 
+and ArcFace maintain strong performance across all conditions. ArcFace achieves a 
+very low EER between 0.0082 and 0.0077, and its accuracy remains above 99% whether 
+encryption is applied or not. FaceNet consistently achieves an EER of 0.040 across all 
+cases, with only minor variations in accuracy. These results indicate that CKKS-based 
+encryption has a negligible impact on verification accuracy in structured datasets.
+In the 105PinsFace dataset, variations across settings are slightly more noticeable 
+due to greater diversity in facial appearance. FaceNet alternates between an EER of 
+0.05 and 0.045, while ArcFace remains stable at 0.015 for all combinations of LPP and 
+FHE. Despite these small shifts, both models maintain high accuracy within the 95–98% 
+range, demonstrating that encrypted matching continues to perform reliably across 
+more complex datasets.
+Table 11 Performance evaluation of FaceNet and ArcFace models on multiple datasets
+Model Dimension Dataset EER Accuracy Precision Recall F1-score
+FaceNet 128D CASIA-3D 0.205 79.34 0.0156 0.7967 0.0305
+PinsFace 0.448 57.92 0.0060 0.5238 0.0118
+Faces94 0.0313 96.84 0.1607 0.9691 0.2757
+LFW 0.4194 57.95 0.0009 0.5815 0.0018
+FaceNet 256D CASIA-3D 0.1711 82.86 0.0194 0.8293 0.0380
+PinsFace 0.4760 60.42 0.0052 0.4286 0.0103
+Faces94 0.0300 96.95 0.1658 0.9705 0.2832
+LFW 0.4214 66.36 0.0010 0.5006 0.0019
+FaceNet 512D CASIA-3D 0.040 98.51 90.87 95.12 92.94
+PinsFace 0.050 95.60 77.49 94.29 86.27
+Faces94 0.0059 99.61 94.48 99.41 96.89
+LFW 0.0652 95.72 91.91 93.32 92.61
+ArcFace 128D CASIA-3D 0.1139 88.61 0.0309 0.8862 0.0597
+PinsFace 0.4861 51.34 0.0051 0.5143 0.0100
+Faces94 0.0347 96.52 0.1479 0.9653 0.2565
+LFW 0.4389 56.15 0.0008 0.5597 0.0016
+ArcFace 256D CASIA-3D 0.1136 88.64 0.0310 0.8862 0.0599
+PinsFace 0.4686 53.22 0.0055 0.5333 0.0108
+Faces94 0.0335 96.67 0.1535 0.9664 0.2650
+LFW 0.4472 55.60 0.0008 0.5494 0.0016
+ArcFace 512D CASIA-3D 0.0082 99.02 96.80 99.17 97.97
+PinsFace 0.015 98.06 89.43 98.10 93.56
+Faces94 0.0059 99.82 91.03 99.41 94.99
+LFW 0.0344 97.10 91.27 96.53 93.83
+Page 22 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+In the Faces94 dataset, which contains clean and well-aligned face images, both mod -
+els achieve nearly identical results across plaintext and encrypted scenarios. FaceNet 
+maintains an EER of 0.0059 in all conditions, and ArcFace exhibits the same stable EER. 
+The accuracy differences observed are extremely small, confirming that the encryption 
+process does not affect performance in datasets with minimal intra-class variation.
+The LFW dataset, which contains challenging real-world variations, shows slight dif -
+ferences across the models. FaceNet reaches an EER of around 0.065 with almost no 
+change after encryption, while ArcFace remains around 0.034–0.0344 in all settings. 
+These results show that even in uncontrolled environments, the encrypted system pro -
+duces outcomes almost identical to those of the plaintext system. ArcFace proves more 
+robust to such variations, maintaining lower EER values throughout.
+Table 12 confirms that both LPP and CKKS-FHE preserve the discriminative struc -
+ture of deep face embeddings. The EER remains effectively unchanged across all datas -
+ets, models, and settings, and accuracy variations remain minimal. These observations 
+demonstrate that the proposed privacy-preserving system maintains strong recognition 
+Table 12 Ablation study showing the effect of LPP and FHE on the equal error rate (EER) across four 
+datasets using FaceNet and ArcFace
+Dataset Model LPP FHE EER
+CASIA-3D FaceNet No No 0.04
+Yes No 0.04
+No Yes 0.04
+Yes Yes 0.04
+CASIA-3D ArcFace No No 0.0082
+Yes No 0.0077
+No Yes 0.0082
+Yes Yes 0.0077
+PinsFace FaceNet No No 0.05
+Yes No 0.045
+No Yes 0.05
+Yes Yes 0.045
+PinsFace ArcFace No No 0.015
+Yes No 0.015
+No Yes 0.015
+Yes Yes 0.015
+Faces94 FaceNet No No 0.0059
+Yes No 0.0059
+No Yes 0.0059
+Yes Yes 0.0059
+Faces94 ArcFace No No 0.0059
+Yes No 0.0059
+No Yes 0.0059
+Yes Yes 0.0059
+LFW FaceNet No No 0.0652
+Yes No 0.0650
+No Yes 0.0652
+Yes Yes 0.0650
+Faces94 ArcFace No No 0.0344
+Yes No 0.0340
+No Yes 0.0344
+Yes Yes 0.0340
+Page 23 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+quality while enabling secure encrypted matching, making it feasible and reliable for 
+real-world face-recognition applications.
+5 Security considerations
+The proposed FR system’s design aligns with ISO/IEC 24745, the global standard for pro-
+tecting face information. This standard outlines the crucial needs to ensure that facial 
+data is safely obtained, handled, stored, and transmitted while upholding user privacy 
+and data integrity. Key aspects of compliance in the system embrace the irreversibility of 
+stored templates, unlinkability, renewability, and protected processing.
+Irreversibility is achieved by shrinking the original 512-dimensional features using 
+LPP , followed by encryption using the CKKS FHE scheme, thereby confirming that the 
+original face cannot be reconstructed. The system also facilitates unlinkability by storing 
+encrypted, anonymised features unique to each application setting, effectively avoiding 
+cross-matching across systems.
+Renewability is enabled by the ability to regenerate templates using different projection 
+matrices or encryption keys, without requiring re-enrolment of face data. All matching 
+operations occur entirely in the encrypted domain, guaranteeing that raw or decrypted 
+features are never exposed during handling.
+Additionally, the system adheres to data minimisation and privacy-by-design princi -
+ples by retaining only the most discriminating features through dimensionality reduc -
+tion. These design selections collectively ensure substantial compliance with ISO/IEC 
+24745, making the system secure, privacy-protecting, and well-suited for deployment in 
+sensitive and security-critical environments.
+6 Conclusion
+The proposed system presented a privacy-preserving face authentication system that 
+integrates deep learning-based feature extraction, dimensionality reduction, and homo -
+morphic encryption. The system was evaluated using two models-FaceNet and ArcFace-
+across multiple datasets. While both models were able to extract discriminative facial 
+features, FaceNet consistently showed lower accuracy and higher error rates, particu -
+larly in complex scenarios. In contrast, ArcFace delivered superior performance, making 
+it more suitable for reliable face authentication tasks. To enhance privacy and reduce 
+computational cost, the system employed LPP to compress the 512-dimensional feature 
+vectors before encryption. LPP effectively preserved local structure while reducing fea -
+ture size, allowing efficient encrypted matching without significantly affecting accuracy. 
+Future work can extend this system to multi-modal biometric fusion to improve accu -
+racy and security. The system performance is analysed, but lightweight optimisation for 
+edge devices is limited. So Future work can focus on improving efficiency for real-time 
+deployment on resource-constrained hardware. Security evaluation mainly considers 
+basic attack scenarios. Future work can include testing against advanced and stronger 
+security threats to further improve system robustness.
+Author contributions
+This study was carried out in collaboration between the authors. Pavani Chitrapu was primarily responsible for the 
+conception and design of the study, data collection, analysis, and manuscript drafting. Hemantha Kumar Kalluri provided 
+critical revisions and intellectual guidance throughout the research process and supervised the findings of this work. 
+Mahesh Kumar Morampudi provided critical revisions and intellectual guidance throughout the research process, 
+and supervised the findings of this work. Satya Krishna Nunna provided critical revisions and intellectual guidance 
+throughout the research process and supervised the findings of this work.
+Page 24 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+Funding
+The authors affirm that no funding or other assistance was obtained in order to prepare this manuscript.
+Data availability
+The datasets used in this study are available from their respective sources. The CASIA-3D FaceV1 dataset was obtained 
+from the Institute of Automation, Chinese Academy of Sciences (CASIA). While the dataset is no longer openly 
+downloadable from the previous CASIA portal, it remains available upon formal request to CASIA for academic research 
+use. The 105Pins Face Dataset is publicly available at  h t t p s :  / / w w w  . k a g g l  e . c o  m / d a t  a s e t s  / h e r e i  s b u r  a k / p i n s - f a c e - r e c o g n i t i 
+o n. The Faces94 dataset is accessible via the University of Essex repository at  h t t p : /  / c s w w  w . e s s e  x . a c  . u k / m  v / a l l  f a c e s /  f a c e  
+s 9 4 . z i p and community mirrors such as  h t t p s :  / / g i t  h u b . c o  m / c h  e n y i j  i a 1 9 9  7 / F a c e  - d a t  a s e t s. The Labeled Faces in the Wild 
+(LFW) deep-funneled dataset is publicly available at  h t t p s :  / / w w w  . k a g g l  e . c o  m / d a t  a s e t s  / d a n i e  l b a r  u s / l f w - d e e p f u n n e l e d. 
+All datasets were used strictly for academic and non-commercial research purposes.
+Declarations
+Ethics approval and consent to participate
+This study is based exclusively on publicly available datasets that were previously collected and released by other 
+researchers. No new data were collected, and ethical approval was therefore not required. Not applicable. This study did 
+not involve direct interaction with human participants and relied solely on publicly available data.
+ Consent for publication
+Not applicable.
+Competing interests
+The authors declare that they have no competing financial or non-financial interests that could have influenced the 
+work reported in this paper.
+Received: 26 July 2025 / Accepted: 3 February 2026
+References
+1. O’Gorman L. Comparing passwords, tokens, and biometrics for user authentication. Proc IEEE. 2003;91(12):2021–40.
+2. Le C, Jain R. A survey of biometrics security systems. Washington University in St. Louis: EEUU; 2009.
+3. Taskiran M, Kahraman N, Erdem CE. Face recognition: past, present and future (a review). Digit Signal Process. 
+2020;106:102809.
+4. Olade I, Liang H-N, Fleming C. A review of multimodal facial biometric authentication methods in mobile devices and 
+their application in head mounted displays. 2018 IEEE SmartWorld, Ubiquitous Intelligence & Computing, Advanced & 
+Trusted Computing, Scalable Computing & Communications, Cloud & Big Data Computing, Internet of People and Smart 
+City Innovation (SmartWorld/SCALCOM/UIC/ATC/CBDCom/IOP/SCI), 2018;1997–2004.
+5. Ibsen M, Rathgeb C, Brechtel F, Klepp R, Pöppelmann K, George A, et al. Attacking face recognition with t-shirts: database, 
+vulnerability assessment, and detection. IEEE Access. 2023;11:57867–79.
+6. Ramachandra R, Busch C. Presentation attack detection methods for face recognition systems: a comprehensive survey. 
+ACM Comput Surv (CSUR). 2017;50(1):1–37.
+7. Ghorbel A, Ghorbel M, Jmaiel M. Privacy in cloud computing environments: a survey and research challenges. J Super-
+comput. 2017;73(6):2763–800.
+8. Butt UA, Amin R, Mehmood M, Aldabbas H, Alharbi MT, Albaqami N. Cloud security threats and solutions: a survey. Wirel 
+Pers Commun. 2023;128(1):387–413.
+9. Patel VM, Ratha NK, Chellappa R. Cancelable biometrics: a review. IEEE Signal Process Mag. 2015;32(5):54–65.
+10. Rathgeb C, Uhl A. A survey on biometric cryptosystems and cancelable biometrics. EURASIP J Inf Secur. 2011;2011:1–25.
+11. Acar A, Aksu H, Uluagac AS, Conti M. A survey on homomorphic encryption schemes: theory and implementation. ACM 
+Comput Surv (Csur). 2018;51(4):1–35.
+12. Paillier P . Public-key cryptosystems based on composite degree residuosity classes. In: EUROCRYPT. London: Springer; 
+1999. p. 223–38.
+13. Tourky D, ElKawkagy M, Keshk A. Homomorphic encryption the “holy grail” of cryptography. In: 2016 2nd IEEE international 
+conference on computer and communications (ICCC). IEEE; 2016. p. 196–201.
+14. Rivest RL. Cryptography and machine learning. In: International conference on the theory and application of cryptology. 
+London: Springer; 1991. p. 427–39.
+15. Ma Y, Wu L, Gu X, He J, Yang Z. A secure face-verification scheme based on homomorphic encryption and deep neural 
+networks. IEEE Access. 2017;5:16532–8.
+16. Chouchane A, Ouamane A, Boutellaa E, Belahcene M, Bourennane S. 3D face verification across pose based on Euler rota-
+tion and tensors. Multimed Tools Appl. 2018;77:20697–714.
+17. Boddeti VN. Secure face matching using fully homomorphic encryption. In: 2018 IEEE 9th international conference on 
+biometrics theory, applications and systems (BTAS). IEEE; 2018. p. 1–10.
+18. Abuzneid MA, Mahmood A. Enhanced human face recognition using LBPH descriptor, multi-KNN, and back-propagation 
+neural network. IEEE Access. 2018;6:20641–51.
+19. Bessaoudi M, Belahcene M, Ouamane A, Chouchane A, Bourennane S. Multilinear enhanced fisher discriminant analysis 
+for robust multimodal 2D and 3D face verification. Appl Intell. 2019;49:1339–54.
+20. Pranav K, Manikandan J. Design and evaluation of a real-time face recognition system using convolutional neural net-
+works. Proc Comput Sci. 2020;171:1651–9.
+Page 25 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+21. Ali M, Kumar D. A combination between deep learning for feature extraction and machine learning for recognition. In: 
+2021 12th international conference on computing communication and networking technologies (ICCCNT). IEEE; 2021. p. 
+01–05.
+22. Miakshyn O, Anufriiev P , Bashkov Y. Face recognition technology improving using convolutional neural networks. In: 2021 
+IEEE 3rd international conference on advanced trends in information theory (ATIT). IEEE; 2021. p. 116–20.
+23. Khan FA, Bouridane A, Boussakta S, Jiang R, Almaadeed S. Secure facial recognition in the encrypted domain using a local 
+ternary pattern approach. J Inform Secur Appl. 2021;59:102810.
+24. Tamilselvi M, Karthikeyan S. An ingenious face recognition system based on hrpsm_cnn under unrestrained environmen-
+tal condition. Alex Eng J. 2022;61(6):4307–21.
+25. Alirezazadeh P , Dornaika F, Moujahid A. A deep learning loss based on additive cosine margin: application to fashion style 
+and face recognition. Appl Soft Comput. 2022;131:109776.
+26. Albraikan AA, Alzahrani JS, Alshahrani R, Yafoz A, Alsini R, Hilal AM, et al. Intelligent facial expression recognition and clas-
+sification using optimal deep transfer learning model. Image Vis Comput. 2022;128:104583.
+27. Lee J-W, Kang H, Lee Y, Choi W, Eom J, Deryabin M, et al. Privacy-preserving machine learning with fully homomorphic 
+encryption for deep neural network. IEEE Access. 2022;10:30039–54.
+28. Ke X, Lin B, Guo W. Localface: learning significant local features for deep face recognition. Image Vis Comput. 
+2022;123:104484.
+29. Huang Y-H, Chen HH. Deep face recognition for dim images. Pattern Recogn. 2022;126:108580.
+30. Chen H, Yan Y, Qin J, Zhao T, Guo T. Recognition-oriented facial depth estimation from a single image. Appl Intell. 
+2023;53(2):1807–25.
+31. Cheema U, Moon S. Disguised heterogeneous face recognition using deep neighborhood difference relational network. 
+Neurocomputing. 2023;519:44–56.
+32. Xie Y, Li P , Nedjah N, Gupta BB, Taniar D, Zhang J. Privacy protection framework for face recognition in edge-based internet 
+of things. Clust Comput. 2023;26(5):3017–35.
+33. Yang J, Wang Z, Huang B, Xiao J, Liang C, Han Z, et al. Headpose-softmax: head pose adaptive curriculum learning loss for 
+deep face recognition. Pattern Recogn. 2023;140:109552.
+34. Mi Y, Huang Y, Ji J, Zhao M, Wu J, Xu X, Ding S, Zhou S. Privacy-preserving face recognition using random frequency com-
+ponents. In: Proceedings of the IEEE/CVF international conference on computer vision; 2023. p. 19673–84.
+35. Sharma R. Biometric authentication using lightweight convolutional neural network. In: 2024 IEEE international students’ 
+conference on electrical, electronics and computer science (SCEECS). IEEE; 2024. p. 1–6.
+36. Aliradi R, Ouamane A. A novel descriptor (LGBQ) based on Gabor filters. Multimed Tools Appl. 2024;83(4):11669–86.
+37. Chen Y, Duan F, Zhao Y, Han T, Hu J, Liu X, et al. Efficient face information encryption and verification scheme based on full 
+homomorphic encryption. Sci Rep. 2025;15(1):11388.
+38. Li X, Li X, Deng J. Disentangled representation transformer network for 3D face reconstruction and robust dense align-
+ment. Vis Comput. 2024;40(11):7701–18.
+39. Hu W, Zhou D, Zhu Z, Qiao T, Yao Y, Hassaballah M. Privacy-preserving face recognition method based on extensible 
+feature extraction. J Vis Commun Image Represent. 2024;100:104140.
+40. Wang T, Wen W, Xiao X, Hua Z, Zhang Y, Fang Y. Beyond privacy: generating privacy-preserving faces supporting robust 
+image authentication. IEEE Trans Inform Forensics Secur. 2025;2025:1.
+41. Girdhar N, Sharma D, Kumar R, Sahu M, Lin C-C. Emerging trends in biomedical trait-based human identification: a biblio-
+metric analysis. SLAS Technol. 2024;29(3):100136.
+42. Chowdhury K, Deb S, Kar N, Sarkar JL, Alkhayyat AH, Nkenyereye L. Pwlm µ-tpe: a visual-usability and privacy-enhanced 
+thumbnail preserving encryption scheme of cloud computing for consumers. IEEE Trans Consum Electron. 2024;2024:1.
+43. Dhar S, Sahu AK. Digital to quantum watermarking: a journey from past to present and into the future. Comput Sci Rev. 
+2024;54:100679.
+44. Schroff F , Kalenichenko D, Philbin J. Facenet: a unified embedding for face recognition and clustering. In: Proceedings of 
+the IEEE conference on computer vision and pattern recognition; 2015. p. 815–23.
+45. Deng J, Guo J, Xue N, Zafeiriou S. Arcface: additive angular margin loss for deep face recognition. In: Proceedings of the 
+IEEE/CVF conference on computer vision and pattern recognition; 2019. p. 4690–9.
+46. Deng J, Roussos A, Chrysos G, Ververas E, Kotsia I, Shen J, Zafeiriou S. The menpo benchmark for multi-pose 2D and 3D 
+facial landmark localisation and tracking. IJCV; 2018.
+47. Deng J, Guo J, Liu T, Gong M, Zafeiriou S. Sub-center arcface: boosting face recognition by large-scale noisy web faces. In: 
+Proceedings of the IEEE conference on european conference on computer vision; 2020.
+48. An X, Deng J, Guo J, Feng Z, Zhu X, Jing Y, Tongliang L. Killing two birds with one stone: efficient and robust training of 
+face recognition CNNs by partial fc. In: CVPR; 2022.
+49. Liu W, Wen Y, Yu Z, Li M, Raj B, Song L. Sphereface: deep hypersphere embedding for face recognition. In: Proceedings of 
+the IEEE conference on computer vision and pattern recognition; 2017. p. 212–20.
+50. Wang H, Wang Y, Zhou Z, Ji X, Gong D, Zhou J, Li Z, Liu W. Cosface: large margin cosine loss for deep face recognition. In: 
+Proceedings of the IEEE conference on computer vision and pattern recognition; 2018. p. 5265–74.
+51. Peng P , Portugal I, Alencar P , Cowan D. A face recognition software framework based on principal component analysis. 
+PLoS ONE. 2021;16(7):0254965.
+52. Sharma A, Paliwal KK. Linear discriminant analysis for the small sample size problem: an overview. Int J Mach Learn Cybern. 
+2015;6:443–54.
+53. Tharwat A. Independent component analysis: an introduction. Appl Comput Inform. 2021;17(2):222–49.
+54. He X, Niyogi P . Locality preserving projections. Adv Neural Inf Process Syst. 2003;16:1.
+55. Brakerski Z, Gentry C, Vaikuntanathan V. (Leveled) fully homomorphic encryption without bootstrapping. ACM Trans 
+Comput Theory (TOCT). 2014;6(3):1–36.
+56. Fan J, Vercauteren F . Somewhat practical fully homomorphic encryption. Cryptology ePrint Archive; 2012.
+57. Cheon JH, Kim A, Kim M, Song Y. Homomorphic encryption for arithmetic of approximate numbers. In: Advances in cryp-
+tology—ASIACRYPT 2017: 23rd international conference on the theory and applications of cryptology and information 
+security, Hong Kong, China, December 3–7, 2017, Proceedings, Part I 23. London: Springer; 2017. p. 409–37.
+58. Cheon JH, Kim A, Kim M, Song YS. Floating-point homomorphic encryption. IACR Cryptol ePrint Arch. 2016;2016:421.
+Page 26 of 26
+Chitrapu et al. Discover Computing          (2026) 29:132 
+59. Chillotti I, Gama N, Georgieva M, Izabachène M. TFHE: fast fully homomorphic encryption over the torus. J Cryptol. 
+2020;33(1):34–91.
+60. Institute of Automation, Chinese Academy of Sciences: CASIA-3D FaceV1 Dataset. Accessed: 2025-06-04 2004.  h t t p : / / b i o m 
+e t r i c s . i d e a l t e s t . o r g     .   
+61. Burak: Pins face recognition 2020.  h t t p s :  / / w w w  . k a g g l  e . c o  m / d a t  a s e t s  / h e r e i  s b u r  a k / p i  n s - f a  c e - r e c  o g n i  t i o n ? r e s o u r c e = d o w n l o 
+a d.
+62. Huang GB, Mattar M, Lee H, Learned-Miller E. Labeled faces in the wild: deep funneled dataset.  h t t p s :  / / w w w  . k a g g l  e . c o  m / d 
+a t  a s e t s  / d a n i e  l b a r  u s / l f w - d e e p f u n n e l e d. Accessed: 2025-08-30 2012.
+63. Najeeb MA, Alariyibi A. Imbalanced dataset effect on CNN-based classifier performance for face recognition. Int J Artif 
+Intell Appl (IJAIA). 2024;15(1):1.
+64. Yang Y, Zhang Q, Gao W, Fan C, Shu Q, Yun H. Design on face recognition system with privacy preservation based on 
+homomorphic encryption. Wirel Pers Commun. 2022;123(4):3737–54.
+Publisher's Note
+Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional affiliations.

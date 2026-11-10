@@ -206,6 +206,41 @@ export default function Home() {
     setReportOpen(true);
   }
 
+  function handleOpenMessageReport(reference: {
+    taskId?: string | null;
+    versionId?: string | null;
+    reportFileId?: string | null;
+  }) {
+    const task = selectedDetail?.tasks?.find((item) => item.id === reference.taskId);
+    const version = task?.versions.find((item) => item.id === reference.versionId)
+      || task?.versions.find((item) => item.report_file_id === reference.reportFileId);
+    if (task && version) {
+      setSelectedReport({
+        taskId: task.id,
+        versionId: version.id,
+        reportFileId: version.report_file_id,
+        title: version.title || task.title,
+        content: version.content,
+      });
+      setReportOpen(true);
+      return;
+    }
+    if (selectedReport && (!reference.versionId || selectedReport.versionId === reference.versionId)) {
+      setReportOpen(true);
+      return;
+    }
+    if (selectedDetail?.report && (!reference.reportFileId || selectedDetail.report.report_file_id === reference.reportFileId)) {
+      setSelectedReport({
+        taskId: null,
+        versionId: null,
+        reportFileId: selectedDetail.report.report_file_id,
+        title: selectedDetail.report.title,
+        content: selectedDetail.report.content,
+      });
+      setReportOpen(true);
+    }
+  }
+
   function handleTurnComplete(id: string | null) {
     if (!id || !token) return;
     void refreshSessions();
@@ -214,6 +249,7 @@ export default function Home() {
       setSelectedDetail(detail);
       const latest = latestReport(detail);
       setSelectedReport((current) => current || latest);
+      setWorkspaceGeneration((value) => value + 1);
     }).catch(() => undefined);
   }
 
@@ -276,7 +312,11 @@ export default function Home() {
               ref={splitRef}
               className={["workspace-split relative flex min-w-0 flex-1 overflow-hidden", isResizingReport ? "select-none" : ""].join(" ")}
             >
-              <UserMenu user={user} onLogout={handleLogout} />
+              {mode === "library" && (
+                <div className="absolute right-5 top-4 z-20">
+                  <UserMenu user={user} onLogout={handleLogout} />
+                </div>
+              )}
               <div
                 className="min-w-0 shrink-0 overflow-hidden"
                 style={{ width: reportReady ? `${100 - reportWidth}%` : "100%" }}
@@ -290,7 +330,8 @@ export default function Home() {
                     key={`${selectedDetail?.id || "new"}-${workspaceGeneration}`}
                     detail={selectedDetail}
                     token={token!}
-                    hasReport={Boolean(selectedReport || selectedDetail?.report || selectedDetail?.report_file_id)}
+                    user={user!}
+                    onLogout={handleLogout}
                     selectedTaskId={selectedReport?.taskId || selectedDetail?.active_task_id || null}
                     selectedReportVersionId={selectedReport?.versionId || null}
                     onSession={(id) => {
@@ -301,7 +342,7 @@ export default function Home() {
                     onReport={handleReportReady}
                     onStats={setStats}
                     onTurnComplete={handleTurnComplete}
-                    onOpenReport={() => setReportOpen(true)}
+                    onOpenReport={handleOpenMessageReport}
                   />
                 )}
               </div>

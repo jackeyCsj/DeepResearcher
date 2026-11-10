@@ -1,231 +1,198 @@
-<div align="right">
-
-[English](README.md)
-
-</div>
-
-<div align="center">
-
 # Deep Research
 
-**S**earch · **A**nalyze · **G**enerate · **E**valuate
+一个自主多 Agent 研究系统：把研究问题拆分成并行子问题，搜索网页、学术论文和本地文献，经过质量审查后生成带引用的 Markdown 报告。Web 应用支持账号登录、持续会话、报告问答、补充研究和报告版本管理；命令行可运行单次研究。
 
-[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python)](https://www.python.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org/)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+## 功能
 
-一个自主多 Agent 研究系统，将一个问题转化为带引用的结构化研究报告 -- 支持迭代质量审查、并行网络/学术搜索和本地知识库。
+- **迭代研究**：Supervisor 规划子问题、并行 Researcher 搜索，Supervisor 根据证据审查结果并重试或补充规划，最后由 Writer 整合报告。
+- **多轮会话**：可在同一会话中继续提问。请求路由到报告问答、首轮/新主题研究、补充研究或章节深化；需要更多信息时先向用户澄清。
+- **报告版本**：补充研究和章节深化会生成完整的新报告版本，并保留旧版本及版本关系。
+- **本地文献 RAG**：支持导入 PDF、Markdown、TXT 和 arXiv 文献；检索采用 BM25 与向量混合召回，再使用 Cross-Encoder 重排。报告和会话状态保存在本地数据目录与 PostgreSQL 中。
+- **流式 Web 界面**：通过 SSE 展示研究计划、资料收集、审查和报告生成进度；支持查看历史会话、报告引用及版本。
+- **MCP 工具**：通过配置加载 Tavily、网页抓取、论文搜索、PDF 转换和 GitHub 搜索等可选工具。
 
-</div>
+## 环境要求
 
+- Python 3.10 或更高版本，建议使用 Conda。
+- Node.js 20.9 或更高版本及 npm。
+- Docker Compose，用于运行 PostgreSQL。
+- LLM API 凭证、Tavily Search API key，以及可用的 OpenAI 兼容 Embedding 服务。
+- `requirements.txt` 当前安装 CUDA 12.6 版 PyTorch。没有 NVIDIA/CUDA 环境时，需要按机器环境调整 PyTorch 安装方式。
 
+## 安装与配置
 
-## 功能特性
-
-- **多 Agent 管线** -- Clarifier -> Supervisor -> Researcher xN -> Writer，以 LangGraph 状态图编排。Supervisor 将研究问题分解为并行子任务，并按 5 项基于证据的标准和严格决策树审查结果 -- 不达标的研究自动重试或重新规划，最多 3 轮。
-- **容错机制** -- 管线全链路多层错误恢复：搜索引擎在提供商之间回退（Brave -> Tavily）；失败的工具调用带退避重试；弱模型 tool_call 解析回退到从文本提取 JSON；MCP 传输错误（如 RefCell 竞争）被透明捕获和重试。故障表现为降级结果，而非崩溃。
-- **上下文工程** -- Token 计数、历史压缩和上下文预算管理使每个 Agent 在多轮 ReAct 循环中保持在上下文窗口内。按 Agent 调节温度，将结构化推理（0）与创意生成（0.3-0.6）分离。
-- **成本感知工具选择** -- Researcher 按成本分级分类工具（搜索摘要 vs. 全页抓取 vs. 论文阅读），仅在摘要缺少所需的具体数据时才升级调用，减少不必要的 API 开销。
-- **RAG 知识库** -- 上传 PDF、Markdown 文件或 arXiv 论文构建本地文献库。文档经分块、向量化后进入混合检索管线（BM25 + 稠密向量 + Cross-Encoder 重排序）。生成的报告自动回存至知识库，后续研究可在先前结果上递进。
-- **MCP 工具集成** -- 搜索引擎、学术 API 和文件转换器通过 Model Context Protocol 动态加载，每个 Agent 的工具白名单在配置中定义而非硬编码。
-- **流式 Web 界面** -- 通过 SSE 实时展示研究进度时间线，交互式报告支持引用导航和 PDF 导出。
-
-## 快速开始
-
-### 1. 克隆并配置
+克隆仓库并创建本地环境文件：
 
 ```bash
-git clone git@github.com:qinyu8028/sage-research.git
-cd sage-research
+git clone https://github.com/jackeyCsj/DeepResearcher.git
+cd DeepResearcher
 cp .env.example .env
 ```
 
-### 2. 获取 API 密钥（均有免费额度）
+PowerShell 创建环境文件：
 
-| 服务 | 注册地址 | `.env` 中的变量 |
-|------|---------|----------------|
-| **DeepSeek**（LLM） | [platform.deepseek.com](https://platform.deepseek.com) | `DEEPSEEK_API_KEY` |
-| **Brave Search** | [brave.com/search/api](https://brave.com/search/api/) | `BRAVE_API_KEY` |
-| **Tavily** | [tavily.com](https://tavily.com) | `TAVILY_API_KEY` |
+```powershell
+Copy-Item .env.example .env
+```
 
-编辑 `.env` 填入上述三个密钥，即可运行。
+在 `.env` 中至少配置以下项目：
 
-> **切换 LLM 提供商：** 将 `LLM_MODEL_ID` 设为你的模型名称。系统通过前缀自动识别提供商 -- `deepseek-*`、`glm-*`、`gemini-*`、`gpt-*`、`qwen-*` 分别路由到对应的 API 凭证。Claude 模型通过内置 Anthropic SDK 适配器支持。只需配置当前使用的提供商的密钥。
+```dotenv
+# LLM：模型前缀选择提供商。这里以 DeepSeek 为例。
+LLM_MODEL_ID=deepseek-v4-flash
+DEEPSEEK_API_KEY=你的密钥
+DEEPSEEK_BASE_URL=https://api.deepseek.com
 
-### 3. 运行
+# 搜索：当前 configs/mcp_servers.json 默认启用 Tavily。
+TAVILY_API_KEY=你的密钥
+
+# Embedding：当前代码使用 OpenAI 兼容 API，并默认从 GLM_API_KEY 读取凭证。
+EMBEDDING_MODEL_ID=embedding-3
+GLM_API_KEY=你的Embedding服务密钥
+EMBEDDING_BASE_URL=https://open.bigmodel.cn/api/paas/v4/
+
+# Web 会话数据库与认证。
+DATABASE_URL=postgresql+psycopg://csj:csj@localhost:5432/deep_research
+AUTH_SECRET_KEY=请替换为随机且私有的长密钥
+```
+
+支持的 LLM 模型名前缀：`deepseek`、`glm`、`gemini`、`gpt`、`qwen` 和 `claude`。各前缀使用的密钥变量及兼容 API 地址见 [.env.example](.env.example) 和 `client/base/llm_client.py`。`REVIEW_MODEL_ID` 可选，用不同模型进行研究质量审查。
+
+> **Embedding 配置说明：** `.env.example` 中目前仍有 hashing/local embedding 的示例配置，但当前 `client/rag/embedding.py` 尚未实现这些 provider 分支；代码要求设置 `EMBEDDING_MODEL_ID`、`GLM_API_KEY` 和 `EMBEDDING_BASE_URL`。首次检索还可能加载并下载 Cross-Encoder 重排模型。
+
+## 启动
+
+安装 Python 依赖并启动 PostgreSQL：
 
 ```bash
-./setup.sh
+conda create -n deep_research python=3.11 -y
+conda activate deep_research
+pip install -r requirements.txt
+docker compose up -d postgres
 ```
 
-脚本会创建 conda 环境、安装 Python/Node 依赖，并启动后端（:8001）和前端（:3000）。打开 http://localhost:3000
-
-### 手动启动
+安装并启动前端：
 
 ```bash
-conda activate deep-research
-python server.py &        # 后端 -- FastAPI 运行在 :8001
-cd web && npm run dev      # 前端 -- Next.js 运行在 :3000
+cd web
+npm ci
+npm run dev
 ```
 
-### CLI 模式
+另开一个终端，在仓库根目录启动后端：
 
 ```bash
-conda activate deep-research
-python main.py "你的研究问题"
-python main.py --model deepseek-v4-flash --max-rounds 2
+conda activate deep_research
+python server.py
 ```
 
-## 架构
+打开 <http://localhost:3000>，注册账号后即可使用。FastAPI 默认运行在 <http://localhost:8001>。`server.py` 使用开发模式自动重载；生产环境请用部署服务器启动 `client.api.app:app`，并妥善配置数据库、CORS、密钥和代理。
 
+### Mock 模式
+
+Mock 模式不需要后端或 API 凭证，使用模拟会话和研究事件：
+
+```bash
+cd web
+npm run dev:mock
 ```
-            User Query
-                  |
-                  v
-            +───────────+   unclear    +─────────────────+
-            | Clarifier |────────────>|  User Feedback  |
-            +─────┬─────+              +────────┬────────+
-                  | clear                       |
-                  v                             v
-            research_brief <───────────────────+
-                  |
-                  v
-+─────────────────────────────────────────────────────────────+
-|                      LangGraph Pipeline                     |
-|                                                             |
-|               +────────────────────+                        |
-|               |  Supervisor.plan() |                        |
-|               +─────────┬──────────+                        |
-|                         |                                   |
-|                 +───────┼──────+                            |
-|                 v       v      v                            |
-|               +────+ +────+ +────+                          |
-|               | R1 | | R2 | | R3 |  (parallel Researchers)  |
-|               +──┬─+ +──┬─+ +──┬─+                          |
-|                  +──────┼──────+                            |
-|                         v                                   |
-|                +─────────────────────+                      |
-|                | Supervisor.review() |                      |
-|                +─────────┬───────────+                      |
-|                          |                                  |
-|                   +──────┴──────+                           |
-|                   v             v                           |
-|               approved     retry/revise                     |
-|                   |             +──> back to plan (max 3)  |
-|                   v                                         |
-|               +────────+                                    |
-|               | Writer |                                    |
-|               +────┬───+                                    |
-|                    |                                        |
-|                    v                                        |
-|            Research Report ──> auto-index to RAG           |
-+─────────────────────────────────────────────────────────────+
+
+PowerShell 下可用以下命令启动 Mock 模式：
+
+```powershell
+$env:NEXT_PUBLIC_MOCK="true"
+npm run dev
+```
+
+### CLI 单次研究
+
+CLI 不需要 PostgreSQL。需配置 LLM、搜索及 Embedding 环境变量：
+
+```bash
+conda activate deep_research
+python main.py "比较 RAG 与微调在企业知识问答中的适用场景"
+```
+
+不传问题时会交互式提示输入。可用参数：
+
+```text
+--model MODEL          覆盖 LLM_MODEL_ID
+--max-rounds N         最大审查轮数
+--max-steps N           每个 Researcher 的最大搜索步数
+--timeout SECONDS       LLM 调用超时
+--data-dir PATH         数据目录，默认 data/
+```
+
+## 文献库
+
+Web 文献库支持上传 PDF、Markdown 和 TXT 文件。PDF 转换需要启用 `pdfmux` MCP 服务；arXiv 导入需要 `paper-search` MCP 服务。直接导入服务端已有文件或 arXiv ID 可使用：
+
+```bash
+python library_cli.py list
+python library_cli.py add 2301.00001
+python library_cli.py add ./paper.pdf --title "自定义标题"
+python library_cli.py delete "自定义标题"
+```
+
+CLI 文献库使用默认数据目录；Web 文献库按登录用户分别保存。搜索、PDF、论文和 GitHub MCP 服务的启用状态、启动命令及可选环境变量在 [configs/mcp_servers.json](configs/mcp_servers.json) 中配置。启用相应服务前，确保其运行时可用：Tavily/Brave 需要 `npx`，Fetch 需要 `uvx`，GitHub MCP 当前通过 Docker 启动。Brave 服务在默认配置中关闭；至少启用一个搜索服务，当前默认启用 Tavily。
+
+## 多轮会话行为
+
+- **报告问答**：依据当前报告和该用户文献库中的检索片段回答并展示来源；没有足够证据时说明检索不足，不会自动启动研究。
+- **补充研究**：调查报告未覆盖的方向，整合已有笔记和新证据，生成新版完整报告。
+- **章节深化**：针对指定章节或主题继续检索并生成新版完整报告。
+- **新主题研究**：留在当前聊天会话中，但创建独立研究任务和报告版本链。
+
+PostgreSQL 保存账号、会话消息、研究步骤、会话摘要、研究任务、运行状态和报告版本元数据。报告文件、向量索引及文献文件保存在 `data/`。`.gitignore` 已忽略运行时数据；不要提交 API key、私有文献或本地生成报告。
+
+## HTTP API
+
+除注册和登录外，API 需要 `Authorization: Bearer <token>`。主要端点如下：
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| `POST` | `/api/auth/register` | 注册账号 |
+| `POST` | `/api/auth/login` | 登录并获取 Bearer token |
+| `GET` | `/api/auth/me` | 获取当前账号 |
+| `POST` | `/api/chat/turns` | 提交新消息；SSE 返回路由、澄清、问答来源或研究进度 |
+| `GET` | `/api/sessions` | 列出当前用户会话 |
+| `GET` | `/api/sessions/{session_id}` | 读取消息、研究任务和报告版本 |
+| `DELETE` | `/api/sessions/{session_id}` | 删除会话及关联数据库记录 |
+| `GET` | `/api/reports/{report_file_id}` | 获取当前用户的报告文件 |
+| `GET` | `/api/library` | 列出当前用户的文献 |
+| `POST` | `/api/library/upload` | 上传文献 |
+| `POST` | `/api/library/ingest` | 导入服务端路径或 arXiv ID |
+| `DELETE` | `/api/library/{title}` | 删除文献 |
+
+旧的 `/api/clarify`、`/api/clarify/refine` 和 `/api/research` 接口仍保留，用于兼容原有流程。
+
+## 开发检查
+
+```bash
+conda activate deep_research
+python -m pytest
+
+cd web
+npm run lint
+npm run build
 ```
 
 ## 项目结构
 
-```
+```text
 client/
-├── base/       — LLMClient, AgentBase, Message, Config, Logger
-├── agents/     — Clarifier, Supervisor, Researcher, Writer
-├── tools/      — BaseTool, ToolRegistry, RAGTool, PaperReaderTool
-├── search/     — SearchTool (Brave+Tavily fallback), Adapters
-├── mcp/        — MCPClient, MCPTool, register_mcp_tools
-├── context/    — TokenCounter, Truncator, HistoryCompactor, ContextBuilder
-├── rag/        — Chunker, Embedding, VectorStore, Reranker, MQE, Pipeline
-├── graph/      — LangGraph state graph (State + nodes + routing)
-├── library/    — Document converter, LibraryManager (ingest/list/delete)
-├── api/        — FastAPI app, Pydantic schemas, SSE event formatting
-└── orchestrator.py — Infrastructure setup, research runner, resource management
-
-web/            — Next.js frontend
-├── app/        — Page layout, global styles
-├── components/ — ClarifyPanel, ResearchProgress, ReportView,
-│                 LibraryDrawer, StreamingText, QueryInput
-└── lib/        — API client, mock SSE simulation
-
-configs/        — MCP server config, agent tool whitelists
-data/           — Runtime data (RAG index, library, and research cache)
+  agents/       Clarifier、Supervisor、Researcher、Writer 与问答生成
+  api/          FastAPI 路由、认证、请求/响应模型及 SSE
+  db/           SQLAlchemy 模型与会话/任务/版本仓库
+  graph/        LangGraph 研究状态图
+  rag/          分块、Embedding、向量存储、混合检索和重排
+  search/       Brave/Tavily 搜索适配器
+  mcp/          MCP 客户端与工具注册
+  library/      PDF、文本和 arXiv 文献导入
+  context/      Token 计数和 agent 历史压缩
+  orchestrator.py 组装依赖并启动研究图
+web/            Next.js 前端
+configs/        MCP 服务和 Agent 工具白名单
+tests/          后端测试
+data/           本地索引、文献、报告及缓存（运行时生成）
 ```
-
-## API 端点
-
-| Method | Path | 描述 |
-|--------|------|------|
-| POST | `/api/clarify` | 分析查询明确度，模糊时返回研究方向建议 |
-| POST | `/api/clarify/refine` | 将用户反馈整合为研究简述 |
-| POST | `/api/research` | 运行完整管线，通过 SSE 流式输出进度 |
-| GET | `/api/library` | 列出已索引的文献 |
-| POST | `/api/library/upload` | 上传文件（PDF/Markdown）到知识库 |
-| POST | `/api/library/ingest` | 通过 arXiv ID 或文件路径导入文献 |
-| DELETE | `/api/library/{title}` | 从知识库中删除文献 |
-
-## 环境变量
-
-系统通过模型名称前缀自动识别 LLM 提供商。只需配置当前使用的提供商。
-
-**LLM（选择一个提供商）：**
-
-| 提供商 | `LLM_MODEL_ID` | 所需环境变量 |
-|--------|----------------|-------------|
-| DeepSeek | `deepseek-v4-flash` | `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL` |
-| Zhipu GLM | `glm-4-flash` | `GLM_API_KEY`, `GLM_BASE_URL` |
-| Google Gemini | `gemini-2.5-flash` | `GOOGLE_API_KEY`, `GOOGLE_BASE_URL` |
-| OpenAI | `gpt-4o` | `OPENAI_API_KEY` |
-| Anthropic | `claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
-| Alibaba Qwen | `qwen-plus` | `QWEN_API_KEY`, `QWEN_BASE_URL` |
-
-**Embedding：**
-
-| 变量                   | 描述                                             |
-| -------------------- | ---------------------------------------------- |
-| `EMBEDDING_MODEL_ID` | Embedding 模型，默认 `embedding-3`（智谱 embedding 模型） |
-| `EMBEDDING_BASE_URL` | Embedding API 端点                               |
-|                      |                                                |
-
-**搜索（至少需要一个，强烈建议两个都配置）：**
-
-| 变量               | 描述                                                    |
-| ---------------- | ----------------------------------------------------- |
-| `BRAVE_API_KEY`  | Brave Search -- [免费额度](https://brave.com/search/api/) |
-| `TAVILY_API_KEY` | Tavily Search -- [免费额度](https://tavily.com)           |
-
-**可选：**
-
-| 变量 | 描述 |
-|------|------|
-| `REVIEW_MODEL_ID` | 使用不同模型进行质量审查（如 `qwen3.7-plus`），启用跨模型审查以减少自一致性偏差 |
-| `GITHUB_TOKEN` | GitHub API -- 启用代码/仓库搜索 |
-| `HF_TOKEN` | HuggingFace -- 加速 Cross-Encoder reranker 下载 |
-| `http_proxy` / `https_proxy` | 网络代理 |
-
-## 工具清单
-
-Researcher 在每个 ReAct 步中从以下工具中选择，按成本分级：
-
-| 工具                                         | 来源  | 成本  | 描述                               |
-| ------------------------------------------ | --- | --- | -------------------------------- |
-| `search`                                   | 内置  | 低   | 网页搜索，Brave 优先 + Tavily 回退。返回排序摘要 |
-| `mcp__fetch__fetch`                        | MCP | 高   | 抓取完整网页内容。结果经 LLM 去噪              |
-| `mcp__paper-search__search_arxiv`          | MCP | 低   | 按关键词搜索 arXiv 论文，返回标题、摘要和 ID      |
-| `mcp__paper-search__search_google_scholar` | MCP | 低   | 搜索 Google Scholar，返回标题、摘要和链接     |
-| `read_arxiv_paper`                         | 内置  | 高   | 通过 pdfmux 下载并阅读 arXiv 论文         |
-| `mcp__github__search_repositories`         | MCP | 低   | 按关键词搜索 GitHub 仓库                 |
-| `mcp__github__search_code`                 | MCP | 低   | 跨仓库搜索 GitHub 代码                  |
-| `rag_search`                               | 内置  | 免费  | 查询本地 RAG 知识库（BM25 + 向量 + 重排序）    |
-
-工具白名单按 Agent 配置在 `configs/agents.json`，MCP 服务器定义在 `configs/mcp_servers.json`。
-
-## 技术栈
-
-**后端：** Python 3.14, LangGraph, FastAPI, OpenAI SDK, MCP
-
-**前端：** Next.js 16, React 19, Tailwind CSS 4
-
-**检索：** Sentence-Transformers, BM25 + 向量混合检索, Cross-Encoder 重排序
-
-**数据源：** Brave Search, Tavily, arXiv, Google Scholar, GitHub API
-
-## 前端预览
-
-![前端预览](assets/screenshot.png)

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import type { ResearchEvent } from "@/lib/api";
+import type { ResearchEvent, ResearchTraceItem } from "@/lib/api";
 import StreamingText from "@/components/StreamingText";
 
 type Verdict = "approved" | "retry" | "revise";
@@ -15,6 +15,8 @@ interface SubQuestionInfo {
 interface CompletedEntry {
   preview: string;
   tool_call_counts: Record<string, number>;
+  note?: string;
+  research_trace?: ResearchTraceItem[];
 }
 
 interface PlanNode {
@@ -108,6 +110,8 @@ export default function ResearchProgress({
               updated.set(event.question, {
                 preview: event.preview,
                 tool_call_counts: event.tool_call_counts,
+                note: event.note,
+                research_trace: event.research_trace,
               });
               const exists = last.sub_questions.some(
                 (sq) => sq.question === event.question
@@ -128,6 +132,8 @@ export default function ResearchProgress({
                     updated.set(event.question, {
                       preview: event.preview,
                       tool_call_counts: event.tool_call_counts,
+                      note: event.note,
+                      research_trace: event.research_trace,
                     });
                     next[j] = { ...rn, completed: updated };
                     break;
@@ -143,6 +149,8 @@ export default function ResearchProgress({
                 completed.set(event.question, {
                   preview: event.preview,
                   tool_call_counts: event.tool_call_counts,
+                  note: event.note,
+                  research_trace: event.research_trace,
                 });
                 next.push({ kind: "research", sub_questions: subs, completed });
               }
@@ -600,7 +608,7 @@ function NodeContent({
               <span className="text-muted-foreground font-mono text-[13px] mt-px">{i + 1}.</span>
               <div>
                 <span className="font-medium">{sq.label}</span>
-                <span className="text-foreground/50 block text-[13px]">{truncate(sq.question, 80)}</span>
+                <span className="text-foreground/50 block text-[13px]">{sq.question}</span>
               </div>
             </li>
           ))}
@@ -650,7 +658,7 @@ function NodeContent({
                 {isExpanded && (
                   <div className="mt-1.5 ml-5 space-y-1">
                     <p className={`text-[13px] leading-snug ${!isDone ? "shimmer-text" : "text-foreground/50"}`}>
-                      {truncate(sq.question, 85)}
+                      {sq.question}
                     </p>
                     {isDone && toolUsage && (
                       <p className="text-[13px] text-foreground/30">
@@ -661,6 +669,44 @@ function NodeContent({
                       <p className="text-[13px] text-foreground/30 leading-relaxed line-clamp-2">
                         {entry.preview}
                       </p>
+                    )}
+                    {isDone && entry.note && (
+                      <details className="mt-2 rounded-md border border-foreground/10 bg-background/55 p-2.5">
+                        <summary className="cursor-pointer text-[12px] font-medium text-foreground/75">
+                          完整研究笔记
+                        </summary>
+                        <pre className="mt-2 max-h-[32rem] overflow-auto whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-foreground/85">
+                          {entry.note}
+                        </pre>
+                      </details>
+                    )}
+                    {isDone && !!entry.research_trace?.length && (
+                      <details className="mt-2 rounded-md border border-foreground/10 bg-background/55 p-2.5">
+                        <summary className="cursor-pointer text-[12px] font-medium text-foreground/75">
+                          工具调用与返回内容（{entry.research_trace.length}）
+                        </summary>
+                        <ol className="mt-2 space-y-2.5">
+                          {entry.research_trace.map((trace, traceIndex) => (
+                            <li key={`${trace.tool}-${traceIndex}`} className="border-t border-foreground/8 pt-2.5 first:border-0 first:pt-0">
+                              <p className="font-mono text-[11px] font-medium text-foreground/80">{traceIndex + 1}. {trace.tool}</p>
+                              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-foreground/60">
+                                {JSON.stringify(trace.arguments, null, 2)}
+                              </pre>
+                              <pre className="mt-1 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded bg-surface p-2 font-sans text-[12px] leading-relaxed text-foreground/75">
+                                {trace.raw_result ?? trace.result}
+                              </pre>
+                              {trace.raw_result && trace.raw_result !== trace.result && (
+                                <details className="mt-1">
+                                  <summary className="cursor-pointer text-[11px] text-foreground/55">传给研究员的处理后结果</summary>
+                                  <pre className="mt-1 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded bg-surface p-2 font-sans text-[12px] leading-relaxed text-foreground/75">
+                                    {trace.result}
+                                  </pre>
+                                </details>
+                              )}
+                            </li>
+                          ))}
+                        </ol>
+                      </details>
                     )}
                   </div>
                 )}

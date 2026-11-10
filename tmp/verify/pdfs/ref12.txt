@@ -1,0 +1,431 @@
+      ShearFace: Efficient Extraction of Anisotropic
+               Features for Face Recognition
+
+Mohamed Anouar Borgi1, Demetrio Labate2                               Maher El Arbi1, Chokri Ben Amar1
+
+   1Research Groups on Intelligent Machines,                                2 Department of Mathematics,
+                 University of Sfax,                                       University of Houston, Houston,
+                  Sfax 3038, Tunisia
+                                                                                     TX 77204, USA
+ {anoir.borgi@ieee.org; dlabate@math.uh.edu}                     {maher.elarbi@gmail.com; chokri.benamar@ieee.org}
+
+Abstract-- This paper presents an improved approach to           samples, SRC classifies the query image by evaluating which
+                                                                 class would result in the minimal reconstruction error.
+face recognition, called Regularized Shearlet Network (RSN),     However, it was shown in [6] that SRC actually owes its
+that takes advantage of the sparse representation properties     success to the use of collaborative representation on the query
+of shearlets in biometric applications. The main novelty of      image rather than the l1-norm sparsity constraint on coding
+our approach is the efficient extraction of geometric features   coefficient. Besides SRC, another powerful method recently
+based on the properties of the shearlet decomposition, a         proposed is the Regularized Robust Coding (RRC) approach
+multiscale directional method which is especially designed to    [7] [8] that robustly regresses a given signal with regularized
+capture directional and anisotropic information in               regression coefficients. By assuming that the coding residual
+multidimensional data. To further improve the performance        and the coding coefficient are respectively independent and
+of our face recognition algorithm, we include a regularization   identically distributed, the RRC seeks for a maximum a
+step to control the trade-off between the fidelity to the data   posterior solution of the coding problem. An iteratively
+(gallery) and smoothness of the solution (probe). In this work,  reweighted regularized robust coding algorithm was proposed
+we focus on the challenging problem of the single training       to solve the RRC model efficiently
+sample per subject (STSS). We compare our new algorithm
+against different state-of-the-arts method using several facial      In this paper, we propose a method called Regularized
+databases including AR, FERET, FRGC, FEI and CK. Our             Shearlets Network (RSN), which combines sparsity and
+tests show that our RSN algorithm is very competitive and        regularization theory. Sparsity, in particular, will be based on
+outperforms several state-of-the-art face recognition            the use of the shearlet representation, an innovative multiscale
+methods.                                                         framework which combines the classical multiresolution
+                                                                 analysis with high directional sensitivity and provides
+      Keywords-- Shearlet, Regularized Shearlets Network,        optimally sparse approximations for a large class of images.
+                                                                 Indeed, despite their extensive use in image processing,
+Face Recognition.                                                traditional wavelets are known to have a limited ability to deal
+                                                                 with directional information. By contrast, shearlets are
+      I. INTRODUCTION                                            especially effective to capture directional and anisotropic
+                                                                 features with high efficiency. Furthermore, they have a well
+    Face recognition (FR) is a classical problem in computer     understood mathematical theory and fast numerical
+vision and pattern recognition and many methods, such as         implementations [9]. Regularization theory is another
+Eigenfaces [1], Fisherfaces [2], SVM [3] and Metaface [4]        important component of our approach, that allows us to
+have been proposed during the past two decades.                  control the trade-off between fidelity to the data and
+                                                                 smoothness of the solution.
+    One of the standard statistical methods for FR is subset
+                                                                     The rest of this paper is organized as follows. In Sec. 2, we
+selection ( L0 regularization) [19], which consists in           briefly describe the necessary background on shearlets. In Sec.
+                                                                 3, we describe our Regularized Shearlet Network algorithm. In
+computing the following estimator:                               Sec. 4, we present several numerical experiments to
+                                                                 demonstrate the efficacy of the proposed algorithm and
+^                  y 2 subject to                                compare it against competing algorithms. Finally, we make
+                       2                                         some concluding remarks in Sec. 5.
+w L0  arg min Xw                   w          (1)
+             w Rp                      0                                           II. THE SHEARLET TRANSFORM
+
+where is a tuning parameter, y is a normalized test                  The shearlet transform, introduced by one of the authors
+                                                                 and his collaborators in [10], is a genuinely multidimensional
+face and X is a matrix representing a gallery of faces. This     version of the traditional wavelet transform, and is especially
+                                                                 designed to represent data containing anisotropic and
+statistical approach has received renewed interest in recent
+years due to the notion of sparse representations, which offers
+the possibility of recasting the face recognition problem as a
+minimization problem. For example, the recently proposed
+Sparse Representation Classification (SRC) scheme [5] casts
+the recognition problem as one of classifying among multiple
+linear regression and uses sparse representations computed via
+l1 minimization for efficient feature extraction. By coding a
+query image as a sparse linear combination of all the training
+directional features with very high efficiency. As a result, this                 By choosing the generator function  appropriately, the
+approach provides optimally sparse approximations for images                  discrete shearlets form a tight frame of well-localized
+with edges, outperforming traditional wavelets. Thanks to                     waveforms defined at various scales, orientations and
+their properties, shearlets have been successfully employed in                locations.
+a number of image processing application including denoising,
+edge detection and feature extraction [11][12][13]. Formally,                                    III. THE PROPOSED APPROACH
+the Continuous Shearlet Transform [14] is defined as the
+mapping:                                                                          Our novel approach for FR that we call Regularized
+                                                                              Shearlet Network (RSN) is defined as a cascade of a feature
+    SH (a, s, t) f , a,s,t , a 0, s , t 2 (2)                                 extraction module followed by a recognition (or verification)
+                                                                              module. We handle the extraction of the features using the
+                          1             1                                     Shearlet Network (SN). Thanks to the properties of shearlets,
+                                      as                                      this step is very efficient to capture the essential geometry of
+    where, ast (x)  det M as 2  (  M       (  x  t)), and                     the image. We implement the recognition step by the use of
+                                                                              regularization theory which allows us to satisfy both fidelity
+Mas a s . Observe each matrix M as can be factorized as                       to the solution (Probe or Test) and closeness to the data
+                                                                              (Gallery) [36]. The structure of our algorithm is shown in
+        0a                                                                    Figure 3.
+
+Bs Aa , where Bs    1 -s        is a shear matrix and
+                    01
+
+Aa  a0  is an anisotropic dilation matrix. Thus, the
+
+    0a
+
+shearlet transform is a function of three variables: the scale a,
+the shear s and the translation t. One of the main properties of
+the Continuous Shearlet Transform is its ability to detect very
+precisely the geometry of the singularities of a 2-dimensional
+
+function f . This property is going far beyond the properties of
+
+the wavelet transform and explains why shearlets are so                            Fig. 2. Augmented face recognition schema.
+effective at capturing edges and other directional information
+in images.
+
+    By sampling the Continuous Shearlet Transform
+
+SH (a, s, t) on an appropriate discrete set, we obtain the                        Analytically, the FR problem can be casted as a regression
+                                                                              problem of approximating a multivariate function from sparse
+corresponding Discrete Shearlet Transform. Specifically, M as                 data. This is an ill-posed problem and a classical way to solve
+is discretized as M jl Bl A j , where B 1 1 ,                                 it is though regularization theory [15, 16, 17]. In practice,
+                                                                              rather than looking for the exact solution, we settle for an
+                                                                  01          approximate one which satisfies some type of regularity. One
+                                                                              of the most popular and effective approximation methods is
+
+A 4 0 are the shear matrix and the anisotropic                                the L1 regularization method which is often referred to as
+       02
+                                                                              Lasso [32] and is given by:
+dilation matrix, respectively. Hence, the discrete shearlets are
+the waveforms:                                                                ^    arg min 1 Xw y 2  w                         (4)
+                                                                                   w Rp n  2             1
+                              3j                                              wL1
+
+         j,l,k (x) 2 2 (Bl A j x k ) , j 0, 2 j l 2 j 1, k 2 (3)              where 0 is an appropriately chosen regularization
+
+                                                                              parameter, y is a normalized test face and X is an n × d
+
+                                                                              matrix representing a gallery of faces.
+                                                                                  The global optimum of (4) can be easily computed using
+
+                                                                              standard convex programming techniques. It is known that, in
+
+                                                                              practice, L1 regularization often leads to sparse solutions,
+
+                                                                              although they are often suboptimal. The theoretical
+                                                                              performance of this method has been analyzed recently
+                                                                              [18][19].
+
+Fig. 1. (a) Spatial-frequency plane of the shearlets, (b) Frequency support.  A. SN for Modeling and Features Extraction
+
+                                                                                  Our proposed RSN approach is initialized by training a
+                                                                              shearlet network (SN) [20] to models the faces. The Gallery
+                                                                              faces are approximated by a shearlet network to produce a
+                                                                              compact biometric signature as wavelet network [38]. One
+main feature of this approach is that this signature, constituted                                                                                                      ~i
+the shearlets and their weights, will be used to match a Probe
+with all faces in the Gallery. The test (Probe) face is projected                 2. If frame is not tight: Calculate the dual basis j,l,k formed
+on the shearlet network of the Gallery face and new weights
+specific to this face are produced. The family of shearlets                       by the shearlets of the network and the new selected shearlet
+remains then unchanged (this is the Gallery face).
+                                                                                                              ~i
+
+                                                                                  according (6); else j,l,k     j,l,k .
+
+                                                                                  3. Calculate the weights by direct projection of the image on
+
+                                                                                  the dual shearlet wi      ~i
+
+                                                                                                        f , j,l,k .
+
+                                                                                  4. Calculate the output of the network frec .
+
+                                                                                  5. If the number of shearlets is reached then learning stops;
+
+                                                                                  otherwise another shearlet is selected and we return to 2.
+
+            Fig. 3. Overview of SN Architecture.                                  B. RSN Algorithm
+
+    Recall that the shearlets form a tight frame, meaning that,                      Below we present the algorithm of RSN, where X
+for any image in the space of square integrable functions we
+have the reproducing formula:                                                     represents the reconstructed gallery faces after extraction of
+
+                                                                                  the features by training SN and y is the reconstruct test face
+
+                                                                                  with the features extracted after projection of the real test face
+                                                                                  on the frame of shearlets produced by the gallery faces.
+
+            f     j,l ,k 2 f , j,l,k           j,l ,k                        (5)  Algorithm 2: RSN
+
+                                                                                  Input: - y : normalized test face f : y f / norm ( f , 2)
+
+We will use this formula to define the Shearlet Network                           - X : aligned gallery faces: X X /             X *X
+
+approach, similar to the wavelet network [33] [39] [40] [41],
+
+as a combination of the RBF neural network and the shearlet                       - Iter: max of iteration; w _ thre ;           ]0 .. 1[
+
+decomposition. In the optimization stage, the calculation of                      Output: w ; Identity(y)
+
+the weights connection in every stage is obtained by projecting
+
+the signal to be analyzed on a family of shearlets. We need the                   1. Choose winit (refer to [35])
+                                                                                  2. Diagonalizable X ; X t X '* X ; yt
+dual family of the shearlets forming our shearlet network,                                                                       X '* y
+
+which is calculated by the formula:
+
+~i          N     i,m ) 1  m        with  i,m          i  ,l ,k  ,  m        (6)  3. For j = 1 ... Iter
+   j ,l ,k                 j ,l ,k                     j            j ,l ,k
+               (                                                                        - Calculate
+
+            m1                                                                         ^  arg min 1 Xw
+
+In our approach, the mother shearlet that we use to                                    w                                 y2      w Use
+                                                                                                                                     1
+construct the family j,l,k is the second derived of the Beta                                            w Rp n              2
+
+function [31] [37] which has the advantage of being well                               Lasso [34]:
+localized. Note that the number of shearlets may be chosen by
+the user.                                                                              wi Lasso(X , y, X t , yt , winit , w _ thre )
+
+Algorithm 1: Training SN                                                          - winit = wi
+
+                                                                                  End
+
+Input: image f                                                                                          yrec X * wi ; w wi
+
+Output: reconstructed image frec                                                  4. For k = 1,..., Classnum      w1/2 ( y                     2
+
+1. Select a shearlet j,l,k as activation function of the                                        error (k )                       X k wk ) 2
+
+shearlet network:                                                                 End
+          a. Choose the mother shearlet.
+          b. Build a library formed by the shearlets which form                   If we consider here a class h then the identity is:
+                a shearlet frame.
+          c. Set as a stop learning condition based on the                                Identity( y) arg minh (error)
+                difference of input and the output network and
+                iterate the following steps:                                          In the algorithm above: Classnum is the classes' number of
+
+                                                                                  X , where Classnum d ; if Classnum d then we
+
+                                                                                  consider the case of Single Training Sample per Subject
+                                                                                  (STSS).
+                    IV. EXPERIMENTAL RESULTS                                  MetaFace [4]  0.6842     0.8750          0.9837
+                                                                              RKR [30]      0.6316     0.8250          0.9837
+    In this paper, we focus on the problem called Single                      RRC [8]       0.7105     0.8500          1
+Training Sample per Subject (STSS) that is receiving                          CRC [6]       0.6316     0.8500          0.9837
+considerable attention in FR [21]. For our experiments, we                    RSN (our)     0.7171     0.8750          0.9919
+have used several standard benchmark face databases to
+evaluate the performance of our approach.                                         Table II shows that, also using the FEI, GT and AR
+                                                                              databases, the RSN and RRC methods are the top performers.
+A. Datasets
+                                                                              TABLE II.     RECOGNITION ACCURACY ON THE FEI, GT & AR
+    We have used the Extended Cohn-Kanade (CK+) [22]                                                  DAT ABAS ES.
+(123 images), Georgia Tech (GT) [23] (50 images), FEI [24]
+(200 images), AR [25] (100 images), FRGC v1 [26] (152                         Method              FEI    Database            AR
+images), FERET [27] (with different dimension 100, 150 and                    NN            -                GT        0.4810
+200 images) and ORL (40 images) face databases. All the                       SVM_OAA       0.9600                     0.8800
+images are resized to 27×32.                                                  SVM_DAG[28]   0.9600     -               0.8200
+                                                                              BHDT [29]     0.6250     0.2800          0.6371
+    In this paper, we chose to select randomly the face image                 MetaFace [4]  0.9700     0.2800          0.8528
+both for Gallery and Probe dataset.                                           RKR [30]      0.9750     0.2000          0.9286
+                                                                              RRC [8]       0.9800     0.2800          0.9571
+                                                                              CRC [6]       0.9750     0.2400          0.8900
+                                                                              RSN (our)     0.9750     0.2800          0.9500
+                                                                                                       0.2800
+                                                                                                       0.3800
+
+Fig. 4. A subject from Gallery and Probe with different face databases. (a)       In Table III, we test FR using the FERET database, with
+                        FRGC. (b) ORL. (c) FEI. (d) CK+.                      100, 150 and 200 images. Also in this case, our method is
+                                                                              among the top performers.
+
+                                                                              TABLE III. RECOGNITION ACCURACY ON THE FERET DATABASE.
+
+                                                                                                       FERET Database
+
+                                                                              Method              100     150             200
+                                                                              NN            -
+                                                                              SVM_OAA       0.7700     -               -
+                                                                              SVM_DAG[28]   0.7700
+                                                                              BHDT [29]     0.5000     0.7200          0.6850
+                                                                              MetaFace [4]  0.8900
+ Fig. 5. A subject from Gallery and Probe with different face databases. (a)  RKR [30]      0.8900     0.7333          0.7150
+                                 GT. (b) AR. (c) FERET.                       RRC [8]       0.8800
+                                                                              CRC [6]       0.8700     0.4200          0.3350
+    We have compared our approach with NN (nearest                            RSN (our)     0.9000
+neighbor) SVM_OAA (one against all), SVM_DAG (Directed                                                 0.8933          0.8950
+Acyclic Graph) [28], BHDT [29], MetaFace [4], RKR [30],
+RRC [8], CRC [6].                                                                                      0.8533          0.8500
+
+B. Recognition accuracy                                                                                0.8800          0.9050
+    Table I shows that RSN (our method) and RRC are the
+                                                                                                       0.8400          0.8750
+best performing methods in terms of FR rate when compared
+with many other classical and state-of-the-art methods using                                           0.8733          0.8950
+the FRGC v1, ORL and CK+ databases.
+                                                                              C. Runing Time Comparison
+TABLE I.  RECOGNITION ACCURACY ON THE FRGC V1, ORL & CK+
+                         DAT ABAS ES.                                             For a fair comparison, we have measured the average
+                                                                              running time of all methods. For all our experiments, we have
+Method          FRGC v1    Database        CK+                                used Matlab version 7.0.1 environment with Intel core 2 duo
+NN           -                ORL    -                                        2.10 GHz CPU and with 2.87Go RAM. For all methods cited
+SVM_OAA      0.5921                  0.9837                                   from the literature, we have applied the implemented codes as
+SVM_DAG[28]  0.6053      0.6994      0.9837                                   provided by the authors in the case of STSS. The tables below
+BHDT [29]    0.2697      0.8750      0.9187                                   report the average running times for the various methods
+                         0.8750                                               considered. Note that the algorithms RKR [30] and CRC [6]
+                         0.7500                                               are overall the least computationally intensive. Our approach
+                                                                              requires a computational time comparable to CRC in many
+                                                                              case, even though the performance in terms of running times
+                                                                              depends on the database considered.
+TABLE IV.     THE AVERAGE RUNING TIME (SECONDS) ON FRGC V1, ORL &  faces. The experimental results for FR on the problem of
+                             CK+ DATABASES.                        Single Training Sample per Subject run on several face
+                                                                   databases show that our new approach is very competitive
+Method            FRGC v1      Database             CK+            when compared against several state-of-the-art methods.
+NN            -                     ORL       -
+SVM_OAA       0.6415                          0.1146                                        ACKNOWLEDGMENT
+SVM_DAG[28]   0.0610          0.7703          0.0473
+BHDT [29]     0.0109          0.0133          0.0046                   The authors would like to acknowledge the financial
+MetaFace [4]  0.5042          0.0113          0.5238               support of this work by grants from General Direction of scien
+RKR [30]      0.0160          0.0019          1.2e-004             tific Research (DGRST), Tunisia, under the ARUB program.
+RRC [8]       0.0867          0.6500          0.1443               D. Labate acknowledges partial support by NSF DMS
+CRC [6]       0.0027          0.0160          0.0017               1005799 and DMS 1008900.
+RSN (our)     0.0784          0.0102          0.1954
+                              7.7e-04                                                            REFERENCES
+                              0.0094
+                                                                   [1] M. Turk, and A. Pentland, "Eigenfaces for recognition," J.Cognitive
+TABLE V.      THE AVERAGE RUNING TIME (SECONDS) ON FEI, GT & AR          Neuroscience, 3(1), pp. 71­86, 1991.
+                              DATABASES.
+                                                                   [2] P.N. Belhumeur, J.P. Hespanha, and D.J. Kriengman, "Eigenfaces vs.
+Method               FEI       Database              AR                  fisherfaces: recognition using class specific linear projection," IEEE
+NN            -                      GT       -                          PAMI, 19(7), pp. 711­720, 1997.
+SVM_OAA       0.1516                          0.1680
+SVM_DAG[28]   0.0786          -               0.0433               [3] B. Heisele, P. Ho, and T. Poggio, "Face recognition with support vector
+BHDT [29]     0.0057          0.0212          0.0055                     machine: Global versus component-based approach,", ICCV, vol.2, pp.
+MetaFace [4]  1.0325          0.0138          0.3153                     688 ­ 694, 2001.
+RKR [30]      7.5e-005        0.0022          0.0150
+RRC [8]       0.1758          1.0684          0.0405               [4] M. Yang, L. Zhang and D. Zhang. "Metaface learning for sparse
+CRC [6]       0.0031          0               0.0038                     representation based face recognition," ICIP, pp. 1601-1604, Hong
+RSN (our)     0.2341          0.1178          0.0419                     Kong, 2010.
+                              0.0012
+                              0.1600                               [5] J. Wright, A.Y. Yang, A. Ganesh, S.S. Sastry, and Y. Ma, "Robust face
+                                                                         recognition via sparse representation," IEEE Trans. Pattern Analysis and
+TABLE VI.     T HE AVERAGE RUNING TIME (SECONDS) ON FERET                Machine Intelligence, vol. 31, no. 2, pp. 210­227, 2009.
+                           DATABASE.
+                                                                   [6] L. Zhang, M. Yang, and X. Feng, "Sparse Representation or
+                           FERET Database                                Collaborative Representation: Which Helps Face Recognition?," ICCV,
+                                                                         pp. 471-478, 2011.
+Method              100       150             200
+NN            -                                                    [7] M. Yang, L. Zhang, J. Yang and D. Zhang, "Robust sparse coding for
+SVM_OAA       0.1692       -               -                             face recognition," CVPR, pp. 625-632, 2011.
+SVM_DAG[28]   0.0397
+BHDT [29]     0.0053       0.6996          0.5001                  [8] M. Yang, L. Zhang, J. Yang and D. Zhang, "Regularized Robust Coding
+MetaFace [4]  0.4781                                                     for Face Recognition," IEEE Trans. on Image Processing, 22(5), pp.
+RKR [30]      1.5e-004     0.0794          0.1074                        1753-1766, 2013.
+RRC [8]       0.1366
+CRC [6]       0.0014       0.0121          0.0120                  [9] K. Guo and D. Labate, "Optimally sparse multidimensional
+RSN (our)     0.2486                                                     representation using shearlets," SIAM J Math. Anal., vol. 39, pp. 298-
+                           0.6991          0.9191                        318, 2007.
+
+                           1.1e-004        1.6e-004                [10] D. Labate, W.-Q. Lim, G. Kutyniok and G. Weiss, "Sparse
+                                                                         multidimensional representation using shearlets," Wavelets XI (San
+                           0.1564          0.1751                        Diego, CA), SPIE, Bellingham, WA, pp. 254­262, 2005.
+
+                           0.0076          0.0037                  [11] G.R. Easley, and D. Labate, "Critically sampled wavelets with
+                                                                         composite dilations," IEEE Trans. Image Process., 21 (2), pp. 550-561,
+                           0.2505          0.2519                        2012.
+
+                          5. CONCLUSION                            [12] G.R. Easley, D. Labate and V. Patel, "Directional multiscale processing
+                                                                         of images using wavelets with composite dilations," J. Math. Imag.
+    The objective of this paper is to present a new method for           Vision, 2013.
+face recognition called Regularized Shearlet Network. This
+approach has the ability to capture face features very             [13] S. Yi, D. Labate, G.R. Easley, and H. Krim, "A Shearlet approach to
+efficiently thanks to the use of the shearlet representation, a          Edge Analysis and Detection," IEEE Trans. Image Process, 18 (5), pp.
+method which promotes sparsity and is especially able to                 929­941, 2009.
+extract geometric features with high accuracy. In our
+approach, these features are fed into a shearlet network and       [14] G. Kutyniok and D. Labate, "Resolution of the wavefront set using
+processed through a regularization stage to control the trade-           continuous shearlets," Trans. Amer. Math. Soc. 361, pp. 2719-2754,
+off between fidelity to the gallery and smoothness of the probe          2009.
+
+                                                                   [15] M. Bertero, "Regularization methods for linear inverse problems,"
+                                                                         Inverse Problems, ed. C.G. Talenti, Springer, Berlin, 1986.
+
+                                                                   [16] M. Bertero, T. Poggio and V. Torre, "Ill-posed problems in early
+                                                                         vision," Proc. IEEE, 76 , pp. 869­889, 1988.
+
+                                                                   [17] A.N. Tikhonov and V.Y. Arsenin, "Solutions of Ill-posed Problems,"
+                                                                         W.H. Winston, Washington, DC, 1977.
+
+                                                                   [18] T. Zhang, "Analysis of multi-stage convex relaxation for sparse
+                                                                         regularization," Journal of Machine Learning Research, 11, pp. 1081­
+                                                                         1107, 2010.
+
+                                                                   [19] T. Zhang, "Multi-stage convex relaxation for feature selection,''
+                                                                         Bernoulli, 2012.
+[20] M.A. Borgi, D. Labate, M. El'arbi, and C. Ben Amar, "Shearlet              [32] R. Tibshirani, "Regression shrinkage and selection via the lasso,"
+      Network-based Sparse Coding Augmented by Facial Texture Features                Journal of the Royal Statistical Society, Series B (Statistical
+      for Face Recognition," ICIAP (2), pp. 611-620, 2013.                            Methodology), 58, pp. 267­288, 1996.
+
+[21] Y. Su, S.G. Shan, X.L. Chen, and W. Gao, "Adaptive Generic Learning        [33] M.A. Borgi, M. El'arbi and C. Ben Amar, "Wavelet Network and
+      for Face Recognition from a Single Sample per Person," CVPR, pp.                Geometric Features Fusion Using Belief Functions for 3D Face
+      2699 ­ 2706, 2010.                                                              Recognition," CAIP (2), pp. 307-314, 2013.
+
+[22] P. Lucey, J. F. Cohn, T. Kanade, J. Saragih, Z. Ambadar, and I.            [34] J. Hiriart-Urruty and C. Lemarechal, "Convex analysis and minimization
+      Matthews, "The Extended Cohn-Kande Dataset (CK+): A complete                    algorithms," Springer-Verlag, 1996.
+      facial expression dataset for action unit and emotion-specified
+      expression," CVPR,Workshop H CBA, pp. 94­101, 2010.                       [35] T. Hastie, R. Tibshirani, and J. Friedman, "The Elements of Statistical
+                                                                                      Learning," Springer Series in Statistics, 2003.
+[23] A. Martinez and R. benavente, "The AR face database," Technical
+      Report 24, CVC, 1998.                                                     [36] M.A. Borgi, D. Labate, M. El'arbi, and C. Ben Amar, "Regularized
+                                                                                      Shearlet Network for face Recognition using Single Sample Per Person,"
+[24] C. E. Thomaz and G. A. Giraldi. "A new ranking method for Principal              ICASSP, pp. 514-518, Firenze Italy, May 4-9, 2014. (accepted)
+      Components Analysis and its application to face image analysis," Image
+      and Vision Computing, vol. 28, no. 6, pp. 902-913, June 2010.             [37] M. Zaied, C. Ben Amar, and M. A. Alimi, "Beta Wavelet Networks for
+                                                                                      Face Recognition, Journal of Decision Systems," Lavoisier 2005
+[25] A. Martinez and R. benavente, "The AR face database," Technical                  Edition, Vol. 14, N°. 1-2/2005, pp. 109-122, 2005.
+      Report 24, CVC, 1998.
+                                                                                [38] S. Said, B. Ben Amor, M. Zaied, C. Ben Amar and M. Daoudi, "Fast and
+[26] P. J. Phillips, P. J. Flynn, T. Scruggs, K. W. Bowyer, J. Chang, K.              efficient 3D face recognition using wavelet networks," ICIP. pp. 4153-
+      Hoffman, J. Marques, J. Min, and W. Worek, "Overview of the face                4156, 2009.
+      recognition grand challenge," CVPR, no. 1, pp. 947-954, June 2005.
+                                                                                [39] O. Jemai, M. Zaied, C. Ben Amar, and M. A. Alimi, "FBWN: an
+[27] P.J. Phillips, H. Moon, S.A. Rizvi, and P.J. Rauss, "The FERET                   architecture of Fast Beta Wavelet Networks for Image Classification,"
+      Evaluation Methodology for Face-Recognition Algorithms," IEEE                   2010 IEEE World Congress on Computational Intelligence, IJCNN
+      Transactions on Pattern Analysis and Machine Intelligence, vol. 22, pp.         2010, International Joint Conference on Neural Networks, Barcelona,
+      1090-1104, 2000.                                                                pp. 1953-1960, July 18-23, 2010.
+
+[28] C.W Hsu, and C.J Lin, "A Comparison of Methods for Multiclass              [40] O. Jemai, M. M. Zaied, C. Ben Amar, and M. A. Alimi, "Pyramidal
+      Support Vector Machines," IEEE Transactions on neural networks, vol.            Hybrid Approach: Wavelet Network with OLS Algorithm Based-Image
+      13, N°. 2, pp. 415 ­ 425, March 2002.                                           Classification," International Journal of Wavelets, Multiresolution and
+                                                                                      Information Processing, IJWMIP, Vol. 9, No. 1, pp. 111-130, 2011.
+[29] H. Cevikalp, "New clustering algorithms for the support vector machine
+      based hierarchical classification," Pattern Recognition Letters, 31(11),  [41] O. Jemai, M. Zaied, C. Ben Amar, and M. A. Alimi, "Faster Learning
+      pp. 1285-1291, 2010.                                                            Algorithm of Wavelet Network Based on Fast Wavelet Transform,"
+                                                                                      International Journal of Pattern Recognition and Artificial Intelligence,
+[30] M. Yang, L. Zhang, D. Zhang, and Shenlong Wang, "Relaxed                         IJPRAI, Vol. 25, N° 8, pp. 1279-1319, 2011.
+      collaborative Representation for Pattern Classification," CVPR, pp.
+      2224-2231, 2012.
+
+[31] C. Ben Amar, M. Zaied and M.A. Alimi, "Beta Wavelets. Synthesis and
+      application to lossy image compression," Journal of Advances in
+      Engineering Software, Elsevier edition, 36(7), pp. 459-474, July 2005.
+

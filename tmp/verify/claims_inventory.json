@@ -1,0 +1,684 @@
+{
+  "refs": {
+    "1": {
+      "source": "Privacy-Preserving Face Recognition with Learnable Privacy Budgets in Frequency Domain (Ji et al., ECCV 2022, arXiv:2207.07316)",
+      "url": "https://arxiv.org/abs/2207.07316",
+      "claims": [
+        {"id": "1a", "where": "§1¶1", "text": "PPFR 的核心目标被表述为：限制服务提供商仅能获知分类结果（身份）及一定置信度，而无法获取原始图像，即便通过自动恢复技术也不行"},
+        {"id": "1b", "where": "§1¶2", "text": "PPFR 研究按处理输入数据方式分为加密（HE/SMC）与扰动两大类；加密类计算开销过高，不适合当前 SOTA 人脸识别系统；扰动类通过施加扰动避免加密高成本，差分隐私（DP）是常用扰动方法"},
+        {"id": "1c", "where": "§2", "text": "人类仅依赖低频信息进行图像识别，而神经网络同时使用低频和高频信息"},
+        {"id": "1d", "where": "§2", "text": "尽量少用低频信息对图像隐私保护非常有效"},
+        {"id": "1e", "where": "§2", "text": "DCT 变换有助于将'对可视化重要的低频信息'与'对识别重要的高频信息'分离，这是隐私保护的前提条件"},
+        {"id": "1f", "where": "§2", "text": "人脸图像约 91.6% 的能量集中在 DC 通道"},
+        {"id": "1g", "where": "§2", "text": "DC 分量定义了整个块的基本色调，对可视化至关重要，但对识别影响很小，因此可在进入识别模块前移除"},
+        {"id": "1h", "where": "§3", "text": "DCTDP 流程：RGB 转 YCbCr，值域调整为 [−128,127]，分割为 H/8×W/8 个 8×8 块；先对图像做 8 倍上采样，再用归一化二维 type-II DCT 将每个块转为 8×8 频域系数；最终 [H,W,3] 转换为 [H,W,8,8,3]"},
+        {"id": "1i", "where": "§4.2", "text": "DCTDP 三个模块：频域变换、DP 扰动、人脸识别。核心机制是可学习隐私预算分配：为每个频率分量初始化可学习参数，经 softmax 后乘以总预算 ε；softmax 输出和为 1 故总隐私预算恒等于 ε；噪声为拉普拉斯机制，σ_{i,j,k}=(r_max−r_min)/ε_{i,j,k}，Σε_{i,j,k}=ε，保证 ε-差分隐私；敏感度通过将 VGGFace2 与精炼 MS1MV2 全部图像变换到频域后取各位置最大最小值之差获得；识别模块用 ArcFace 损失 + ResNet50 骨干"},
+        {"id": "1j", "where": "§4.3优缺点", "text": "同态加密可在加密数据上运算，保护数据隐私并维持高识别精度；但加密过程引入大量额外计算，不适合大规模交互场景"},
+        {"id": "1k", "where": "§5.4", "text": "Ji et al. 2022 方法本质是先转换到频域、移除 DC 分量、学习隐私预算、再向频域特征添加噪声；基于后端识别网络的损失学习隐私预算分配，实现理论隐私保证的同时精度损失极小"},
+        {"id": "1l", "where": "§6.1", "text": "LFW 上 ϵmean=0.5 时 ArcFace 版本达 99.48%，IJB-C(1e-4) 达 91.22%，显著优于 PEEP（IJB-C 仅 6.02%）和 Cloak（33.82%）"},
+        {"id": "1m", "where": "§7.1", "text": "2022 年 ECCV 可学习隐私预算方法是频域保护+深度学习路线主线演进的一部分"},
+        {"id": "1n", "where": "§7.5", "text": "PPFR-FD 动机即人脸解锁移动设备、社区门禁与城市监控，因高精度依赖深层网络，人脸图像常需传至第三方服务器推理，带来隐私风险（报告将此动机归于引文[1]）"},
+        {"id": "1o", "where": "§8", "text": "频域变换（DCT/BDCT）分离可视化与识别信息、移除 DC 分量已成熟；差分隐私在频域提供理论隐私保证且精度损失小"}
+      ]
+    },
+    "2": {
+      "source": "Alarming gains in face reconstruction from biometric templates made by researchers (Biometric Update, 2025-05)",
+      "url": "https://www.biometricupdate.com/202505/alarming-gains-in-face-reconstruction-from-biometric-templates-made-by-researchers",
+      "claims": [
+        {"id": "2a", "where": "§1", "text": "深度人脸模板通常编码约 512 个数值"},
+        {"id": "2b", "where": "§1", "text": "传统重建方法需生成大量随机人脸再依据相似度分数筛选，通常需至少 50,000 次查询"},
+        {"id": "2c", "where": "§1", "text": "2024 年 IEEE S&P 论文《Scores Tell Everything about Bob: Non-adaptive Face Reconstruction on Face Recognition Systems》提出可比重建速度提升数千倍的新方法，且所需算力有限；重建人脸保留身份但对年龄不敏感，在部分表情与极端角度下表现较差"},
+        {"id": "2d", "where": "§7.4", "text": "非自适应分数重建攻击（IEEE S&P 2024）可从生物特征模板重建人脸图像，速度比此前认为可能的方法快数千倍"},
+        {"id": "2e", "where": "§8", "text": "非自适应分数重建攻击速度提升数千倍（同 2d 的重述）"}
+      ]
+    },
+    "3": {
+      "source": "Template recovery attack on encrypted face recognition systems with unprotected decision using synthetic faces (Frontiers in Imaging, 2025)",
+      "url": "https://www.frontiersin.org/journals/imaging/articles/10.3389/fimag.2025.1476377/full",
+      "claims": [
+        {"id": "3a", "where": "§1", "text": "采用内积相似度度量的同态加密人脸识别系统存在关键漏洞——即便攻击者无系统访问权限、无训练数据，也可利用泄露的比较分数破坏人脸隐私；攻击者可通过控制合成用户（spoofer）向数据库注入合成参考模板，在单次查询中恢复目标探针模板；缓解措施是'在加密域内进行比较并输出最终决策'，仅传输加密的最终决策"}
+      ]
+    },
+    "4": {
+      "source": "Reconstructing Protected Biometric Templates from Binary Authentication Results (Rahimi et al., arXiv:2601.17620)",
+      "url": "http://arxiv.org/abs/2601.17620v1",
+      "claims": [
+        {"id": "4a", "where": "§1", "text": "仅观察认证成功/失败（在可注入足够多模板的前提下）即可重建生物特征模板，重建损失可忽略，并通过生成式反演形成从二值分数到高分辨率人脸图像的完整流水线，生成图像通过系统成功率超 98%；该方法适用于任何保持识别精度的保护机制"},
+        {"id": "4b", "where": "§7.4", "text": "从二值认证结果重建模板：生成图像通过系统成功率超 98%，适用于任何保持识别精度的保护机制"},
+        {"id": "4c", "where": "§8", "text": "同上重述"}
+      ]
+    },
+    "5": {
+      "source": "Unlinkable and irreversible biometric template protection based on Bloom filters (Gomez-Barrero et al., 2016 ICB)",
+      "url": "http://atvs.ii.uam.es/files/2016_IS_BFUnlinkability.pdf",
+      "claims": [
+        {"id": "5a", "where": "§1", "text": "ISO/IEC 24745 标准将模板定义为'完全可链接'——若存在方法能以 100% 确定性判断用不同密钥保护的两个模板是否来自同一生物样本"},
+        {"id": "5b", "where": "§6.2", "text": "ISO/IEC 24745(2011) 确立两大核心要求：不可逆性与不可链接性；标准原文要求 'knowledge of the transformed biometric reference cannot be used to determine any information about the generating biometric sample(s) or features' 且 'the stored biometric references should not be linkable across applications or databases'"},
+        {"id": "5c", "where": "§6.2", "text": "不可逆性定义：即使掌握可撤销模板 C 及对应密钥 T，也不能据此重建出能正向匹配原始生物特征样本 M 的信号 M′；该属性可防止利用存储数据发起 spoof 或 replay 攻击"},
+        {"id": "5d", "where": "§6.2", "text": "系统分数级可链接性（SSWL）D_sys^↔∈[0,1]，值越低表示不可链接性越好"},
+        {"id": "5e", "where": "§6.4", "text": "ISO/IEC 24745:2011 定义不可逆性、不可链接性、可更新性（renewability）三大要求"},
+        {"id": "5f", "where": "§7.3", "text": "基于 Bloom 滤波器的方案提出'结构保持特征重排（structure-preserving feature re-arrangement）'作为额外处理步骤，生成抗交叉匹配（cross-matching resistant）的保护模板"}
+      ]
+    },
+    "6": {
+      "source": "SlerpFace: Face Template Protection via Spherical Linear Interpolation (AAAI 2025)",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/33162/35317",
+      "claims": [
+        {"id": "6a", "where": "§1", "text": "不可链接性要求生成同一身份的不同保护模板时，这些模板不能被相互关联"},
+        {"id": "6b", "where": "§4.5表", "text": "SlerpFace 使用球面线性插值，D_sys^↔=0.05"},
+        {"id": "6c", "where": "§6.2", "text": "SSWL D_sys^↔ 越低不可链接性越好（与 5d 同述）"},
+        {"id": "6d", "where": "§7.3", "text": "SlerpFace 通过球面线性插值实现人脸模板保护；在 CFP-FP 数据集上未保护基线 D_sys^↔=0.94，SlerpFace 达 D_sys^↔=0.05，分布接近，满足不可链接性要求；满足 ISO/IEC 标准的不可逆性、可撤销性、不可链接性"}
+      ]
+    },
+    "7": {
+      "source": "Cancelable Face Biometrics With Soft-Biometric Privacy Enhancement (Melzi et al., IEEE Access 2025)",
+      "url": "https://publications.idiap.ch/attachments/papers/2025/Melzi_ACCESS_2025.pdf",
+      "claims": [
+        {"id": "7a", "where": "§1", "text": "人脸图像及其模板都包含敏感人口统计信息（软生物特征属性），需要专门保护"},
+        {"id": "7b", "where": "§1", "text": "不可链接性可通过在变换中引入密钥或随机参数实现；当满足不可链接性时，被泄露的模板可撤销并替换为新模板，从而提供模板可更新性（renewability）"}
+      ]
+    },
+    "8": {
+      "source": "Privacy-Preserving Face Recognition in the Frequency Domain (Wang et al., AAAI 2022, PPFR-FD)",
+      "url": "https://cdn.aaai.org/ojs/20157/20157-13-24170-1-2-20220628.pdf",
+      "claims": [
+        {"id": "8a", "where": "§2", "text": "PPFR-FD 论文指出，人脸图像的可区分性（distinguishability）存在于更高频率；这些频率值很小，其微小误差会对可视化产生巨大影响"},
+        {"id": "8b", "where": "§4.2", "text": "PPFR-FD 引入快速掩码方法——丢弃 DC 分量、混洗（shuffle）、自归一化（self-normalize）、混合（mix）剩余频率通道以增强隐私并阻碍重建；该方案修改现有识别模型（如 ArcFace）以接受掩码频域输入进行训练和推理；作者进行了白盒（攻击者知模型结构与参数）与黑盒（GAN 重建）攻击实验以评估隐私保护可靠性；论文指出其局限：未解决生物模板的可撤销性（revocability）与不可链接性（unlinkability），超出该工作范围"},
+        {"id": "8c", "where": "§6.1", "text": "PPFR-FD 在 LFW 上达到 99.68% 准确率，几乎等同于未保护 ArcFace 的 99.82%；即使丢弃超过 94% 的图像能量，识别精度仅受轻微影响；丢弃最低分通道（DC 通道）时精度仅下降约 3%"},
+        {"id": "8d", "where": "§4.5表", "text": "表中 PPFR-FD 行：频域通道；DC 丢弃+混洗+自归一化+混合"},
+        {"id": "8e", "where": "§5.3", "text": "PPFR-FD 主要面向客户端-服务器协作推理场景，而非联邦本地训练/聚合"}
+      ]
+    },
+    "9": {
+      "source": "Cancelable Multi-biometric Template Generation Based on Dual-Tree Complex Wavelet Transform (Intelligent Automation & Soft Computing)",
+      "url": "https://www.techscience.com/iasc/v33n2/46776/html",
+      "claims": [
+        {"id": "9a", "where": "§3表", "text": "DWT/DTCWT 的角色：安全虹膜模式识别、可撤销多生物特征模板"},
+        {"id": "9b", "where": "§3", "text": "DWT 被用于安全虹膜模式识别框架，将虹膜图像用密钥保护后通过 LSB 和 DWT 方法嵌入载体图像；DTCWT 被用于生成可撤销多生物特征模板"}
+      ]
+    },
+    "10": {
+      "source": "Robust local features for remote face recognition (LSF, Shearlet in Fourier domain, Liu et al.)",
+      "url": "http://www.lilyliliu.com/upload/Pd4d6a9f7611f483396d621612a019ea5.pdf",
+      "claims": [
+        {"id": "10a", "where": "§3表", "text": "Shearlet 变换在傅里叶域执行；频带幅度平均揭示假脸频谱不规则性（后半句与[11]共引）"},
+        {"id": "10b", "where": "§3表", "text": "Shearlet 结合 LBP 的 LSF 描述子；仅实部对识别有效（与[12]共引）"},
+        {"id": "10c", "where": "§3", "text": "Shearlet 变换在傅里叶域中执行；实验发现只有 Shearlet 变换在傅里叶域中的实部（real part）对人脸识别有效"},
+        {"id": "10d", "where": "§4.5表", "text": "表中 LSF（Liu et al.）：Shearlet（傅里叶域）；Shearlet 实部 + LBP"}
+      ]
+    },
+    "11": {
+      "source": "Frequency-Domain Masking and Spatial Interaction for Generalizable Deepfake Detection (MDPI Electronics 2025)",
+      "url": "https://www.mdpi.com/2079-9292/14/7/1302",
+      "claims": [
+        {"id": "11a", "where": "§3表", "text": "频带幅度平均揭示假脸频谱不规则性（FFT/DFT 行角色描述）"}
+      ]
+    },
+    "12": {
+      "source": "Efficient Extraction of Anisotropic Features for Face Recognition (ShearFace, ICPR 2014)",
+      "url": "https://www.math.uh.edu/~dlabate/ShearFace_ICPR2014.pdf",
+      "claims": [
+        {"id": "12a", "where": "§3表", "text": "Shearlet 结合 LBP 的 LSF 描述子；仅实部对识别有效（与[10]共引，同 10b）"},
+        {"id": "12b", "where": "§3", "text": "Regularized Shearlet Network (RSN) 利用稀疏表示进行人脸识别"}
+      ]
+    },
+    "13": {
+      "source": "LOWKEY: Leveraging Adversarial Attacks to Protect Social Media Users from Facial Recognition (Cherepanova et al., ICLR 2021)",
+      "url": "https://jpdickerson.com/pubs/cherepanova21lowkey.pdf",
+      "claims": [
+        {"id": "13a", "where": "§4.1", "text": "LowKey 利用对抗攻击保护社交媒体用户免受人脸识别；在 MS-Celeb-1M 上训练 ArcFace/CosFace 的 ResNet-50/152 与 IR-50/152 集成模型生成攻击；实验显示，在模糊化 LowKey 图像上，防御方干净精度约 96.7%，而攻击者 Rank-50 精度降至 4.2%–9.6%（视模型而定）"},
+        {"id": "13b", "where": "§4.1优缺点", "text": "适用场景为社交媒体图像发布前的隐私防护"}
+      ]
+    },
+    "14": {
+      "source": "Low-Mid Adversarial Perturbation against Unauthorized Face Recognition System (arXiv:2206.09410)",
+      "url": "https://arxiv.org/html/2206.09410v2",
+      "claims": [
+        {"id": "14a", "where": "§4.1", "text": "LMFAP（2023）针对未授权人脸识别系统，在低-中频段注入扰动；在 JPEG 压缩（Quality=75/50）下，APF 方法攻击成功率最高（65.30/65.11/67.96），FGSM-LMFAP 次之（51.02/49.80/52.04），LowKey 为 51.63/51.43/52.04"},
+        {"id": "14b", "where": "§4.1优缺点", "text": "鲁棒性受 JPEG 压缩等影响，不同方法在压缩下成功率差异显著"},
+        {"id": "14c", "where": "§4.1优缺点", "text": "适用场景为未授权识别系统对抗（与[13]共引）"}
+      ]
+    },
+    "15": {
+      "source": "Exploring Frequency Adversarial Attacks for Face Forgery Detection (Jia et al., CVPR 2022)",
+      "url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Jia_Exploring_Frequency_Adversarial_Attacks_for_Face_Forgery_Detection_CVPR_2022_paper.pdf",
+      "claims": [
+        {"id": "15a", "where": "§4.1", "text": "该方法对输入图像做 DCT，通过融合模块在频域注入对抗扰动，相比空间域 FGSM/PGD 更不易被人类察觉且不降低原图视觉质量"},
+        {"id": "15b", "where": "§4.1优缺点", "text": "频域扰动利用人眼对特定频段敏感度较低的特性，视觉隐蔽性优于空间域攻击（与[16]共引）"}
+      ]
+    },
+    "16": {
+      "source": "Adversarial AI through Frequency-Domain Imperceptible Attack on Person Re-Identification (FreqAdv, CMC 2026)",
+      "url": "https://www.sciopen.com/article/10.32604/cmc.2026.078413",
+      "claims": [
+        {"id": "16a", "where": "§4.1", "text": "FreqAdv 系列（2026, CMC）提出 FreqAdv-FFT、FreqAdv-Wavelet、FreqAdv-Phase、FreqAdv-SelDCT、FreqAdv-RandDCT，针对行人重识别（Re-ID）；在 WB_WoB-ReID 数据集上 FreqAdv-Wavelet 对 HRNet 将 mAP 降至 2.52%；在 Market-1501 上 FreqAdv-FFT 对 ResNet-50 将 mAP 降至 3.96%"},
+        {"id": "16b", "where": "§4.1优缺点", "text": "频域扰动视觉隐蔽性优于空间域攻击（与[15]共引，同 15b）"}
+      ]
+    },
+    "17": {
+      "source": "Leveraging Universal Adversarial Perturbation and Frequency Band Filters Against Face Recognition (Mathematics/MDPI 2024)",
+      "url": "https://www.mdpi.com/2227-7390/12/20/3287",
+      "claims": [
+        {"id": "17a", "where": "§4.1", "text": "该工作将频域作为额外维度迭代优化通用对抗扰动，使用可学习滤波器提取频段"}
+      ]
+    },
+    "18": {
+      "source": "On the (Im)Practicality of Adversarial Perturbation for Image Privacy (Rajabi et al., PoPETs 2021)",
+      "url": "https://pdxscholar.library.pdx.edu/compsci_fac/265",
+      "claims": [
+        {"id": "18a", "where": "§4.1优缺点", "text": "通用扰动（UEP）易被估计与移除方法破解"}
+      ]
+    },
+    "19": {
+      "source": "Privacy-Preserving Face Recognition in the Frequency Domain [Quick Review] (liner.com)",
+      "url": "https://liner.com/review/privacypreserving-face-recognition-in-frequency-domain",
+      "claims": [
+        {"id": "19a", "where": "§4.2", "text": "PPFR-FD 局限：未解决可撤销性与不可链接性（与[8]共引，同 8b 后半）"},
+        {"id": "19b", "where": "§6.1", "text": "LFW 99.68% vs 未保护 ArcFace 99.82% 等精度数据（与[8]共引，同 8c）"},
+        {"id": "19c", "where": "§4.5表", "text": "表中 PPFR-FD 行（与[8]共引）"}
+      ]
+    },
+    "20": {
+      "source": "DuetFace: Collaborative Privacy-Preserving Face Recognition via Channel Splitting in the Frequency Domain (Mi et al., ACM MM 2022, arXiv:2207.07340)",
+      "url": "https://arxiv.org/abs/2207.07340",
+      "claims": [
+        {"id": "20a", "where": "§4.2", "text": "DuetFace 基于'仅用视觉上不可分辨的高频通道即可实现出奇好的识别性能'这一反直觉发现；设计按可视化重要性划分频率通道的可信分割；服务器端模型仅处理非关键通道；通过交互式模块从客户端传递注意力（feature mask）以补偿缺失的视觉信息；实验表明其识别精度与计算开销可与未保护的 ArcFace 相当，并优于当时最先进的隐私保护方法"},
+        {"id": "20b", "where": "§4.5表", "text": "表中 DuetFace 行：频域通道分割；服务端仅处理非关键通道+注意力迁移"},
+        {"id": "20c", "where": "§5.1", "text": "频域方法优势：计算效率高（DuetFace 达到与未保护 ArcFace 相当的计算开销）；与深度网络兼容性好（频域通道分割可直接嵌入现有识别骨干网络的推理流程）；可视化隐私强（仅保留视觉不可分辨的高频通道，可抵抗肉眼检查与识别）"},
+        {"id": "20d", "where": "§5.3", "text": "频域方法（DuetFace、PPFR-FD）主要面向客户端-服务器协作推理场景，而非联邦本地训练/聚合；频域通道分割可视为一种客户端侧预处理，理论上可减少上传到服务器的敏感信息，从而间接缓解服务器端梯度/特征泄露，但现有文献未直接给出频域方法缓解梯度泄露的定量证据"},
+        {"id": "20e", "where": "§5.5", "text": "频域方法提供轻量级、高精度的'可视化/识别隐私'保护，但缺乏密码学级安全保证，且无法防御重建攻击（与[38]共引）"},
+        {"id": "20f", "where": "§5.6表", "text": "表中频域行：半可信服务器、防可视化检查与识别、计算开销低（≈未保护 ArcFace）"},
+        {"id": "20g", "where": "§7.1", "text": "DuetFace（ACM MM 2022）是该路线主线演进的一部分"},
+        {"id": "20h", "where": "§8", "text": "在随机/选定频率分量上训练推理可较好平衡隐私与精度（PartialFace、DuetFace）"}
+      ]
+    },
+    "21": {
+      "source": "DuetFace (alphaXiv page, arXiv:2207.07340)",
+      "url": "https://www.alphaxiv.org/abs/2207.07340",
+      "claims": [
+        {"id": "21a", "where": "§4.2", "text": "同 20a（DuetFace 方法与结论，镜像来源）"},
+        {"id": "21b", "where": "§4.5表", "text": "同 20b"},
+        {"id": "21c", "where": "§5.3", "text": "同 20d"}
+      ]
+    },
+    "22": {
+      "source": "Privacy-Preserving Face Recognition Using Random Frequency Components (Mi et al., ICCV 2023, arXiv:2308.10461, PartialFace)",
+      "url": "https://arxiv.org/abs/2308.10461",
+      "claims": [
+        {"id": "22a", "where": "§4.2", "text": "PartialFace：剪除人眼可感知的低频分量，在随机选择的频率分量上训练与推理识别模型，以调和'减少模型可利用信息'与'保持高识别精度'之间的表面悖论"},
+        {"id": "22b", "where": "§4.5表", "text": "表中 PartialFace 行：随机频率分量；剪除低频+随机分量训练推理"},
+        {"id": "22c", "where": "§7.1", "text": "ICCV 2023 PartialFace 是该路线主线演进的一部分"},
+        {"id": "22d", "where": "§8", "text": "随机/选定频率分量平衡隐私与精度（与[20]共引，同 20h）"}
+      ]
+    },
+    "23": {
+      "source": "PartialFace HuggingFace papers page (arXiv:2308.10461)",
+      "url": "https://huggingface.co/papers/2308.10461",
+      "claims": [
+        {"id": "23a", "where": "§4.2", "text": "同 22a（镜像来源）"},
+        {"id": "23b", "where": "§4.5表", "text": "同 22b"},
+        {"id": "23c", "where": "§7.1", "text": "同 22c"}
+      ]
+    },
+    "24": {
+      "source": "Privacy-Preserving Face Recognition in Hybrid Frequency-Color Domain (Han, Li, Denzler; arXiv:2401.13386, 2024)",
+      "url": "http://arxiv.org/abs/2401.13386v1",
+      "claims": [
+        {"id": "24a", "where": "§4.2", "text": "提出频域-颜色融合方法降低频域输入维度；引入稀疏颜色信息缓解加差分隐私噪声后的精度下降；采用身份特定的嵌入映射（拉大身份间距离）保护原始人脸嵌入，并用安全多方计算安全计算嵌入距离；在 1:N 验证场景中比 SOTA 高约 2.6%–4.2% 精度"},
+        {"id": "24b", "where": "§4.5表", "text": "表中 Hybrid Freq-Color 行"},
+        {"id": "24c", "where": "§7.1", "text": "2024 混合频率-颜色域方法是主线演进的一部分"},
+        {"id": "24d", "where": "§7.5", "text": "Hybrid Frequency-Color 方法在 1:N 验证场景中比 SOTA 高 2.6%–4.2% 精度"},
+        {"id": "24e", "where": "§8", "text": "多数方法仍面临精度明显下降的陷阱（'noticeable drop in recognition accuracy is a pitfall for most methods'，原文引述）；频域-颜色融合缓解加噪后精度下降"}
+      ]
+    },
+    "25": {
+      "source": "Privacy-Preserving Face Recognition in Hybrid Frequency-Color Domain (SCITEPRESS 2024 版本)",
+      "url": "https://www.scitepress.org/Papers/2024/123732/123732.pdf",
+      "claims": [
+        {"id": "25a", "where": "§4.2", "text": "SciTePress 版本进一步指出多数频域 FR 方法输入高维且未利用颜色信息，提出跨通道选择最重要系数、丢弃冗余信息的频率融合方法"},
+        {"id": "25b", "where": "§6.1", "text": "rank-1 场景下精度提升：ArcFace 提升 7.4%、DCTDP 提升 9.4%、DCTDP-FF 提升 13.3%、HFCF-LBP 提升 8.1%、HFCF-DLBP 提升 9.3%"},
+        {"id": "25c", "where": "§4.5表", "text": "表中 Hybrid Freq-Color 行（与[24]共引）"},
+        {"id": "25d", "where": "§8", "text": "频域方法高维输入且常未利用颜色信息"}
+      ]
+    },
+    "26": {
+      "source": "Reversible attack based on adversarial perturbation (Yin et al., Pattern Recognition Letters 2023)",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0167865522003877",
+      "claims": [
+        {"id": "26a", "where": "§4.3", "text": "将 Y 通道的对抗扰动嵌入 UV 通道，实现可逆对抗攻击——既阻止非法图像访问，又保证合法使用"},
+        {"id": "26b", "where": "§4.3优缺点", "text": "可逆性支持授权方解密后恢复识别能力（与[28]共引）"}
+      ]
+    },
+    "27": {
+      "source": "Reversible Attack Based on Local Visible Adversarial Perturbation (arXiv:2110.02700)",
+      "url": "https://arxiv.org/html/2110.02700v3",
+      "claims": [
+        {"id": "27a", "where": "§4.3", "text": "存在基于局部可见对抗扰动的可逆对抗样本工作"}
+      ]
+    },
+    "28": {
+      "source": "Invertible mask network for face privacy preservation (Yang et al., Information Sciences 2023)",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0020025523001871",
+      "claims": [
+        {"id": "28a", "where": "§4.3", "text": "Invertible Mask Network (IMN) 基于可逆'掩码'网络，既能有效保护受保护人脸隐私，又能几乎无损恢复"},
+        {"id": "28b", "where": "§4.3优缺点", "text": "可逆性支持授权方恢复识别（与[26]共引，同 26b）"}
+      ]
+    },
+    "29": {
+      "source": "Invertible Mask Network for Face Privacy-Preserving (arXiv:2204.08895)",
+      "url": "https://arxiv.org/abs/2204.08895",
+      "claims": [
+        {"id": "29a", "where": "§4.3", "text": "IMN（arXiv 版）：可逆掩码网络保护隐私且几乎无损恢复（与 28a 同述，镜像来源）"}
+      ]
+    },
+    "30": {
+      "source": "CryptoMask: Privacy-Preserving Face Recognition (Bai et al., 2023)",
+      "url": "https://research.monash.edu/en/publications/cryptomask-privacy-preserving-face-recognition",
+      "claims": [
+        {"id": "30a", "where": "§4.3", "text": "CryptoMask（Bai et al., 2023）采用同态加密（HE）与安全多方计算（MPC）的隐私保护人脸识别系统"},
+        {"id": "30b", "where": "§4.3优缺点", "text": "适用场景为需授权解密的高安全场景、云外包识别（与[1]共引）"}
+      ]
+    },
+    "31": {
+      "source": "From Noise to Meaning: Meaningful Secret Sharing with Tamper Detection for Facial Recognition (arXiv:2608.08924)",
+      "url": "https://arxiv.org/html/2608.08924v1",
+      "claims": [
+        {"id": "31a", "where": "§4.3", "text": "报告原文：'同态加密 PPFR（Song et al., PLoS ONE 2025）与多密钥同态加密（Wang et al., Expert Systems 2025）[31]'——即报告用引文[31]支撑'Song et al., PLoS ONE 2025'和'Wang et al., Expert Systems 2025 多密钥同态加密'两个文献条目，但引文[31]本身链接指向一篇秘密共享（secret sharing）论文。需核实：该引文链接的论文是否真实存在、内容是否与报告所述两个文献条目相关"},
+        {"id": "31b", "where": "§4.3优缺点", "text": "同态加密计算复杂 [31]（报告用[31]支撑 HE 计算复杂的论断）"}
+      ]
+    },
+    "32": {
+      "source": "Image Watermarking With Biometric Data For Copyright (Barbier et al., 2015)",
+      "url": "https://inria.hal.science/hal-01131845/document",
+      "claims": [
+        {"id": "32a", "where": "§4.4", "text": "使用 BioHashing 算法计算可撤销生物特征数据，用于指纹与人脸图像的鲁棒生物特征水印"},
+        {"id": "32b", "where": "§4.4优缺点", "text": "水印可同时承载版权信息与生物特征"},
+        {"id": "32c", "where": "§4.4优缺点", "text": "适用场景为生物特征数据库版权保护、模板存储安全（与[33]共引）"}
+      ]
+    },
+    "33": {
+      "source": "A Secure and Efficient Biometric Template Protection (Sardar et al., IEEE 2023)",
+      "url": "https://www.computer.org/csdl/journal/ai/2023/05/09815514/1ELgatUaozm",
+      "claims": [
+        {"id": "33a", "where": "§4.4", "text": "提出新型生物密码系统（Bio-Cryptosystem），无需用户记忆令牌即可高安全保护模板，采用可撤销特征"},
+        {"id": "33b", "where": "§4.4优缺点", "text": "可撤销性（cancelability）允许模板泄露后重新签发（与[34]共引）"},
+        {"id": "33c", "where": "§4.4优缺点", "text": "适用场景为模板存储安全（与[32]共引）"}
+      ]
+    },
+    "34": {
+      "source": "Enhanced biometric template protection schemes (Srinivas et al., Computers & Security 2025)",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0167404825002627",
+      "claims": [
+        {"id": "34a", "where": "§4.4", "text": "提出新型可撤销生物特征模板保护系统，弥合精度与安全性之间的差距"},
+        {"id": "34b", "where": "§4.4优缺点", "text": "可撤销性允许模板泄露后重新签发（与[33]共引）；需平衡精度与安全性"}
+      ]
+    },
+    "35": {
+      "source": "Hybrid Multimodal Biometric Template Protection (ResearchGate)",
+      "url": "https://www.researchgate.net/publication/348327911_Hybrid_Multimodal_Biometric_Template_Protection",
+      "claims": [
+        {"id": "35a", "where": "§4.4", "text": "结合同态加密与可撤销生物特征保护模板的多模态方案"},
+        {"id": "35b", "where": "§4.4优缺点", "text": "多模态方案复杂度高（与[36]共引）"}
+      ]
+    },
+    "36": {
+      "source": "Multimodal Cancellable Biometric Template Protection (IEEE Access 2024)",
+      "url": "https://ieeexplore.ieee.org/iel8/6287639/10380310/10756664.pdf",
+      "claims": [
+        {"id": "36a", "where": "§4.4", "text": "多模态可撤销生物特征模板保护（IEEE 2024）"},
+        {"id": "36b", "where": "§4.4优缺点", "text": "多模态方案复杂度高（与[35]共引）"},
+        {"id": "36c", "where": "§7.5", "text": "多模态/多生物特征方向（与[70]共引）"}
+      ]
+    },
+    "37": {
+      "source": "Unlinkable and irreversible biometric template protection (Fierrez et al., 2016)",
+      "url": "https://biometrics.eps.uam.es/fierrez/files/2016_IS_BFUnlinkability.pdf",
+      "claims": [
+        {"id": "37a", "where": "§4.5表", "text": "表中 BioHashing 行：密钥绑定，主体特定令牌"}
+      ]
+    },
+    "38": {
+      "source": "Privacy-preserving Adversarial Facial Features (AdvFace, CVPR 2023 Slides)",
+      "url": "https://cvpr.thecvf.com/media/cvpr-2023/Slides/21229_pL731AP.pdf",
+      "claims": [
+        {"id": "38a", "where": "§5.1", "text": "CVPR 2023 的 AdvFace 工作明确指出，频域方法'无法防御重建攻击，且带来重新部署成本'"},
+        {"id": "38b", "where": "§5.1", "text": "空间域对抗扰动（AdvFace 类方法）可抵抗重建攻击并维持识别精度，但需要对抗训练/重新部署"},
+        {"id": "38c", "where": "§5.1", "text": "空间域 DP（Chamikara et al.）同样'无法防御重建攻击'"},
+        {"id": "38d", "where": "§5.4", "text": "DP 类方法'无法防御重建攻击'"},
+        {"id": "38e", "where": "§5.5", "text": "频域方法缺乏密码学级安全保证，且无法防御重建攻击（与[20]共引）；HE/SMPC/BTP 提供强密码学保证但开销大（与[40]共引）"},
+        {"id": "38f", "where": "§5.6表", "text": "表各行：频域行关键局限=无法防重建攻击；空间域对抗扰动行；DP 行无法防重建"},
+        {"id": "38g", "where": "§8", "text": "对抗重建攻击的鲁棒性是开放问题（背景引用）"}
+      ]
+    },
+    "39": {
+      "source": "FaceMAE: Privacy-Preserving Face Recognition via Masked Autoencoders (Wang et al., 2022, arXiv:2205.11090)",
+      "url": "http://arxiv.org/abs/2205.11090v1",
+      "claims": [
+        {"id": "39a", "where": "§5.1", "text": "FaceMAE 通过掩码自编码器重建人脸，相比此前方法在 LFW、CFP-FP、AgeDB 上错误率至少降低 50%"}
+      ]
+    },
+    "40": {
+      "source": "Secure Face Matching Using Fully Homomorphic Encryption (CVCops19, CISPA)",
+      "url": "https://cvcops19.cispa.saarland/pdfs/36-secure-face-matching.pdf",
+      "claims": [
+        {"id": "40a", "where": "§5.2", "text": "直接对 512 维特征应用 FHE 需约 12.8 秒/匹配对、每模板 48.7 MB；其提出的 FHE 框架在加密模板上匹配性能与明文匹配相当（IJB-B 数据集上 FAR=0.01% 时 TAR 为 25.77 vs 25.78）"},
+        {"id": "40b", "where": "§5.5", "text": "HE/SMPC/BTP 提供强密码学保证但开销大（与[38]共引，同 38e 后半）"},
+        {"id": "40c", "where": "§5.6表", "text": "表中 HE 行：高计算开销（12.8s/匹配、48.7MB/模板）"}
+      ]
+    },
+    "41": {
+      "source": "Locality preserving and homomorphically encrypted deep features for privacy-preserving face recognition (Discover Computing)",
+      "url": "https://link.springer.com/article/10.1007/s10791-026-09978-y",
+      "claims": [
+        {"id": "41a", "where": "§5.2", "text": "对深层人脸嵌入应用局部保持投影（LPP），将特征维度从 512-D 降至 256-D，加密时间从 3.3141s 降至 1.6570s，加密计算从 5.3890s 降至 2.6947s，总时间从约 8.74s 降至约 4.49s（几乎减半）"},
+        {"id": "41b", "where": "§5.5", "text": "频域预处理降低数据维度后再施加 HE，可减少加密计算量（类似 LPP 降维效果）"}
+      ]
+    },
+    "42": {
+      "source": "CryptoFace: End-to-End Encrypted Face Recognition (arXiv:2509.00332)",
+      "url": "https://arxiv.org/html/2509.00332v1",
+      "claims": [
+        {"id": "42a", "where": "§5.2", "text": "首个端到端 FHE 人脸识别系统，采用 CKKS 方案与深度优化的 CryptoFaceNet 架构，在加密域完成特征提取、匹配与阈值判定，全程不解密"},
+        {"id": "42b", "where": "§5.6表", "text": "表中 HE 行：安全假设为密码学级、量子安全"}
+      ]
+    },
+    "43": {
+      "source": "Computing while blindfolded – Lifting the veil on homomorphic encryption (OPC Canada blog, 2023-10-24)",
+      "url": "https://www.priv.gc.ca/en/blog/20231024",
+      "claims": [
+        {"id": "43a", "where": "§5.2", "text": "FHE 的 bootstrapping 计算极其昂贵，可能成为复杂操作的瓶颈，因此实际多采用'分层 FHE'处理有界深度计算"},
+        {"id": "43b", "where": "§5.6表", "text": "表中 HE 行关键局限：bootstrapping 昂贵"}
+      ]
+    },
+    "44": {
+      "source": "Belt and Braces: When Federated Learning Meets Differential Privacy (CACM)",
+      "url": "https://cacm.acm.org/research/belt-and-braces-when-federated-learning-meets-differential-privacy",
+      "claims": [
+        {"id": "44a", "where": "§5.3", "text": "FL 本身不提供隐私保证：仅避免原始数据直接暴露，但仍缺乏针对间接信息推断的严格隐私保证"},
+        {"id": "44b", "where": "§5.3", "text": "深度梯度泄露（DLG）可通过优化虚拟输入/标签最小化与目标梯度的差异来重建训练数据"},
+        {"id": "44c", "where": "§5.4", "text": "FL+DP 场景下，DP 可数学化限制间接泄露，但在样本量小时存在信噪比低的问题"},
+        {"id": "44d", "where": "§5.6表", "text": "表中 FL 行：无固有隐私保证、梯度泄露；DP 行：小样本信噪比低"}
+      ]
+    },
+    "45": {
+      "source": "Federated Learning for Face Recognition with Gradient Correction (FedGC, Niu & Deng, AAAI 2022)",
+      "url": "https://cdn.aaai.org/ojs/20095/20095-13-24108-1-2-20220628.pdf",
+      "claims": [
+        {"id": "45a", "where": "§5.3", "text": "FedGC 针对联邦人脸识别中共享全部网络参数导致的隐私泄露，提出基于 softmax 的正则化项，通过精确注入跨客户端梯度项来修正类嵌入梯度，理论证明可提升隐私"},
+        {"id": "45b", "where": "§5.6表", "text": "表中 FL 行关键局限：梯度泄露"}
+      ]
+    },
+    "46": {
+      "source": "Differential Privacy: Gradient Leakage Attacks in Federated Learning Environments (arXiv:2510.23931)",
+      "url": "https://arxiv.org/html/2510.23931v1",
+      "claims": [
+        {"id": "46a", "where": "§5.3", "text": "DP-SGD 等机制被评估为对抗 FL 中梯度泄露攻击（GLA）的防御手段"}
+      ]
+    },
+    "47": {
+      "source": "Efficient Privacy-Preserving Face Recognition Based on Feature Encoding and Symmetric Homomorphic Encryption (MDPI Entropy; 报告称其为 Erkin et al.)",
+      "url": "https://www.mdpi.com/1099-4300/28/1/5",
+      "claims": [
+        {"id": "47a", "where": "§5.5", "text": "Erkin et al. 证明可通过 SMPC 与高效协议实现隐私保护人脸识别，使加密人脸图像与模板库匹配，并给出参数选择指南"},
+        {"id": "47b", "where": "§6.1", "text": "同态加密类 PPFR 在 ORL 数据集上识别准确率约 96.4%，而基于特征编码与对称同态加密的新方案达 98.582%，高出约 2%"},
+        {"id": "47c", "where": "§6.5", "text": "许多方案仅在 ORL 等小规模数据集上评测，作者亦承认需扩展到更大规模、年龄/光照/姿态更多样的数据集"}
+      ]
+    },
+    "48": {
+      "source": "Multi-biometric template protection based on Homomorphic Encryption (Fierrez et al., Pattern Recognition 2017)",
+      "url": "https://biometrics.eps.uam.es/fierrez/files/2017_PR_multiBtpHE_marta.pdf",
+      "claims": [
+        {"id": "48a", "where": "§5.5", "text": "SMPC 与 HE 常结合使用（如 HE+GC 处理加密 iriscode 的 Hamming 距离计算）"}
+      ]
+    },
+    "49": {
+      "source": "Researchers warn biometric template protection still not adopted by industry (Biometric Update, 2026-01)",
+      "url": "https://www.biometricupdate.com/202601/researchers-warn-biometric-template-protection-still-not-adopted-by-industry",
+      "claims": [
+        {"id": "49a", "where": "§5.5", "text": "HE 传统上不属于 BTP 范畴，但正被纳入 BTP 实现路径；挪威银行业正在测试 Mobai 的同态加密方案用于保护生物特征模板；研究者警告，哈希、传统加密、分布式数据库、智能卡、TEE 等通用数据保护方法通常不适用于生物特征模板保护"},
+        {"id": "49b", "where": "§5.6表", "text": "表中 BTP 行关键局限：通用方法不适用"}
+      ]
+    },
+    "50": {
+      "source": "NIST FRVT Part 2: Identification (NISTIR 8271)",
+      "url": "https://www.nist.gov/document/nistir827120190911pdf",
+      "claims": [
+        {"id": "50a", "where": "§6.1", "text": "NIST FRVT Part 2（Identification）将 rank-1 miss rate（FNIR(N,1,0)）作为主要精度指标，并报告 FPIR=0.001 下的 FNIR 以及 rank-50 命中率；其 2018 mugshot 测试显示不同算法 rank-1 miss rate 从约 0.001 到约 0.5 不等"},
+        {"id": "50b", "where": "§6.4", "text": "NIST 运行大规模算法测试，使用海量图像数据库衡量精度与一致性，为开发者提供基准"}
+      ]
+    },
+    "51": {
+      "source": "Privacy-Preserving Face Recognition with Learnable Privacy Budgets in Frequency Domain (ECCV 2022 正式版 PDF, ecva.net)",
+      "url": "https://www.ecva.net/papers/eccv_2022/papers_ECCV/papers/136720471.pdf",
+      "claims": [
+        {"id": "51a", "where": "§6.1", "text": "在 LFW、CALFW 上平均精度下降仅 0.14% 和 0.65%；在 CFP-FP、AgeDB、CPLFW 上平均下降约 2.5%（因姿态更复杂）；在 IJB-B/IJB-C 大库上保持 89.33% 准确率，而对比方法 PEEP 仅 5.82%、Cloak 33.58%、InstaHide 61.88%"},
+        {"id": "51b", "where": "§6.4", "text": "频域方法常用实验设置：在 LFW、CFP-FP、CPLFW、CALFW、AgeDB-30 上报告准确率，并在 IJB-B/IJB-C 大库上验证；隐私预算 ε 常设为 0.5 等值进行消融"},
+        {"id": "51c", "where": "§6.5", "text": "攻击模型不一致：重建攻击评估依赖像素级相似度指标（PSNR/SSIM/MSE/LPIPS），而不同工作采用不同攻击模型（黑盒/白盒），导致结果难以横向比较"},
+        {"id": "51d", "where": "§7.1", "text": "2022 ECCV 可学习隐私预算方法主线演进（与[1]同源镜像）"},
+        {"id": "51e", "where": "§7.5", "text": "视频流从摄像头传至云端/边缘服务器做神经分析引发隐私担忧，已有基于 GAN 的智能模糊化保护（报告用[51]即 DCTDP/ECCV 论文支撑此视频流 GAN 模糊化论断）"},
+        {"id": "51f", "where": "§8", "text": "频域变换分离可视化与识别信息、移除 DC 已成熟（与[1]共引）"}
+      ]
+    },
+    "52": {
+      "source": "Privacy-Preserving Face Recognition with Learnable Privacy Budgets in Frequency Domain (alphaXiv page)",
+      "url": "https://www.alphaxiv.org/abs/2207.07316",
+      "claims": [
+        {"id": "52a", "where": "§6.1", "text": "消融：均匀分配隐私预算时 LFW 准确率仅 65.966%，而学习式预算分配达 99.48%，差距超过 33 个百分点（镜像/社区来源，需与原文核对）"},
+        {"id": "52b", "where": "§6.4", "text": "实验设置（镜像来源）"},
+        {"id": "52c", "where": "§6.1", "text": "IJB-B/IJB-C 89.33% vs PEEP 5.82% 等对比（镜像来源，同 51a）"}
+      ]
+    },
+    "53": {
+      "source": "ISO/IEC 30136 Performance Testing of Template Protection Schemes (NIST IFPC 2025 presentation, Gomez-Barrero)",
+      "url": "https://pages.nist.gov/ifpc/2025/presentations/13.pdf",
+      "claims": [
+        {"id": "53a", "where": "§6.2", "text": "ISO/IEC 24745 两大核心要求（不可逆性、不可链接性）与 ISO/IEC 30136 相关表述"},
+        {"id": "53b", "where": "§6.4", "text": "ISO/IEC 30136:2018 正被 ISO/IEC DIS 30136 修订替代"}
+      ]
+    },
+    "54": {
+      "source": "General Framework to Evaluate Unlinkability in Biometric Template Protection Systems (Gomez-Barrero et al., arXiv:2311.04633, 2023)",
+      "url": "https://arxiv.org/html/2311.04633v1",
+      "claims": [
+        {"id": "54a", "where": "§6.2", "text": "提出两个指标——(1) 局部逐分数（score-wise）度量，基于分数分布间的似然比；(2) 全局度量，独立于分数域，便于系统间公平基准比较；两指标均落在闭区间内，适用于竞赛或商业评估；该框架被应用于评估四类方案：biometric salting、Bloom filters、Homomorphic Encryption、block re-mapping"},
+        {"id": "54b", "where": "§6.2", "text": "ISO/IEC IS 24745 将不可链接性定义为'两个或多个生物特征参考之间不能相互链接，也不能链接到其来源主体'；核心是判断两个受保护模板 T1、T2 是否隐藏同一生物实例"},
+        {"id": "54c", "where": "§6.4", "text": "不可链接性评测协议考虑三组分数分布——使用不同应用特定参数、在不同应用中注册的模板比较结果；Kirchgasser & Uhl（BIOSIG 2022）进一步提出'On the need to adapt the current Unlinkability Evaluation Protocol'"},
+        {"id": "54d", "where": "§6.5", "text": "Gomez-Barrero 等指出：尽管不可逆性与精度退化已被充分分析，但对不可链接性的客观评估关注甚少，'there is still no general metric, protocol or framework to assess, in an objective way, the unlinkability of biometric templates'；当前 ISO/IEC 30136 项目未纳入标准化不可链接性度量"},
+        {"id": "54e", "where": "§6.4", "text": "ISO/IEC 30136 指出标准化模板保护基准协议（涵盖识别精度、安全与隐私）是进一步部署生物特征验证系统的必要条件"}
+      ]
+    },
+    "55": {
+      "source": "Are Existing Evaluation Metrics Faithful to Human Perception? (NeurIPS 2023)",
+      "url": "https://papers.neurips.cc/paper_files/paper/2023/file/2082273791021571c410f41d565d0b45-Paper-Conference.pdf",
+      "claims": [
+        {"id": "55a", "where": "§6.2", "text": "文献常用 PSNR、MSE、SSIM 等像素级指标衡量原始图与重建图的相似度——高相似度表示重建攻击成功、模型更脆弱"},
+        {"id": "55b", "where": "§6.2", "text": "这些指标与人类感知相关性较弱：某些情况下 PSNR/SSIM 高、MSE/LPIPS 低的图像，人类标注者反而认为隐私泄露更少，因此提出 SemSim 等改进指标"},
+        {"id": "55c", "where": "§6.5", "text": "隐私度量不标准化/与人类感知脱节（同 55b 重述）"},
+        {"id": "55d", "where": "§6.5", "text": "攻击模型不一致的讨论背景（与[51]共引）"}
+      ]
+    },
+    "56": {
+      "source": "Image Quality Assessment through FSIM, SSIM, MSE and PSNR (SCIRP, JCC 2019)",
+      "url": "https://www.scirp.org/pdf/jcc_2019030117485323.pdf",
+      "claims": [
+        {"id": "56a", "where": "§6.2", "text": "PSNR 本质是单次 MSE 计算，SSIM 通过滑动窗口卷积计算结构失真，对结构畸变更敏感（与[57]共引）"}
+      ]
+    },
+    "57": {
+      "source": "PSNR and SSIM: application areas and criticism (VideoProcessing.ai)",
+      "url": "https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html",
+      "claims": [
+        {"id": "57a", "where": "§6.2", "text": "PSNR/SSIM 计算方式与局限说明（与[56]共引，同 56a）"}
+      ]
+    },
+    "58": {
+      "source": "ISO/IEC 30136:2018 - Performance testing of biometric template protection schemes (ISO page)",
+      "url": "https://www.iso.org/standard/53256.html",
+      "claims": [
+        {"id": "58a", "where": "§6.2", "text": "ISO/IEC 30136:2018 要求测量并报告'成功攻击的理论与经验概率（单次或多次）'以及'当一个或多个模板保护方案被攻破时泄露的原始生物特征信息量'"},
+        {"id": "58b", "where": "§6.4", "text": "30136:2018 支持评估模板保护方案的准确率、保密性与隐私；建立定义、术语与度量；要求报告准确率、成功攻击概率、泄露信息量，并给出多样性与不可链接性的测量指南"}
+      ]
+    },
+    "59": {
+      "source": "ISO/IEC 30136:2018 (ISO Spanish page)",
+      "url": "https://www.iso.org/es/contents/data/standard/05/32/53256.html?browse=ics",
+      "claims": [
+        {"id": "59a", "where": "§6.4", "text": "同 58b（镜像页面）"},
+        {"id": "59b", "where": "§6.4", "text": "ISO/IEC 30136 修订替代信息（镜像页面）"}
+      ]
+    },
+    "60": {
+      "source": "20 Best Face Recognition Datasets for ML in 2026 (Unidata blog)",
+      "url": "https://unidata.pro/blog/best-ml-face-recognition-datasets",
+      "claims": [
+        {"id": "60a", "where": "§6.3表", "text": "LFW：13,233 张图像、5,749 人（1,680 人有 ≥2 张照片），非约束人脸验证与 legacy 模型评估"},
+        {"id": "60b", "where": "§6.3表", "text": "MegaFace：100 万张 distractor 图像；CelebA：200,000+ 图像（CelebA-HQ 提供 1024×1024）；VGGFace2：3.3M 图像、9,131 身份；WebFace42M：42M 图像、2M 身份"}
+      ]
+    },
+    "61": {
+      "source": "Labelled Faces in the Wild (LFW) Dataset (Kaggle page)",
+      "url": "https://www.kaggle.com/datasets/jessicali9530/lfw-dataset",
+      "claims": [
+        {"id": "61a", "where": "§6.3表", "text": "LFW 数据集规模与用途（与[60]共引）"}
+      ]
+    },
+    "62": {
+      "source": "Beyond Real Faces: Synthetic Datasets Can Achieve Reliable Recognition Performance without Privacy Compromise (arXiv:2510.17372)",
+      "url": "https://arxiv.org/html/2510.17372v1",
+      "claims": [
+        {"id": "62a", "where": "§6.3表", "text": "CASIA-WebFace：494,414 张图像、10,575 身份；5 个标准基准平均精度约 0.9470–0.9652"},
+        {"id": "62b", "where": "§6.3表", "text": "MS1M/MS1M-MegaFace：MS1M-MegaFace 含 14.7M 图像、750k 身份；LFW 上达 0.9975；ArcFace/CosFace 训练基础"},
+        {"id": "62c", "where": "§6.3表", "text": "IJB-B/IJB-C：IARPA Janus 项目大规模基准"},
+        {"id": "62d", "where": "§6.3表", "text": "VGGFace2：3.3M 图像、9,131 身份（与[60]共引）"},
+        {"id": "62e", "where": "§6.3表", "text": "WebFace42M：42M 图像、2M 身份（与[60]共引）"}
+      ]
+    },
+    "63": {
+      "source": "Face Recognition — AMBERER documentation",
+      "url": "https://amberer.gitlab.io/papers_in_ai/face-recognition.html",
+      "claims": [
+        {"id": "63a", "where": "§6.3表", "text": "CASIA-WebFace 行（与[62]共引）"},
+        {"id": "63b", "where": "§6.3表", "text": "MS1M 行（与[62]共引）"}
+      ]
+    },
+    "64": {
+      "source": "Exposing IARPA Janus Benchmark C (Exposing.ai)",
+      "url": "https://exposing.ai/ijb_c",
+      "claims": [
+        {"id": "64a", "where": "§6.3表", "text": "IJB-B/IJB-C：IARPA Janus 项目大规模基准"}
+      ]
+    },
+    "65": {
+      "source": "What is Facial Recognition? Balancing Security Benefits & Privacy Risks (Omnilert blog)",
+      "url": "https://www.omnilert.com/blog/facial-recognition-balancing-security-and-privacy",
+      "claims": [
+        {"id": "65a", "where": "§6.4", "text": "NIST FRVT：NIST 运行大规模算法测试，使用海量图像数据库衡量精度与一致性，为开发者提供基准（与[50]共引）"}
+      ]
+    },
+    "66": {
+      "source": "Tutorial on Biometric Template Protection and Evaluation (Marta Gomez-Barrero, IWBF 2018)",
+      "url": "https://www.marta-gomez-barrero.com/talk/2018-iwbf",
+      "claims": [
+        {"id": "66a", "where": "§6.4", "text": "Kirchgasser & Uhl（BIOSIG 2022）'On the need to adapt the current Unlinkability Evaluation Protocol'（与[54]共引）"}
+      ]
+    },
+    "67": {
+      "source": "Explainable Face Recognition in the Frequency Domain (Huber et al., WACV 2025)",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/papers/Huber_Beyond_Spatial_Explanations_Explainable_Face_Recognition_in_the_Frequency_Domain_WACV_2025_paper.pdf",
+      "claims": [
+        {"id": "67a", "where": "§7.1", "text": "Huber et al.（WACV 2025）将频域分析与可解释人脸识别结合，引用 Mi et al.（ICCV 2023）与 Wang et al.（PPFR-FD）等工作"},
+        {"id": "67b", "where": "§8", "text": "频域可解释人脸识别仍为新兴方向"}
+      ]
+    },
+    "68": {
+      "source": "DiffPrivate: Facial Privacy Protection with Diffusion Models (PoPETs 2025)",
+      "url": "https://petsymposium.org/popets/2025/popets-2025-0049.pdf",
+      "claims": [
+        {"id": "68a", "where": "§7.2", "text": "DiffPrivate（Le & Carlsson, PoPETs 2025）：基于扩散模型的人脸隐私保护框架"}
+      ]
+    },
+    "69": {
+      "source": "StablePrivacy: Diffusion-Based Privacy Enhancement for Face Image (BMVC 2024 Workshop)",
+      "url": "https://bmva-archive.org.uk/bmvc/2024/workshops/PFATCV/2_StablePrivacy_Diffusion_Base.pdf",
+      "claims": [
+        {"id": "69a", "where": "§7.2", "text": "StablePrivacy（BMVC 2024 Workshop）：基于扩散模型的人脸图像隐私增强"},
+        {"id": "69b", "where": "§8", "text": "相关法规包括加州 CCPA（Assembly Bill No. 375, 2018）（报告用[69]即 StablePrivacy 论文支撑 CCPA 法规论断，需核实该论文是否提及 CCPA）"}
+      ]
+    },
+    "70": {
+      "source": "Generation of Face Privacy-Protected Images Based on the Diffusion Model (You et al., Entropy 2024)",
+      "url": "https://www.mdpi.com/1099-4300/26/6/479",
+      "claims": [
+        {"id": "70a", "where": "§7.2", "text": "You et al.（Entropy 2024）：基于扩散模型的人脸隐私保护图像生成"},
+        {"id": "70b", "where": "§7.3", "text": "报告原文：'Privacy-preserving Multi-biometric Indexing based on Frequent Binary Patterns（Osorio-Roig et al., IEEE TIFS 2024）[70]'——即报告用引文[70]（You et al. Entropy 2024 扩散模型论文）支撑一篇 TIFS 2024 多模态索引论文的条目。需核实引文[70]链接论文的真实标题与内容，以及它是否与 TIFS 论文为同一篇"},
+        {"id": "70c", "where": "§7.5", "text": "§7.5 中 'Privacy-preserving Multi-biometric Indexing（IEEE TIFS 2024）[70]'（同 70b）"}
+      ]
+    },
+    "71": {
+      "source": "ID-Booth: Identity-consistent Face Generation with Diffusion Models (Tomašević et al., FG 2025, arXiv:2504.07392)",
+      "url": "http://arxiv.org/abs/2504.07392v6",
+      "claims": [
+        {"id": "71a", "where": "§7.2", "text": "ID-Booth：基于扩散模型的身份一致人脸生成框架，采用三元组身份训练目标，在保持预训练扩散模型合成能力的同时实现身份一致生成；生成数据可用于小规模数据集增强并以隐私保护方式训练更好的识别模型"},
+        {"id": "71b", "where": "§8", "text": "跨数据集泛化：需在多个公开数据集（CASIA-WebFace、WebFace260M、LFW、CFP-FP、AgeDB）验证（报告用[71]支撑该泛化方向论述）"}
+      ]
+    },
+    "72": {
+      "source": "Ensuring privacy in face recognition: a survey on data generation, inference and storage (Springer 2025)",
+      "url": "https://link.springer.com/article/10.1007/s42452-025-06987-2",
+      "claims": [
+        {"id": "72a", "where": "§7.2", "text": "Springer 2025 综述系统梳理了扩散模型（如 DCFace、Arc2Face、PortraitBooth 等）在人脸隐私与合成数据中的应用"}
+      ]
+    },
+    "73": {
+      "source": "Deep Learning in the Field of Biometric Template Protection: An Overview (Rathgeb et al., arXiv:2303.02715, 2023)",
+      "url": "http://arxiv.org/abs/2303.02715v1",
+      "claims": [
+        {"id": "73a", "where": "§7.3", "text": "综述深度学习在生物特征模板保护中的应用，讨论其对性能、算法公平性、攻击脆弱性与模板保护的影响"}
+      ]
+    },
+    "74": {
+      "source": "Benchmarking of Cancelable Biometrics for Deep Templates (Shahreza et al., arXiv:2302.13286, 2023)",
+      "url": "http://arxiv.org/abs/2302.13286v1",
+      "claims": [
+        {"id": "74a", "where": "§7.3", "text": "在深度模板上基准测试多种 CB 方案（BioHashing、MLP Hashing、Bloom Filters、IoM-URP、IoM-GRP），按 ISO/IEC 24745 标准评估不可逆性、不可链接性与识别性能，覆盖人脸、声纹、指静脉、虹膜"},
+        {"id": "74b", "where": "§8", "text": "ISO/IEC 24745 定义不可逆性、不可链接性、保密性三大要求"}
+      ]
+    },
+    "75": {
+      "source": "Feature extraction and learning approaches for cancellable biometrics (IET Cognitive Computation and Systems)",
+      "url": "https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/cit2.12283",
+      "claims": [
+        {"id": "75a", "where": "§7.3", "text": "可撤销生物特征综述：综述特征提取与学习进展、趋势与挑战"}
+      ]
+    },
+    "76": {
+      "source": "A Novel Adversarial Example Detection Method Based on Frequency Domain Reconstruction (Sensors/PMC, 2024)",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11398211",
+      "claims": [
+        {"id": "76a", "where": "§7.4", "text": "基于频域重建的对抗样本检测方法观察到多数对抗扰动表现为高频信号或叠加于高频分量上，神经网络训练时倾向过拟合低频信号"}
+      ]
+    },
+    "77": {
+      "source": "A Survey on Physical Adversarial Attacks against Face Recognition Systems (arXiv:2410.16317)",
+      "url": "https://arxiv.org/html/2410.16317v1",
+      "claims": [
+        {"id": "77a", "where": "§7.4", "text": "物理对抗攻击综述：收集 2016–2024 年 40 篇论文；指出对抗攻击既可用于攻击也可作为隐私保护（躲避/假冒）防御工具，并预测其在隐私保护中的作用将增长"},
+        {"id": "77b", "where": "§8", "text": "物理对抗攻击在真实环境的稳定性、可检测性仍是难点"}
+      ]
+    },
+    "78": {
+      "source": "StyleAdv: A Usable Privacy Framework Against Facial Recognition with Adversarial Image Editing (Le & Carlsson, PoPETs 2024)",
+      "url": "https://petsymposium.org/popets/2024/popets-2024-0043.pdf",
+      "claims": [
+        {"id": "78a", "where": "§7.4", "text": "StyleAdv：针对人脸识别的可用隐私框架，采用对抗图像编辑；在五种 FRS 上测试，对抗攻击下 top-1 精度降至 0%，ArcFace(irse50) top-5 仅 0.5%、top-100 为 7.0%；并测试 JPEG 压缩、总变差、特征压缩、空间平滑等防御"}
+      ]
+    },
+    "79": {
+      "source": "SDFR: Synthetic Data for Face Recognition Competition (FG 2024, arXiv:2404.04580)",
+      "url": "http://arxiv.org/abs/2404.04580v2",
+      "claims": [
+        {"id": "79a", "where": "§7.5", "text": "SDFR Competition（FG 2024）研究用合成数据训练人脸识别模型以缓解网络爬取数据的法律、伦理与隐私问题"}
+      ]
+    }
+  }
+}

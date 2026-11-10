@@ -1,0 +1,60 @@
+[
+  {"claim_id": "SRC", "ref": 31, "verdict": "可达", "evidence": "arXiv:2608.08924v1 存在，2026-08-09 提交，题为 From Noise to Meaning", "note": "论文真实存在，主题为 VSS 秘密共享+隐写术+篡改检测，非同态加密论文"},
+  {"claim_id": "31a", "ref": 31, "verdict": "部分支持", "evidence": "该文参考文献[35]为 Song et al. PLoS ONE 2025 HE 人脸识别、[37]为 Wang et al. Expert Systems 2025 多密钥 HE", "note": "链接论文仅在文献列表中引用这两篇，本身并非 HE 论文；用[31]支撑该两条目属二手引用、张冠李戴"},
+  {"claim_id": "31b", "ref": 31, "verdict": "支持", "evidence": "正文 related works 称 homomorphic encryption 'enables operations on encrypted data, but is computationally complex'", "note": "HE 计算复杂的论断可在该文找到"},
+
+  {"claim_id": "SRC", "ref": 32, "verdict": "受限", "evidence": "HAL 页面被 Anubis 反爬拦截；经 HAL API 元数据及 arXiv:1503.04624 镜像全文核实", "note": "论文即 Barbier et al. ARES 2015，arXiv 有同文镜像"},
+  {"claim_id": "32a", "ref": 32, "verdict": "支持", "evidence": "§3.4 'applies multiple times the BioHashing algorithm'；摘要称结合 watermarking 与 cancelable biometrics", "note": "生物特征数据为指纹 BioCode（FVC2002/2004 指纹库实验），人脸图像主要作为嵌入载体/相关工作场景"},
+  {"claim_id": "32b", "ref": 32, "verdict": "支持", "evidence": "嵌入标记为 owner 与 customer 的 BioCode 串联加图像标识，同时证明所有权与身份", "note": "水印同时承载版权（proof of ownership）与生物特征身份"},
+  {"claim_id": "32c", "ref": 32, "verdict": "部分支持", "evidence": "论文面向数字图像版权保护（proof of ownership），非生物特征数据库版权/模板存储场景", "note": "适用场景被夸大，与[33]共引的模板存储安全表述超出原文范围"},
+
+  {"claim_id": "SRC", "ref": 33, "verdict": "可达", "evidence": "IEEE CAS 2023 页面可达：Sardar et al., Palmprint Recognition, vol.4 pp.1051-1063", "note": "论文真实存在，但为掌纹（palmprint）而非人脸"},
+  {"claim_id": "33a", "ref": 33, "verdict": "支持", "evidence": "摘要：'A novel Bio-Cryptosystem has been proposed... no need to remember the users' tokens'，含 cancelable biometrics 组件", "note": "与报告表述一致"},
+  {"claim_id": "33b", "ref": 33, "verdict": "支持", "evidence": "user-specific token 与掌纹特征计算 cancelable 特征向量，泄露后可重发", "note": "可撤销性表述成立（co-cited 通用论断）"},
+  {"claim_id": "33c", "ref": 33, "verdict": "部分支持", "evidence": "论文场景为掌纹识别系统模板保护，原始特征离线保存、可撤销特征加密在线保存", "note": "模板存储安全主旨成立，但非人脸场景，与[32]共引"},
+
+  {"claim_id": "SRC", "ref": 34, "verdict": "可达", "evidence": "ScienceDirect 摘要页可达：Srinivas et al., Computers & Security vol.157, 104573, 2025-10", "note": "全文付费，摘要与引言片段可见"},
+  {"claim_id": "34a", "ref": 34, "verdict": "支持", "evidence": "引言：'introduces a novel cancellable biometric template protection system to resolve the gap between accuracy and security'", "note": "与报告表述一致"},
+  {"claim_id": "34b", "ref": 34, "verdict": "支持", "evidence": "摘要称 CB 方案常因变换复杂度导致精度下降，本文 DFE 生成可重发行的可撤销模板", "note": "精度-安全性平衡与可撤销重发表述成立（co-cited 通用论断）"},
+
+  {"claim_id": "SRC", "ref": 35, "verdict": "可达", "evidence": "ResearchGate 页面可达：Ghouzali et al., Intelligent Automation & Soft Computing 27(1):35-51, 2021", "note": "页面含 PDF 正文片段"},
+  {"claim_id": "35a", "ref": 35, "verdict": "不支持", "evidence": "论文方法为 secure sketch+DTCWT-DCT 水印+3D 混沌加密，全文未用同态加密", "note": "'HE+cancelable biometrics'仅作为被引相关工作一句话出现，报告将方法描述张冠李戴"},
+  {"claim_id": "35b", "ref": 35, "verdict": "部分支持", "evidence": "管线含指纹 sketch、水印嵌入人脸、混沌加密、人脸+指纹分数级融合，多阶段确实复杂", "note": "原文未将复杂度表述为缺点，系报告概括（与[36]共引）"},
+
+  {"claim_id": "SRC", "ref": 36, "verdict": "受限", "evidence": "IEEE 直链返回 HTML 拦截页；经 IEEE Access 卷期页（vol.12 pp.173557-173582）及 ADS/DOAJ 替代来源核实", "note": "论文为 Rachapalli et al. 2024, DOI 10.1109/ACCESS.2024.3501368"},
+  {"claim_id": "36a", "ref": 36, "verdict": "支持", "evidence": "摘要：提取人脸、虹膜、掌纹特征，QR 码彩色化生成单向可撤销模板，IEEE Access 2024", "note": "多模态可撤销模板保护表述一致"},
+  {"claim_id": "36b", "ref": 36, "verdict": "部分支持", "evidence": "三模态+QR 彩色化+变换域验证，管线多阶段；原文未明确称复杂度高", "note": "系报告概括性缺点（与[35]共引）"},
+  {"claim_id": "36c", "ref": 36, "verdict": "支持", "evidence": "论文即多模态（face+iris+palmprint）多生物特征模板保护", "note": "多模态方向表述成立（与[70]共引）"},
+
+  {"claim_id": "SRC", "ref": 37, "verdict": "可达", "evidence": "PDF 下载成功，15 页，Fierrez/Gomez-Barrero 2016 Bloom filter 不可链接性论文", "note": "与 ref 5 为同一论文不同 URL 版本"},
+  {"claim_id": "37a", "ref": 37, "verdict": "支持", "evidence": "§2: BioHashing 'operates as a key-binding scheme, using secret subject-specific tokens'", "note": "密钥绑定、主体特定令牌表述与原文逐字一致"},
+
+  {"claim_id": "SRC", "ref": 38, "verdict": "可达", "evidence": "CVPR 2023 幻灯片 13 页下载成功，含 Motivation 对比页", "note": "幻灯片（非论文全文），文字精简"},
+  {"claim_id": "38a", "ref": 38, "verdict": "支持", "evidence": "第6页：'Frequency domain[5,6]: cannot defend against reconstruction attacks and incur redeployment costs'", "note": "[5]=Ji DCTDP、[6]=Mi DuetFace，与报告语境一致"},
+  {"claim_id": "38b", "ref": 38, "verdict": "部分支持", "evidence": "第13页称 AdvFace 可抵抗未知重建攻击且维持精度，'easily integrated... as a plug-in'，无需重新部署", "note": "前半成立；'需要对抗训练/重新部署'与幻灯片 plug-in 表述矛盾（仅离线训练 shadow model）"},
+  {"claim_id": "38c", "ref": 38, "verdict": "支持", "evidence": "第6页：'DP(Differential privacy)[3,4]: cannot defend against reconstruction attacks'，[3]=Chamikara", "note": "空间域 DP 无法防重建表述有明确依据"},
+  {"claim_id": "38d", "ref": 38, "verdict": "支持", "evidence": "同上第6页 DP 无法防御重建攻击的明确表述", "note": "§5.4 表述成立"},
+  {"claim_id": "38e", "ref": 38, "verdict": "部分支持", "evidence": "第6页支持'频域无法防重建'及'Encryption: large computation overhead'；'缺乏密码学级保证'与 SMPC/BTP 未在幻灯片出现", "note": "前半有据；'密码学级''SMPC/BTP'为报告引申（与[20][40]共引）"},
+  {"claim_id": "38f", "ref": 38, "verdict": "支持", "evidence": "第6页四类方法对比支持表中频域行'无法防重建'、DP 行'无法防重建'", "note": "空间域对抗扰动行可由 AdvFace 自身结论支撑"},
+  {"claim_id": "38g", "ref": 38, "verdict": "支持", "evidence": "第5页指出现实攻击者可从人脸特征重建原图，为全文动机", "note": "作为背景引用成立（较宽泛）"},
+
+  {"claim_id": "SRC", "ref": 39, "verdict": "可达", "evidence": "arXiv:2205.11090v1 摘要页可达，Wang et al. 2022-05-23 提交", "note": "论文真实存在"},
+  {"claim_id": "39a", "ref": 39, "verdict": "支持", "evidence": "摘要：'reduces at least 50% error rate on LFW, CFP-FP and AgeDB'，MAE 从掩码脸重建", "note": "数字与数据集表述严格一致"},
+
+  {"claim_id": "SRC", "ref": 40, "verdict": "受限", "evidence": "cvcops19.cispa.saarland 连接被重置；经 arXiv:1805.00577（同一论文 BTAS 2018 版）全文核实", "note": "Boddeti, Secure Face Matching Using FHE"},
+  {"claim_id": "40a", "ref": 40, "verdict": "支持", "evidence": "§1: '48.7 MB of memory for each 512-dimensional encrypted face template and 12.8 secs for matching a single pair'", "note": "12.8s/48.7MB 系文中引用 Troncoso-Pastoriza et al. 的 naive FHE 数据；TAR 25.77 vs 25.78 见 Table 2 IJB-B 行 FAR=0.01%"},
+  {"claim_id": "40b", "ref": 40, "verdict": "部分支持", "evidence": "该文称 FHE 提供 128-192 bit 安全但 naive 开销大，其框架已降至 0.01s/16KB；未涉及 SMPC/BTP", "note": "HE 强保证+开销主旨成立，SMPC/BTP 超出该文范围（与[38]共引）"},
+  {"claim_id": "40c", "ref": 40, "verdict": "支持", "evidence": "§1 naive FHE 需 48.7MB/模板、12.8s/匹配对，结论再次确认", "note": "表中 HE 行高开销表述有依据"},
+
+  {"claim_id": "SRC", "ref": 41, "verdict": "受限", "evidence": "Springer 正文页反爬（Client Challenge）；content/pdf 直链可下载，26 页全文已核实", "note": "Chitrapu et al., Discover Computing 29:132, 2026"},
+  {"claim_id": "41a", "ref": 41, "verdict": "支持", "evidence": "§3.4 '512-dimensional deep features... reduced to 256 dimensions'；正文：加密 3.3141s→1.6570s、密文计算 5.3890s→2.6947s、总时长 4.49143s/4.45853s（无 LPP 约 8.7s）", "note": "所有数字与原文表 6-9 及 §4 分析一致（表中 512 维计算列为 5.3895，正文写作 5.3890）"},
+  {"claim_id": "41b", "ref": 41, "verdict": "支持", "evidence": "论文动机即高维特征加密开销大，LPP 降维后密文更小、加密距离计算更快", "note": "报告将 LPP 降维原理类比到频域预处理，机制表述成立"},
+
+  {"claim_id": "SRC", "ref": 42, "verdict": "可达", "evidence": "arXiv:2509.00332v1 HTML 全文可达，Ao & Boddeti 2025", "note": "论文真实存在"},
+  {"claim_id": "42a", "ref": 42, "verdict": "支持", "evidence": "'the first end-to-end encrypted face recognition system' with FHE；CKKS；CryptoFaceNet；'without decryption at any point'", "note": "与报告表述逐点一致"},
+  {"claim_id": "42b", "ref": 42, "verdict": "支持", "evidence": "正文：HE 'provides provable post-quantum security'、'considered quantum-secure'（LWE/RLWE）", "note": "量子安全表述有依据"},
+
+  {"claim_id": "SRC", "ref": 43, "verdict": "可达", "evidence": "OPC Tech-Know Blog 'Computing while blindfolded'，2023-10-24，David Weinkauf", "note": "二手来源（科普博客）"},
+  {"claim_id": "43a", "ref": 43, "verdict": "支持", "evidence": "博客：bootstrapping 开销'can be so great that it outweighs any gain'；'Levelled fully' FHE 用于 bounded-depth 计算、'no negative performance hit due to bootstrapping'", "note": "二手来源；报告'实际多采用分层 FHE'为稍强概括，博客原意是深度可预知时的可选方案"},
+  {"claim_id": "43b", "ref": 43, "verdict": "支持", "evidence": "博客引早期测试 bootstrapping 'up to 30 minutes'、典型慢 1000 倍", "note": "二手来源；bootstrapping 昂贵表述成立"}
+]

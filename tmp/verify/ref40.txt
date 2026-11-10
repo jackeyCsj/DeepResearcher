@@ -1,0 +1,885 @@
+Secure Face Matching Using Fully Homomorphic Encryption
+Vishnu Naresh Boddeti
+Michigan State University
+East Lansing, MI
+vishnu@msu.edu
+Abstract
+Face recognition technology has demonstrated tremen-
+dous progress over the past few years, primarily due to
+advances in representation learning. As we witness the
+widespread adoption of these systems, it is imperative to
+consider the security of face representations. In this pa-
+per, we explore the practicality of using a fully homomor-
+phic encryption based framework to secure a database of
+face templates. This framework is designed to preserve
+the privacy of users and prevent information leakage from
+the templates, while maintaining their utility through tem-
+plate matching directly in the encrypted domain. Addi-
+tionally, we also explore a batching and dimensionality re-
+duction scheme to trade-off face matching accuracy and
+computational complexity. Experiments on benchmark face
+datasets (LFW, IJB-A, IJB-B, CASIA) indicate that secure
+face matching can be practically feasible (16 KB template
+size and 0.01 sec per match pair for 512-dimensional fea-
+tures from SphereFace [23]) while exhibiting minimal loss
+in matching performance.
+1. Introduction
+Face recognition is the science of determining the iden-
+tity of people through their characteristic facial appearance.
+Being the primary modality for human identiﬁcation, this
+topic has received tremendous attention in the pattern recog-
+nition and biometrics communities. There has been a steady
+improvement in face recognition accuracy over the past few
+decades, much of which can be attributed to deep learn-
+ing over the last few years. Thanks to progress in learning
+feature representations, automated face recognition systems
+are now believed to surpass human performance in some
+scenarios [25]. As a result, face recognition technology is
+witnessing wide spread adoption in numerous applications,
+such as surveillance systems, social media and law enforce-
+ment. However, the increased deployment of such technol-
+ogy also makes it an attractive target of malicious attacks.
+A typical face recognition system acquires a facial
+image, which undergoes some pre-processing, following
+which high-dimensional features are extracted. During en-
+rollment, these features vectors are stored in a database
+along with their identity labels. This database is then used
+to verify a person’s claimed identity (face veriﬁcation) or
+determine a person’s identity (face identiﬁcation).
+One of the simplest and foremost points of attack on a
+face recognition system is the database of face templates.
+Directly storing the facial feature vectors in the database can
+signiﬁcantly compromise the privacy of the enrolled users
+and the security of the authentication system. For instance,
+it has been demonstrated recently that access to the repre-
+sentations can enable the reconstruction of a user’s original
+facial image [26] by a malicious attacker. The reconstructed
+face images were shown to be of sufﬁcient quality to be
+successfully matched by a state-of-the-art face recognition
+system. Similarly, soft facial attributes such as age, gen-
+der, ethnicity etc. can be predicted with high accuracy from
+facial features [24]. Therefore, it is imperative to devise
+techniques to prevent information leakage from face rep-
+resentations while preserving face matching performance,
+thereby preventing attacks of this nature. Addressing this
+problem is the central aim of this paper.
+An attractive solution for secure face matching is the
+use of cryptosystems to protect the face template database
+and perform matching over encrypted data. These meth-
+ods, however, have not found much traction in the biomet-
+rics and pattern recognition community. Generic encryp-
+tion schemes are inherently incapable of supporting basic
+arithmetic operations, necessary for template matching, di-
+rectly in the encrypted domain. On the other hand, homo-
+morphic cryptosystems are a special class of cryptosystems
+that allow basic arithmetic operations over encrypted data
+[12]. These systems can be broadly categorized into three
+classes, (1) partially homomorphic encryption systems that
+support only a single arithmetic operation i.e., either addi-
+tion [30] or multiplication [10] in the encrypted domain, (2)
+somewhat homomorphic encryption systems that support a
+limited number of both additions and multiplications, and
+(3) fully homomorphic encryption (FHE) systems that sup-
+arXiv:1805.00577v2  [cs.CV]  13 Jul 2018
+port unlimited additions and multiplications directly in the
+encrypted domain. These systems offer a trade-off between
+generalization and computational complexity. Ergo, while
+the latter are more general they are signiﬁcantly more com-
+putationally demanding than the former systems.
+In this paper, we present a fully homomorphic encryp-
+tion [13] based approach to (1) cryptographically secure the
+database of face templates and the feature vector of the pre-
+sented face image, and (2) perform matching directly in
+the encrypted domain without the need for decrypting the
+templates. We leverage the observation that a typical face
+matching metric, either Euclidean distance or cosine simi-
+larity, can be decomposed into its constituent series of addi-
+tion and multiplication operations. Both of these operations
+are supported by FHE schemes over encrypted data. This
+solution affords many beneﬁts, including the desidarata of
+template protection schemes [27]:
+Diversity: Using different encryption and decryption
+keys across different databases can protect against cross-
+database-matching attacks. Revocability: Compromised
+templates can be revoked and reissued simply by revoking
+and reissuing the encryption and decryption keys.Security:
+The security of the face template database is cryptograph-
+ically guaranteed by the hardness of the ring learning with
+errors problem [6]. This problem forms the basis of cur-
+rent practical FHE schemes. Therefore, it is computation-
+ally prohibitive to obtain the original face template without
+the decryption key. Performance: Since homomorphic en-
+cryption admits addition and multiplication of integers di-
+rectly in the encrypted domain, the proposed scheme can
+maintain the recognition performance, in terms of FAR and
+FRR, of the face recognition system. Privacy: The inabil-
+ity to access the original face template without the decryp-
+tion keys helps preserve the privacy of the users, preventing
+estimation of either the original image [26] or any soft bio-
+metric traits [24].
+The key technical barrier to realizing homomorphic en-
+cryption based face matching is the computational com-
+plexity of homomorphic encryption, especially homomor-
+phic multiplication. This limitation renders it unsuitable for
+tasks that need to operate on high-dimensional vectors. For
+instance, we consider face representations that are hundreds
+to thousands of dimensions, thereby necessitating as many
+costly homomorphic operations. A straight-forward appli-
+cation of FHE for face matching needs 48.7 MB of memory
+for each 512-dimensional encrypted face template and 12.8
+secs for matching a single pair of such templates [46].
+The primary contributions of this paper are geared to-
+wards addressing this limitation: (1) Utilize a more efﬁ-
+cient FHE scheme, namely Fan-Vercauteren [11], easing
+the computational burden to 16.5 MB of memory and 0.6
+secs per pair of templates. These requirements could still be
+prohibitive for practical deployment. (2) Utilize a batching
+scheme that allows homomorphic multiplication of multiple
+values at the cost of a single homomorphic multiplication.
+This scheme reduces the computational requirements to, 16
+KB memory per template and 0.01 secs to match a pair of
+templates. (2) Dimensionality reduction to further provide
+a trade-off between computational efﬁciency and matching
+performance.
+2. Related Work
+Cryptographic Biometric Template Protection: A num-
+ber of approaches have been proposed to bring together bio-
+metric authentication and traditional cryptography. Soutar
+et al. [42, 43] proposed one of the earliest systems for bio-
+metric encryption of ﬁngerprints. The idea of using visual
+cryptography [29] on raw biometric data was also explored
+in the context of ﬁngerprint images [34], iris templates [36]
+and face images [37]. This method ensures biometric pri-
+vacy while maintaining the ability to match biometric im-
+ages. Fuzzy vault [19] based approaches have been pro-
+posed for biometric authentication in the context of ﬁnger-
+print [47] and iris [22] patterns. These methods allow for
+matching inexact biometric templates in the encrypted do-
+main. However, unlike the proposed FHE solution, they are
+not designed to maintain full utility (performance wise) of
+the encrypted biometrics.
+Pattern-Recognition Based Biometric Template Protec-
+tion: Instead of relying on the security afforded by cryp-
+tographic systems, a number of pattern recognition based
+approaches have been proposed for biometric template pro-
+tection. Davida et al. [9] and Radha et al. [35] proposed
+non-invertible transformation functions to protect biomet-
+ric signatures. Cancelable biometrics [32] are another ap-
+proach for the same purpose while allowing for revocability
+and diversity of templates. Key-binding systems [28, 4] se-
+cure a biometric template by monolithically binding it with
+a secret key. The readers are encouraged to refer to the ex-
+cellent article by Jain et al. [18] for a more comprehensive
+treatment of this topic. All the aforementioned approaches,
+however, trade-off security and matching performance i.e.,
+they either suffer signiﬁcant loss in matching accuracy or
+do not provide adequate template protection. In contrast,
+the FHE based scheme explored here does not suffer from
+this trade-off and can offer high levels of template protec-
+tion without adversely sacriﬁcing matching performance.
+Homomorphic Encryption for Biometrics: The primary
+attraction of homomorphic encryption is the ability to per-
+form basic arithmetic operations such as additions and mul-
+tiplications in the encrypted domain. Initial homomorphic
+encryption [16] driven biometric authentication approaches
+[21, 3] were largely based on partial homomorphic encryp-
+tion (PHE) schemes and in the context of matching bina-
+rized templates. Upmanyu et al. [48, 49] proposed a bio-
+...
+Detection Alignment Normalization Embedding Function Representation
+y∈ Rd
+Figure 1: A typical face representation pipeline comprises of face detection, alignment, normalization and feature extraction.
+The embedding function maps a high-dimensional normalized face image to ad-dimensional vector representation.
+metric matching system based on a PHE scheme. This
+scheme required repeated rounds of communication be-
+tween the client and the database to compute the match
+score, suffering from large communication overhead and
+computational complexity. Barni et al. [1, 2] leverage a
+Paillier cryptosystem, a PHE system that supports addition
+over encrypted data. This system was used for matching ﬁn-
+gerprints using ﬁngercode templates where the probe is en-
+crypted while the database remains unencrypted, providing
+no security to the ﬁngerprint database. Penn et al. [33] also
+leverage a Paillier cryptosystem [30] for matching binary
+iris templates. Recently, Cheon et al. [7] proposed Ghost-
+shell, a secure biometric authentication scheme for match-
+ing 2048-bit binary iris templates in the encrypted domain.
+It relied on a somewhat homomorphic encryption scheme,
+requiring about 0.5s per match pair. However, these ap-
+proaches are speciﬁc to matching binary bit strings and can-
+not maintain the same computational and algorithmic char-
+acteristics when extended to real valued face templates.
+The development of fully homomorphic encryption by
+Gentry et al. [15] has led to the promise of statistical analy-
+sis over encrypted data. In the context of biometric match-
+ing, Troncoso-Pastoriza et al. [46] proposed a FHE based
+face veriﬁcation system using Gabor features. Their sys-
+tem was based on early an FHE scheme [14] that was com-
+putationally expensive (template size of 380 MB and 100
+secs per match pair) and did not take full advantage of the
+speciﬁc nature of the face matching problem. In contrast,
+this paper proposes a secure face matching scheme that sig-
+niﬁcantly improves the computational efﬁciency over en-
+crypted templates (template size of 66 KB and 0.01 sec per
+match pair). We leverage the Fan-Vercauteren scheme [11],
+a more efﬁcient FHE scheme, and a batching scheme that al-
+lows homomorphic multiplication of multiple numbers for
+the cost of a single homomorphic multiplication.
+Face Recognition: There is a vast body of work devoted
+to studying the topic of face recognition. While an ex-
+haustive survey of the literature is beyond the scope of
+this paper, we present a few approaches that form the ba-
+sis of our face matching system. Current state-of-the-
+art face recognition approaches are based on deep neural
+network based representation learning techniques. These
+methods [44, 39, 31, 23] rely on end-to-end learning of
+feature extraction models using convolutional neural net-
+works (CNNs). The goal of this paper is to ensure secure
+matching of face templates extracted from such representa-
+tion models. We demonstrate the efﬁcacy of our framework
+on two different face representation models, FaceNet [39]
+(128-dimensions) and SphereFace [23] (512-dimensions).
+3. Approach
+The goal of this paper is to explore the practicality of us-
+ing fully homomorphic encryption for face matching over
+encrypted face templates. First we describe the face match-
+ing process and break it down to its constituent operations,
+series of multiplications and additions. Then we introduce
+fully homomorphic encryption and ﬁnally describe solu-
+tions to mitigate the computational burden of face matching
+over encrypted data.
+3.1. Problem Setup
+A typical face recognition system consists of a database
+of face representations X ={x1,..., xn} extracted from
+the images of the enrolled subjects (see Fig. 1 for a pic-
+torial illustration of the feature extraction process). During
+deployment, a user who wishes to get authenticated pro-
+vides their facial image from which a representation y is
+extracted. This representation is then matched against the
+templates in the database. The result of the matching pro-
+cess is a score that determines the degree of dissimilarity
+between y and X. The dissimilarity score between two
+representationsx∈ Rd andy∈ Rd is typically deﬁned as,
+d(x,y) = 1− xTy‖x‖‖y‖ = 1− ˜xT ˜y = 1− d∑i=1 ˜xi ˜yi (1)
+where ˜x = x‖x‖ is the normalized representation. Hence,
+the face matching process is comprised ofd scalar multipli-
+cations andd scalar additions.
+In this work, we seek to devise a solution to preserve the
+privacy of the databaseX as well as the probey and prevent
+leakage of any private information corresponding to a user’s
+Encrypted DatabaseClient Device
+(E(x), c)
+Key Gen
+Encryptionx
+θd
+θe
+(a) Enrollment: During this phase the user generates the key pair (θe,θd), encrypts feature vectorx with the public keyθe and transmits
+the encrypted feature vector E(x) and the user identity c. The private keyθd however remains on the client device.
+Encrypted DatabaseClient Device
+θe
+Encryptiony
+θd
+Decryption(d1, . . . , dn)
+(E(y), c′)
+(E(d1), . . . ,E(dn))
+(b) Authentication: During this phase, a user seeks to get authenticated, encrypts the probe feature vector y with the public keyθe and
+transmits E(y) to the database along with the claimed identity c′. The database computes the dissimilarity score over encrypted features
+and transmits the matching score to the client, where it is decrypted with the private keyθd.
+Figure 2: Enrollment and authentication protocols for secure face matching using fully homomorphic encryption.
+facial appearance. This can be achieved through a parame-
+terized function that transforms a face template z from the
+original space into an alternate space, i.e.,E(z) = f (z;θe),
+wheref (·;θe) is the transformation function with parame-
+tersθe andz = g(E(z);θd), where g(·;θd) is the inverse
+transformation function with parameters θd. While many
+such transformation functions exist, the key idea of our pa-
+per is to use transformation functions that can cryptographi-
+cally guarantee the security of the original featuresz (with-
+out knowledge ofθd) while allowing for template matching
+in the transformed space without loss of accuracy i.e.,
+d(E(x),E(y)) = d(f (x,θe),f (y,θe))≈d(x,y) (2)
+Transformation functions that satisfy this property en-
+able us to preserve the privacy of the users. Even if a mali-
+cious attacker can gain access to the database of face tem-
+plates, without access to the inverse transformation param-
+etersθd the attacker cannot estimate the user’s facial image
+or extract soft biometric attributes inherent in the template.
+3.2. Enrollment and Authentication Protocols
+We now describe a protocol for user enrollment and au-
+thentication using the cryptographic transformation func-
+tion described above. We consider a scenario with two en-
+tities, a device and a database.
+Enrollment: During this phase the c-th user performs the
+following actions on the device; (1) generate pair of keys,
+a public encryption keyθce and a private decryption keyθcd
+(each user can have their own pair of keys), (2) transmit the
+public keyθce to the database, (3) capture a series of images
+of the face, (4) extract the representation of the acquired
+face imagesX c ={xc1,..., xcnc} wherenc is the number
+of enrollment samples for thec-th user, (5) encrypt the face
+images using the public key θce, and (6) and ﬁnally trans-
+mit the encrypted templates to the database along with the
+identity label. On the database the encrypted templates, the
+public keyθce and identity label are added to the database.
+Figure 2a shows an illustration of this process.
+Authentication: During this phase the device seeks to au-
+thenticate the user through the following process: (1) the
+user’s facial image is acquired following which the repre-
+sentationy is extracted, (2) this representation is encrypted
+using the public key θe, which can possibly be differ-
+ent from θce, (3) transmit the encrypted representation, the
+claimed identity (c′) and the public encryption keyθe if it is
+different fromθce. At the database if the encryption key of
+the probe is different from the encryption key of the user’s
+template, the database executes key switching on the probe
+without having to decrypt it, (5) compute the dissimilarity
+scored(E(y),E(x)c′k ) for all the templates of thec′-th iden-
+tity, (6) the encryption key of the scores are switched back
+toθe, and transmitted back to the device. Finally, at the
+device, the encrypted scores are decrypted using the secret
+decryption keyθd to verify the identity of the user. Figure
+2b shows an illustration of this procedure.
+3.3. Homomorphic Encryption: A Primer
+We ﬁrst introduce the main ideas behind the Fan-
+Vercauteren [11] FHE scheme that we use and describe a
+straight-forward but computationally expensive application
+of this scheme to the face matching problem.
+Mathematical Notation: Modular arithmetic forms the
+mathematical basis of homomorphic encryption systems.
+Fort∈ Z a ring Rt = Zt[x]/(xn + 1) represents polyno-
+mials of degree less than n with the coefﬁcients modulo t.
+The operators⌊·⌋,⌈·⌉ and⌊·⌉ denote rounding down, up and
+to the nearest integer respectively. The operator [·] denotes
+the reduction of an integer by modulo t, where the reduc-
+tions are performed on the symmetric interval [−t/2,t/ 2).
+The operators when applied to a polynomial are assumed
+to act independently on the coefﬁcients of the polynomial.
+a
+$
+←− −Sdenotes thata is sampled uniformly from the ﬁnite
+setS. Similarly, a←− −χ denotes thata is sampled from a
+discrete truncated Gaussian.
+Fan-Vercauteren Scheme [11]: Any number, integer or
+rational, ﬁrst needs to be encoded in a ring Rt before it
+can be encrypted. Similarly, the encrypted numbers are en-
+coded as polynomials in the ring Rq. Let λ be the desired
+level of security, w the base to represent numbers in, and
+l =⌊logwq⌋ the number of terms in the decomposition ofq
+into basew. The FV scheme utilizes three keys, (1) a private
+decryption keyθd, (2) a public encryption key θe, and (3)
+evaluation keysθev which are necessary for multiplication
+over encrypted data. Below are the details of key genera-
+tion, addition and multiplication over encrypted integers.
+• Gen Secret Key (λ): Sampleθd
+$
+←− −R2
+• Gen Public Key (θd): Samplea
+$
+←− −Rq ande
+$
+←− −χ.
+Outputθe = ([−(aθd +e)]q,a)
+• Gen Evaluation Key (θd,w): fori∈{ 0,...,l }, sample
+ai
+$
+←− −Rq,ei←− −χ.
+Outputθev = ([−(aiθd +ei) +wiθ2d]q,ai)
+• Encrypt(m, θe): For m ∈ Rt, sample u
+$
+←− −R2
+and e1, e2 ←− −χ. Output ct = ([m +θe[0]u +
+e]q, [θe[1]u +e]q)
+• Decrypt(ct,θd): Output
+[⌊
+t
+q [ct[0] +ct[1]θd]
+⌉]
+• Add(ct0,ct1): Output (ct0[0]+ct1[0],ct0[1]+ct1[1])
+• Multiply(ct0,ct1): Compute:
+c0 =
+[⌊
+t
+q (ct0[0]ct1[0])
+⌉]
+q
+c1 =
+[⌊
+t
+q (ct0[0]ct1[1] +ct0[1]ct1[0])
+⌉]
+q
+c2 =
+[⌊
+t
+q (ct0[1]ct1[1])
+⌉]
+q
+c2 =∑li=0c(i)2 wi and compute
+c′0 =c0 +∑li=1θev[i][0]ci2
+c′1 =c1 +∑li=1θev[i][1]ci2
+Output (c′0,c′1)
+The algorithm described above enables us to perform
+face matching in the encrypted domain. The face dissim-
+ilarity score described in Eq. 1 can be computed in the en-
+crypted domain as:
+d(x,y) = 1−g
+( d∑
+i=1
+E(xi)E(yi),θd
+)
+(3)
+where computing the inner product over encrypted data
+would necessitated encrypted multiplications andd− 1 en-
+crypted additions. Since each encrypted multiplication is
+computationally expensive, evaluating the face dissimilar-
+ity score can be very slow [46]. This problem is further ex-
+acerbated by the high dimensionality of the face templates,
+typically running into hundreds to thousands of dimensions.
+Addition and multiplication of two encrypted integers
+translates to polynomial addition and multiplication in Rt.
+As long as the coefﬁcients of the resulting polynomials do
+not exceedt and their degrees do not exceed (xn + 1), cor-
+rectness is ensured and we can recover the score by evalu-
+ating the polynomial at the integer basew i.e., atx =w.
+3.4. Efﬁcient Homomorphic Face Matching
+While the algorithm described above can be directly uti-
+lized for face matching, it suffers from high computational
+requirements. Supporting computations involving many
+high-precision real-values from the facial features requires
+prohibitively large values ofn andt. For a 512-dimensional
+face template and desired security level of 128 bits, us-
+ing this algorithm requires 16.5 MB of storage space for
+each encrypted template and 0.6 secs for matching a pair
+of such templates. We present a few different solutions
+to address these limitations. First, we describe a quanti-
+zation scheme to encode facial features in Rt. Then, we
+describe a batching scheme for encoding a vector of real-
+values into a single polynomial using the Chinese Remain-
+der Theorem. This encoding allows us to amortize multiple
+6 1 2 2
+9 3 -4 0
+× 54 3 -8 0 +
+Kg1
+57 -5 -8 54 +
+Kg2
+49 49 49 49 × 49 0 0 0
+3 -8 0 54 -8 54 57 -5 01 0 0
+Figure 3: Homomorphic computation of inner product between vectors using batching, where multiple elements are encrypted
+into a single encrypted block. The batching process does not allow access to each element of the encrypted block. Therefore,
+after the Hadamard product, the sum of the elements within the encrypted block can be computed through repeated cyclic
+rotations and additions.
+homomorphic multiplications within a single homomorphic
+multiplication, thereby providing signiﬁcant computational
+efﬁciencies. Lastly, we leverage classical dimensionality re-
+duction algorithms to further ease the computational burden
+of homomorphic face matching.
+Data Representation: The efﬁciency of homomorphic ad-
+ditions and multiplications is critically dependent on the en-
+coding scheme chosen to represent the real-valued elements
+of the face template within a polynomial ringRt. The space
+of ring Rt is signiﬁcantly different from the space of real
+values R or the space of integers Z. Hence, to maintain the
+integrity of the homomorphic computations, the chosen en-
+coding scheme needs to ensure that the range of values af-
+ter the desired homomorphic operations remain within the
+ring. Pursuantly, we encode the real-valued face features
+into integers with a precision of two decimal digits and then
+represent these integers in basew.
+Encoding(a) = sign(a)(an−1xn−1 +··· +a1x+a0) (4)
+Accordingly, this encoding scheme can represent any inte-
+ger in−(wn− 1)≤a≤ (wn− 1).
+Batching: The main computational bottleneck of face
+matching over encrypted data is the number of homomor-
+phic multiplications necessary for computing the dissimi-
+larity score. Brakerski et al. [5] and Smart et al. [41] pro-
+posed techniques for homomorphic encryption and decryp-
+tion over an array of numbers instead of a single number at
+a time. These techniques leverage the Chinese Remainder
+Theorem (CRT) and encode multiple numbers within the
+same polynomial. For instance, given the primitive 2n-th
+root of unity modulo t, we have: xn + 1 = ( x−ξ)(x−
+ξ3)... (x−ξ2n−1) modt
+The CRT factorizes the ring Rt whent is chosen to be
+a product of many small prime factors i.e., t = ∏ki=1ti,
+wherep1,...,p k are distinct prime numbers. Given these
+primes, we can perform computations modulo each prime
+and recover the computation with respect to the product of
+the primes by using the CRT. The computations with respect
+to the primes are independent of each other and hence can
+be implemented in parallel.
+Given two vectorsx andy, the sum and Hadamard prod-
+uct of the two vectors can simply be computed as element-
+wise addition and multiplication, respectively, of the en-
+crypted vectors. By batching k numbers into a single en-
+crypted block, we can perform k homomorphic additions
+or multiplications at the block level for the computational
+cost of a single operation. Therefore, as the batch size gets
+larger, we can realize signiﬁcant computational efﬁciency.
+The main drawback of this scheme, however, is the inability
+to access the individual elements of the packed encrypted
+vector. This prevents us from computing the sum of the
+elements, an operation that is necessary for computing the
+dissimilarity score (Eq. 3). This limitation can be addressed
+by leveraging the observation made my Gentry et al. [15],
+namely, it is possible to cyclically rotate the encrypted vec-
+tors without the need for decryption. Therefore, the sum of
+the encrypted values can be computed by cyclically rotating
+and adding the encrypted vectors l = log qw times. Figure 3
+and Algorithm 1 respectively provide a pictorial illustration
+and algorithmic description of this process.
+Algorithm 1 Homomorphic Inner Product
+1: procedure ENCRYPTED INNER PRODUCT (m,m′)
+2: E(x)←f (x,θe) ⊿ CRT Encoding
+3: E(y)←f (y,θe) ⊿ CRT Encoding
+4: ct←Multiply (E(x),E(y)) ⊿ Batch Multiply
+5: fori ={0,...,l } do
+6: ct←ct +Kgi (ct) ⊿ Cyclic Rotation
+7: end for
+8: returnct ⊿ The element in the ﬁrst slot is the
+desired inner product.
+9: end procedure
+Dimensionality Reduction: The high computational cost
+of face matching over encrypted data depends on two fac-
+tors, (1) the high computational cost of one homomorphic
+multiplication, and (2) the high dimensionality of the face
+Table 1: Security Parameters, Timing and Memory
+Security Dim No FHE Parameters Batching No Batchingin bits Time Mem n t (bits) q Time (ms) Mem Time (ms) Mem(λ) ( d) ( µs) (KB) Enc Score Dec Total (KB) Enc Score Dec Total (MB)
+128
+64 0.44 2.0 128 110 40961 0.07 0.17 0.01 0.25 2.0 4.40 5.25 0.01 9.66 0.25
+128 0.89 4.0 256 110 40961 0.14 0.38 0.02 0.59 4.0 17.57 21.05 0.02 38.64 1.0
+512 3.48 16.0 1024 110 40961 0.58 1.80 0.07 2.45 16.0 280.19 343.81 0.08 624.07 16.5
+1024 7.49 32.0 2048 110 40961 1.14 4.02 0.15 5.80 33.0 1135.44 1411.82 0.16 2547.42 66.0
+1024 7.49 32.0 4096 110 40961 2.27 8.36 0.30 11.42 66.0 2214.88 2924.75 0.33 5139.97 131.0
+192
+64 0.44 2.0 128 77 40961 0.07 0.17 0.01 0.25 2.0 4.38 5.25 0.01 9.64 0.25
+128 0.89 4.0 256 77 40961 0.15 0.39 0.02 0.55 4.0 17.24 21.07 0.02 38.33 1.0
+512 3.48 16.0 1024 77 40961 0.58 1.85 0.07 2.50 16.0 274.11 343.60 0.08 617.79 16.5
+1024 7.49 32.0 2048 77 40961 1.17 4.03 0.15 5.35 33.0 1134.22 1410.99 0.16 2545.38 66.0
+1024 7.49 32.0 4096 77 40961 2.33 8.91 0.30 11.54 66.0 2214.96 2889.39 0.33 5104.68 131.0
+templates. While the former is addressed to an extent by
+the batching scheme, there are further avenues for mitigat-
+ing the computational burden by reducing the dimensional-
+ity of the face template. While a variety of dimensionality
+reduction algorithms exist (ISOMAP [45], LLE [38], ran-
+dom projections [8] etc.), we consider classical Principal
+Component Analysis based dimensionality reduction as an
+illustrative example.
+Key Switching: In a practical deployment of face recog-
+nition systems, it is natural to consider the scenario where
+each user utilizes their own set of public encryption (θce) and
+private decryption (θcd) keys respectively. This results in a
+scenario where face templates encrypted through one set of
+encryption keys have to be re-encrypted through another set
+of encryption keys without decrypting the template. This
+key-switching operation is supported by the FV scheme and
+is similar to the multiplication operation in Section 3.3.
+3.5. Security Analysis:
+The proposed system has three sources of attack, (1) the
+client device, (2) the communication channel between the
+client and the database, and (3) the database itself. The
+security of the client device is of paramount importance,
+since the device stores the private decryption key and is
+also the source of the raw facial images and the extracted
+facial features. We assume the “honest-but-curious” secu-
+rity model where all the parties honestly follow the protocol
+and learn nothing beyond their own outputs. Under this se-
+curity model, the communication channel is secure from a
+malicious attacker, since the encrypted facial template can-
+not be decrypted without access to the secret key. Similarly
+the facial database itself, which consists of the user’s iden-
+tity label and encrypted facial templates, is secure without
+the access to the secret decryption keys.
+4. Experiments
+The goal of this paper is to explore the practicality and
+efﬁcacy of using fully homomorphic encryption for the pur-
+pose of face matching over encrypted data. For our exper-
+imentation, we consider two different state-of-the-art deep
+neural network based face representations, namely, FaceNet
+[39] and SphereFace [23] with 128 and 512 (or 1024) di-
+mensional features, respectively.
+We evaluate these representations over multiple datasets
+of varying complexity. Speciﬁcally, we consider the fol-
+lowing datasets (1) LFW [17] consisting of 13,233 face
+images of 5,749 subjects, downloaded from the web. These
+images exhibit limited variations in pose, illumination, and
+expression, (2) IJB-A [20]: The IARPA Janus Benchmark-
+A (IJB-A) dataset consisting of 500 subjects with a to-
+tal of 25,813 images (5,399 still images and 20,414 video
+frames). This is a challenging dataset exhibiting i) full pose
+variation, ii) a mix of images and videos, and iii) wider geo-
+graphical variation of subjects, (3) IJB-B [50]: The IARPA
+Janus Benchmark-B (IJB-B) dataset consists of 1,845 sub-
+jects with a total of 76,824 images (21,798 still images
+and 55,026 video frames from 7,011 videos). This dataset
+is a larger superset of the IJB-A dataset, with more sub-
+jects and greater facial appearance variations, and (4) CA-
+SIA [51]: A large collection of labeled images downloaded
+from the web (based on names of famous personalities) typ-
+ically used for training deep neural networks. It consists of
+494,414 images across 10,575 subjects, with an average of
+about 500 face images per subject. This dataset was used to
+train the FaceNet and SphereFace representations.
+4.1. Implementation Details
+Our implementation is based on the NTL C++ Library
+[40]. For all experiments, we used a machine with a 4-core
+Intel i5-6400 processor running at 2.7 GHz. All of our ex-
+periments were run in a single-threaded environment. Be-
+fore we perform face matching experiments it is crucial to
+determine the parameters necessary for security and correct-
+ness of the face matching process. For a given desired level
+of security, Table 1 shows the effect of the different param-
+eter settings (n,q andt) and the dimensionality of the facial
+features on the computational complexity of face matching
+Table 2: Face Recognition Accuracy (TAR @ FAR in %)
+Dataset Method 128-D FaceNet 512-D SphereFace 64-D PCA FaceNet 64-D PCA SphereFace0.01% 0.1% 1% 0.01% 0.1% 1% 0.01% 0.1% 1% 0.01% 0.1% 1%
+LFW
+No FHE 84.06 94.56 98.65 90.49 96.74 99.11 83.99 94.64 98.73 88.41 95.80 98.87
+FHE (2.5×10−3) 84.05 94.56 98.65 90.49 96.74 99.11 84.00 94.64 98.72 88.38 95.80 98.87
+FHE (1.0×10−2) 83.89 94.53 98.66 90.46 96.73 99.11 83.94 94.62 98.72 88.38 95.80 98.87
+FHE (1.0×10−1) 78.82 92.58 98.35 84.78 94.72 98.64 78.18 93.06 98.41 84.32 94.38 98.69
+IJB-A
+No FHE 23.13 45.92 70.26 7.27 30.40 67.89 20.13 46.07 73.71 6.81 28.92 67.59
+FHE (2.5×10−3) 23.12 45.94 70.27 7.27 30.40 67.89 20.08 46.14 73.66 6.81 28.92 67.59
+FHE (1.0×10−2) 22.83 45.78 70.17 7.25 30.39 67.66 19.92 46.05 73.81 6.80 28.92 67.45
+FHE (1.0×10−1) 19.82 42.74 68.37 7.20 30.00 65.23 17.54 44.02 72.11 6.68 27.43 66.76
+IJB-B
+No FHE 25.77 48.31 74.47 7.86 31.27 69.83 24.95 47.80 74.58 7.13 29.72 69.79
+FHE (2.5×10−3) 25.78 48.28 74.46 7.86 31.27 69.82 25.06 47.78 74.66 6.85 29.70 69.69
+FHE (1.0×10−2) 25.71 48.31 74.44 7.80 31.29 69.75 24.90 47.97 74.50 6.86 29.85 69.52
+FHE (1.0×10−1) 23.75 46.08 72.87 7.49 30.92 67.45 22.79 45.80 73.12 6.90 29.82 69.55
+CASIA
+No FHE 70.98 84.70 93.29 86.48 90.81 93.83 70.85 84.76 93.35 82.87 89.07 92.80
+FHE (2.5×10−3) 70.98 84.70 93.29 86.47 90.81 93.83 70.94 84.82 93.33 82.78 89.04 92.78
+FHE (1.0×10−2) 70.96 84.68 93.28 86.47 90.83 93.81 70.92 84.82 93.32 82.74 89.00 92.79
+FHE (1.0×10−1) 70.82 84.66 93.25 83.21 89.49 93.05 70.88 84.79 93.32 78.82 87.29 92.16
+over encrypted features. We report a breakdown of the time
+taken for each of the steps in the matching process, the total
+matching time and the size of the templates. We observe
+that the fastest FHE based face matching is admittedly over
+1000x slower than matching in the real-domain. Neverthe-
+less, batching can offer signiﬁcant a speed-up (T =0.59ms vs
+T =38.64ms for n=256, d=128 andT =11.42ms vsT =624ms
+for n=1024, d=512) and memory savings (4 KB vs 1 MB
+for n=256, d=128, 16 KB vs 16.5 MB for n=1024, d=512)
+over element-wise homomorphic face matching. In com-
+parison, the FHE based face matching scheme by Troncoso-
+Pastoriza et al. [46] requires∼12.8 secs per match pair and
+48.7 MB for each template for 512-dimensional features.
+In contrast, our results, suggest that face matching over en-
+crypted templates using the proposed FHE framework can
+provide high levels of security, 128 to 192 bits, and real-
+time matching over a small database of face templates.
+4.2. Homomorphic Face Matching
+We report the results of face matching experiments on
+benchmark datasets for two different, state-of-the-art face
+representations (FaceNet [39] and SphereFace [23]) in Ta-
+ble 2. For each of these representations, aligned and nor-
+malized face images are propagated through the corre-
+sponding neural networks to extract 1 facial templates of
+128 and 512 dimensions, respectively. We report true ac-
+ceptance rate (TAR) at three different operating points of
+0.01%, 0.1% and 1.0% false accept rates (FARs). We ﬁrst
+evaluate face matching performance over unencrypted face
+1We use publicly available implementations, https://github.
+com/davidsandberg/facenet and https://github.com/
+wy1iu/sphereface.
+templates as a baseline to compare against. Since FHE op-
+erates on integer representations of the face templates, we
+consider three different quantization schemes for each ele-
+ment of the face features, one with a precision of 0.1, 0.01
+and another with a precision of 0.0025. We observe that
+the performance of the latter scheme, by way of being a
+more precise representation of the raw features, is competi-
+tive with the performance of the unencrypted features. As a
+result, the homomorphic face matching over encrypted fea-
+tures can perform as well as matching raw features while
+providing template protection, preventing information leak-
+age and preserving the privacy of the users. Finally, our ex-
+perimental results suggest that even simple PCA based di-
+mensionality reduction can perform comparably to the orig-
+inal high-dimensional features, while affording signiﬁcant
+homomorphic face matching efﬁciency.
+5. Conclusion
+This paper explored the practicality of securing and
+matching a database of face templates using fully homo-
+morphic encryption. We utilize a batching scheme, that per-
+forms multiple homomorphic multiplications in a single op-
+eration, and a dimensionality reduction scheme. Our frame-
+work affords signiﬁcant computational efﬁciencies, requir-
+ing 16 KB of memory space per encrypted template and
+0.01 secs for matching a pair of such templates. Exper-
+imental results over multiple benchmark datasets suggest
+that, fully homomorphic encryption could be a viable prac-
+tical solution for accurate face matching in the encrypted
+domain, and can help prevent information leakage and pre-
+serve the privacy of users.
+References
+[1] M. Barni, T. Bianchi, D. Catalano, M. Di Raimondo,
+R. Donida Labati, P. Failla, D. Fiore, R. Lazzeretti, V . Piuri,
+F. Scotti, et al. Privacy-preserving ﬁngercode authentication.
+In ACM Workshop on Multimedia and Security, 2010.
+[2] M. Barni, T. Bianchi, D. Catalano, M. Di Raimondo, R. D.
+Labati, P. Failla, D. Fiore, R. Lazzeretti, V . Piuri, A. Piva,
+et al. A privacy-compliant ﬁngerprint recognition system
+based on homomorphic encryption and ﬁngercode templates.
+In BTAS. IEEE, 2010.
+[3] M. Barni, G. Droandi, and R. Lazzeretti. Privacy protection
+in biometric-based recognition systems: A marriage between
+cryptography and signal processing. IEEE Signal Processing
+Magazine, 32(5):66–76, 2015.
+[4] V . N. Boddeti and B. V . Kumar. A framework for binding and
+retrieving class-speciﬁc information to and from image pat-
+terns using correlation ﬁlters. IEEE Transactions on Pattern
+Analysis and Machine Intelligence, 35(9):2064–2077, 2013.
+[5] Z. Brakerski, C. Gentry, and S. Halevi. Packed cipher-
+texts in lwe-based homomorphic encryption. In Public-Key
+Cryptography–PKC 2013, pages 1–13. Springer, 2013.
+[6] Z. Brakerski and V . Vaikuntanathan. Fully homomorphic en-
+cryption from ring-lwe and security for key dependent mes-
+sages. In Annual Cryptology Conference , pages 505–524.
+Springer, 2011.
+[7] J. H. Cheon, H. Chung, M. Kim, and K.-W. Lee. Ghost-
+shell: Secure biometric authentication using integrity-based
+homomorphic evaluations. IACR Cryptology ePrint Archive,
+2016:484, 2016.
+[8] S. Dasgupta. Experiments with random projection. In Un-
+certainty in Artiﬁcial Intelligence , pages 143–151. Morgan
+Kaufmann Publishers Inc., 2000.
+[9] G. I. Davida, Y . Frankel, and B. J. Matt. On enabling se-
+cure applications through off-line biometric identiﬁcation. In
+IEEE Symposium on Security and Privacy , pages 148–157,
+1998.
+[10] T. ElGamal. A public key cryptosystem and a signature
+scheme based on discrete logarithms. IEEE Transactions on
+Information Theory, 31(4):469–472, 1985.
+[11] J. Fan and F. Vercauteren. Somewhat practical fully ho-
+momorphic encryption. IACR Cryptology ePrint Archive ,
+2012:144, 2012.
+[12] C. Fontaine and F. Galand. A survey of homomorphic en-
+cryption for nonspecialists. EURASIP Journal on Informa-
+tion Security, 2007:15, 2007.
+[13] C. Gentry. A fully homomorphic encryption scheme . Stan-
+ford University, 2009.
+[14] C. Gentry and S. Halevi. Implementing gentrys fully-
+homomorphic encryption scheme. In Annual International
+Conference on the Theory and Applications of Crypto-
+graphic Techniques, pages 129–148, 2011.
+[15] C. Gentry, S. Halevi, and N. P. Smart. Fully homomor-
+phic encryption with polylog overhead. In Annual Interna-
+tional Conference on the Theory and Applications of Cryp-
+tographic Techniques, pages 465–482. Springer, 2012.
+[16] O. Goldreich. Foundations of cryptography: volume 2, basic
+applications. Cambridge university press, 2009.
+[17] G. B. Huang, M. Ramesh, T. Berg, and E. Learned-Miller.
+Labeled faces in the wild: A database for studying face
+recognition in unconstrained environments. Technical re-
+port, Technical Report 07-49, University of Massachusetts,
+Amherst, 2007.
+[18] A. K. Jain, K. Nandakumar, and A. Nagar. Biometric tem-
+plate security. EURASIP Journal on Advances in Signal Pro-
+cessing, 2008:113, 2008.
+[19] A. Juels and M. Sudan. A fuzzy vault scheme. Designs,
+Codes and Cryptography, 38(2):237–257, 2006.
+[20] B. F. Klare, B. Klein, E. Taborsky, A. Blanton, J. Cheney,
+K. Allen, P. Grother, A. Mah, and A. K. Jain. Pushing
+the frontiers of unconstrained face detection and recognition:
+IARPA Janus Benchmark A. In CVPR, 2015.
+[21] R. L. Lagendijk, Z. Erkin, and M. Barni. Encrypted signal
+processing for privacy protection: Conveying the utility of
+homomorphic encryption and multiparty computation. IEEE
+Signal Processing Magazine, 30(1):82–105, 2013.
+[22] Y . J. Lee, K. R. Park, S. J. Lee, K. Bae, and J. Kim. A
+new method for generating an invariant iris private key based
+on the fuzzy vault system. IEEE Transactions on Systems,
+Man, and Cybernetics, Part B (Cybernetics) , 38(5):1302–
+1313, 2008.
+[23] W. Liu, Y . Wen, Z. Yu, M. Li, B. Raj, and L. Song.
+Sphereface: Deep hypersphere embedding for face recogni-
+tion. In CVPR, volume 1, 2017.
+[24] Z. Liu, P. Luo, X. Wang, and X. Tang. Deep learning face
+attributes in the wild. In ICCV, 2015.
+[25] C. Lu and X. Tang. Surpassing human-level face veriﬁcation
+performance on lfw with gaussianface. In AAAI, 2015.
+[26] G. Mai, K. Cao, P. C. Yuen, and A. K. Jain. Face im-
+age reconstruction from deep templates. arXiv preprint
+arXiv:1703.00832, 2017.
+[27] D. Maltoni, D. Maio, A. K. Jain, and S. Prabhakar. Hand-
+book of ﬁngerprint recognition. Springer Science & Business
+Media, 2009.
+[28] K. Nandakumar, A. Nagar, and A. K. Jain. Hardening ﬁn-
+gerprint fuzzy vault using password. In ICB. Springer, 2007.
+[29] M. Naor and A. Shamir. Visual cryptography. In Workshop
+on the Theory and Application of of Cryptographic Tech-
+niques, pages 1–12. Springer, 1994.
+[30] P. Paillier. Public-key cryptosystems based on composite
+degree residuosity classes. In International Conference on
+the Theory and Applications of Cryptographic Techniques ,
+pages 223–238. Springer, 1999.
+[31] O. M. Parkhi, A. Vedaldi, and A. Zisserman. Deep face
+recognition. In BMVC, 2015.
+[32] V . M. Patel, N. K. Ratha, and R. Chellappa. Cancelable
+biometrics: A review. IEEE Signal Processing Magazine ,
+32(5):54–65, 2015.
+[33] G. M. Penn, G. P ¨otzelsberger, M. Rohde, and A. Uhl.
+Customisation of paillier homomorphic encryption for efﬁ-
+cient binary biometric feature vector matching. In Interna-
+tional Conference of the Biometrics Special Interest Group
+(BIOSIG), pages 1–6, 2014.
+[34] Y . S. Rao, Y . Sukonkina, C. Bhagwati, and U. K. Singh. Fin-
+gerprint based authentication application using visual cryp-
+tography methods (improved id card). In IEEE Region 10
+Conference (TENCON), pages 1–5. IEEE, 2008.
+[35] N. K. Ratha, J. H. Connell, and R. M. Bolle. Enhancing secu-
+rity and privacy in biometrics-based authentication systems.
+IBM systems Journal, 40(3):614–634, 2001.
+[36] P. Revenkar, A. Anjum, and W. Gandhare. Secure iris
+authentication using visual cryptography. arXiv preprint
+arXiv:1004.1748, 2010.
+[37] A. Ross and A. Othman. Visual cryptography for biometric
+privacy. IEEE Transactions on Information Forensics and
+Security, 6(1):70–81, 2011.
+[38] S. T. Roweis and L. K. Saul. Nonlinear dimensionality reduc-
+tion by locally linear embedding. Science, 290(5500):2323–
+2326, 2000.
+[39] F. Schroff, D. Kalenichenko, and J. Philbin. Facenet: A uni-
+ﬁed embedding for face recognition and clustering. InCVPR,
+pages 815–823, 2015.
+[40] V . Shoup. Number theory c++ library (ntl) version 11.0.0,
+2003.
+[41] N. P. Smart and F. Vercauteren. Fully homomorphic simd
+operations. Designs, Codes and Cryptography, 71(1):57–81,
+2014.
+[42] C. Soutar, D. Roberge, A. Stoianov, R. Gilroy, and B. V . Ku-
+mar. Biometric encryption using image processing. In Opti-
+cal Security and Counterfeit Deterrence Techniques II , vol-
+ume 3314, pages 178–189. International Society for Optics
+and Photonics, 1998.
+[43] C. Soutar, D. Roberge, A. Stoianov, R. Gilroy, and B. V . Ku-
+mar. Biometric encryption. ICSA Guide to Cryptography ,
+pages 649–675, 1999.
+[44] Y . Taigman, M. Yang, M. Ranzato, and L. Wolf. Deepface:
+Closing the gap to human-level performance in face veriﬁca-
+tion. In CVPR, 2014.
+[45] J. B. Tenenbaum, V . De Silva, and J. C. Langford. A global
+geometric framework for nonlinear dimensionality reduc-
+tion. Science, 290(5500):2319–2323, 2000.
+[46] J. R. Troncoso-Pastoriza, D. Gonzalez-Jimenez, and
+F. Perez-Gonzalez. Fully private noninteractive face veri-
+ﬁcation. IEEE Transactions on Information Forensics and
+Security, 8(7):1101–1114, 2013.
+[47] U. Uludag, S. Pankanti, and A. K. Jain. Fuzzy vault for
+ﬁngerprints. In International Conference on Audio-and
+Video-Based Biometric Person Authentication , pages 310–
+319. Springer, 2005.
+[48] M. Upmanyu, A. M. Namboodiri, K. Srinathan, and C. Jawa-
+har. Efﬁcient biometric veriﬁcation in encrypted domain. In
+International Conference on Biometrics, 2009.
+[49] M. Upmanyu, A. M. Namboodiri, K. Srinathan, and C. Jawa-
+har. Blind authentication: a secure crypto-biometric veriﬁca-
+tion protocol. IEEE Transactions Information Forensics and
+Security, 5(2):255–268, 2010.
+[50] C. Whitelam, E. Taborsky, A. Blanton, B. Maze, J. Adams,
+T. Miller, N. Kalka, A. K. Jain, J. A. Duncan, K. Allen, et al.
+IARPA Janus Benchmark-B Face Dataset. InCVPRW, 2017.
+[51] D. Yi, Z. Lei, S. Liao, and S. Z. Li. Learning face represen-
+tation from scratch. arXiv preprint arXiv:1411.7923, 2014.

@@ -1,0 +1,63 @@
+[
+  {"claim_id": "SRC", "ref": 19, "verdict": "可达", "evidence": "liner.com Quick Review 页存在，为 PPFR-FD (Wang et al., AAAI 2022) 评论页，含方法综述与 LFW 实验结果", "note": "二手评论来源"},
+  {"claim_id": "19a", "ref": 19, "verdict": "部分支持", "evidence": "页面含 masking 方法与实验综述，但抓取内容未见 revocability/unlinkability 局限表述", "note": "镜像/二手来源，对应原论文 claim 8b；局限表述以原论文为准，本次抓取未覆盖"},
+  {"claim_id": "19b", "ref": 19, "verdict": "支持", "evidence": "页载 LFW 99.68% vs ArcFace 未保护 99.82%，移除超 94% 图像能量", "note": "镜像/二手来源，对应原论文 claim 8c，数字一致"},
+  {"claim_id": "19c", "ref": 19, "verdict": "支持", "evidence": "页载 fast masking: discards DC, shuffles, self-normalizes, mixes frequency channels", "note": "镜像/二手来源，对应原论文 claim 8b/8d"},
+
+  {"claim_id": "SRC", "ref": 20, "verdict": "可达", "evidence": "arXiv 摘要页完整，标题、作者、摘要均可获取", "note": ""},
+  {"claim_id": "20a", "ref": 20, "verdict": "支持", "evidence": "摘要：counterintuitive discovery（仅视觉不可分辨高频通道）、credible split by cruciality、non-crucial channels 服务端处理、feature mask 注意力迁移、comparable to ArcFace", "note": ""},
+  {"claim_id": "20b", "ref": 20, "verdict": "支持", "evidence": "摘要支持频域通道分割+注意力迁移的方法定位", "note": ""},
+  {"claim_id": "20c", "ref": 20, "verdict": "支持", "evidence": "摘要：comparable computation cost to unprotected ArcFace；plug-in interactive block 嵌入现有骨干；protects from visual inspection/reconstruction/identification", "note": ""},
+  {"claim_id": "20d", "ref": 20, "verdict": "支持", "evidence": "摘要明确 collaborative inference 客户端-服务器协作推理框架", "note": "关于间接缓解梯度泄露无定量证据部分为报告自身推断，源文未涉及，不构成矛盾"},
+  {"claim_id": "20e", "ref": 20, "verdict": "部分支持", "evidence": "DuetFace 无密码学级保证属实，但摘要自称 protects face images from undesired reconstruction", "note": "无法防御重建攻击的观点与源文主张相悖，该论断主要来自共引文献[38] AdvFace"},
+  {"claim_id": "20f", "ref": 20, "verdict": "支持", "evidence": "摘要支持：视觉不可分辨通道抗肉眼检查、开销与 ArcFace 相当", "note": ""},
+  {"claim_id": "20g", "ref": 20, "verdict": "支持", "evidence": "arXiv 页标注 Accepted to ACM Multimedia 2022", "note": ""},
+  {"claim_id": "20h", "ref": 20, "verdict": "支持", "evidence": "摘要：在选定频率通道上保持精度与隐私平衡", "note": ""},
+
+  {"claim_id": "SRC", "ref": 21, "verdict": "可达", "evidence": "alphaXiv 页面存在，作者列表与摘要与 arXiv:2207.07340 完全一致", "note": "镜像来源"},
+  {"claim_id": "21a", "ref": 21, "verdict": "支持", "evidence": "镜像摘要含 counterintuitive discovery、credible split、feature mask、comparable to ArcFace", "note": "镜像/二手来源，对应原论文 claim 20a"},
+  {"claim_id": "21b", "ref": 21, "verdict": "支持", "evidence": "镜像页方法描述与 arXiv 版一致", "note": "镜像/二手来源，对应原论文 claim 20b"},
+  {"claim_id": "21c", "ref": 21, "verdict": "支持", "evidence": "镜像页确认 collaborative inference 客户端-服务器场景", "note": "镜像/二手来源，对应原论文 claim 20d"},
+
+  {"claim_id": "SRC", "ref": 22, "verdict": "可达", "evidence": "arXiv 摘要页完整，标注 ICCV 2023", "note": ""},
+  {"claim_id": "22a", "ref": 22, "verdict": "支持", "evidence": "摘要：pruning human-perceivable low-frequency components；training and inference on randomly selected frequency components；elucidate the seeming paradox", "note": ""},
+  {"claim_id": "22b", "ref": 22, "verdict": "支持", "evidence": "摘要支持随机频率分量+剪除低频的方法定位", "note": ""},
+  {"claim_id": "22c", "ref": 22, "verdict": "支持", "evidence": "arXiv 页 Comments 标注 ICCV 2023", "note": ""},
+  {"claim_id": "22d", "ref": 22, "verdict": "支持", "evidence": "摘要：effectively balances privacy protection goals and recognition accuracy", "note": ""},
+
+  {"claim_id": "SRC", "ref": 23, "verdict": "可达", "evidence": "WebFetch 直接抓取失败，经 WebSearch 快照确认 huggingface.co/papers/2308.10461 页面存在且摘要与 arXiv 一致", "note": "镜像来源；页面经搜索快照核实"},
+  {"claim_id": "23a", "ref": 23, "verdict": "支持", "evidence": "镜像页摘要含 prunes human-perceivable low-frequency components、randomly selected frequency components", "note": "镜像/二手来源，对应原论文 claim 22a"},
+  {"claim_id": "23b", "ref": 23, "verdict": "支持", "evidence": "镜像页方法描述与 arXiv 版一致", "note": "镜像/二手来源，对应原论文 claim 22b"},
+  {"claim_id": "23c", "ref": 23, "verdict": "支持", "evidence": "镜像页标注 ICCV 2023", "note": "镜像/二手来源，对应原论文 claim 22c"},
+
+  {"claim_id": "SRC", "ref": 24, "verdict": "可达", "evidence": "arXiv:2401.13386v1 摘要页完整，作者 Han/Li/Denzler", "note": ""},
+  {"claim_id": "24a", "ref": 24, "verdict": "支持", "evidence": "摘要：hybrid frequency-color fusion 降维、sparse color information 缓解 DP 噪声后精度下降、identity-specific embedding mapping 拉大身份距离、SMPC 计算嵌入距离", "note": ""},
+  {"claim_id": "24b", "ref": 24, "verdict": "支持", "evidence": "摘要支持频域-颜色混合域方法定位", "note": ""},
+  {"claim_id": "24c", "ref": 24, "verdict": "支持", "evidence": "arXiv 页标注已被 VISAPP 2024 接收", "note": ""},
+  {"claim_id": "24d", "ref": 24, "verdict": "支持", "evidence": "摘要原句：around 2.6% to 4.2% higher accuracy than the state-of-the-art in the 1:N verification scenario", "note": ""},
+  {"claim_id": "24e", "ref": 24, "verdict": "支持", "evidence": "摘要原句：The noticeable drop in recognition accuracy is a pitfall for most methods", "note": "稀疏颜色缓解加噪后精度下降亦见摘要"},
+
+  {"claim_id": "SRC", "ref": 25, "verdict": "可达", "evidence": "SCITEPRESS PDF 下载成功并提取全文（VISIGRAPP/VISAPP 2024, pp.536-546）", "note": "即 arXiv:2401.13386 的会议版"},
+  {"claim_id": "25a", "ref": 25, "verdict": "支持", "evidence": "§1：Most frequency-based FR methods have high-dimensional inputs without utilizing any color information；selects the most important coefficients across the channel to discard redundant information", "note": ""},
+  {"claim_id": "25b", "ref": 25, "verdict": "支持", "evidence": "§4.3.2：rank-1 提升 7.4% ArcFace、9.4% DCTDP、13.3% DCTDP-FF、8.1% HFCF-LBP、9.3% HFCF-DLBP，数字完全一致", "note": "会议版特有实验结论，arXiv 摘要页未含此细节"},
+  {"claim_id": "25c", "ref": 25, "verdict": "支持", "evidence": "论文标题与内容即为 Hybrid Frequency-Color Domain 方法", "note": "与[24]同源"},
+  {"claim_id": "25d", "ref": 25, "verdict": "支持", "evidence": "§1 同句指出频域方法高维输入且未利用颜色信息", "note": ""},
+
+  {"claim_id": "SRC", "ref": 26, "verdict": "可达", "evidence": "ScienceDirect 公开摘要与 Highlights 可获取（PRL Vol.166, 2023, pp.1-7），正文付费墙", "note": "标题全称含 and reversible data hiding in YUV colorspace，报告标题略有截短"},
+  {"claim_id": "26a", "ref": 26, "verdict": "支持", "evidence": "Highlights：Embed adversarial perturbations of Y channel into UV channel by reversible data hiding", "note": ""},
+  {"claim_id": "26b", "ref": 26, "verdict": "支持", "evidence": "摘要：ensure that authorized models can recover original image data without distortion", "note": ""},
+
+  {"claim_id": "SRC", "ref": 27, "verdict": "可达", "evidence": "arXiv HTML 全文可获取", "note": ""},
+  {"claim_id": "27a", "ref": 27, "verdict": "支持", "evidence": "摘要/正文：propose a new method for generating reversible adversarial examples based on local visible adversarial perturbation", "note": ""},
+
+  {"claim_id": "SRC", "ref": 28, "verdict": "可达", "evidence": "ScienceDirect 公开摘要可获取（Information Sciences Vol.629, 2023, pp.566-579）", "note": ""},
+  {"claim_id": "28a", "ref": 28, "verdict": "支持", "evidence": "摘要：proposes face privacy-preserving method based on Invertible Mask Network (IMN)；almost perfectly recover the protected face", "note": ""},
+  {"claim_id": "28b", "ref": 28, "verdict": "支持", "evidence": "摘要：the recovered face can be obtained by authorized users；contribution 称 losslessly recover by authorized users", "note": ""},
+
+  {"claim_id": "SRC", "ref": 29, "verdict": "可达", "evidence": "arXiv:2204.08895 摘要页完整", "note": "镜像来源"},
+  {"claim_id": "29a", "ref": 29, "verdict": "支持", "evidence": "arXiv 摘要：IMN 保护隐私且 almost perfectly recover，与 InfoSci 版一致", "note": "镜像/二手来源，对应原论文 claim 28a"},
+
+  {"claim_id": "SRC", "ref": 30, "verdict": "可达", "evidence": "Monash 研究库页面完整，含摘要与出版信息（ICICS 2023, LNCS 14252, pp.333-350）", "note": ""},
+  {"claim_id": "30a", "ref": 30, "verdict": "支持", "evidence": "摘要原句：employs homomorphic encryption (HE) and secure multi-party computation (MPC)", "note": ""},
+  {"claim_id": "30b", "ref": 30, "verdict": "支持", "evidence": "摘要：database held by a third party, such as a cloud server，云外包场景明确", "note": "摘要未明确'授权解密'表述，CryptoMask 仅揭示是否匹配而不恢复图像，该短语为报告概括"}
+]

@@ -1,0 +1,838 @@
+                                                               Image and Vision Computing 64 (2017) 34­46
+
+                                                         Contents lists available at ScienceDirect
+
+                                             Image and Vision Computing
+
+                                        journal homepage: www.elsevier.com/locate/imavis
+
+Robust local features for remote face recognition
+
+Jie Chen a, Vishal M. Patel b, Li Liu a,d,, Vili Kellokumpu a, Guoying Zhao a, Matti Pietikäinen a, Rama Chellappa c
+
+a Center for Machine Vision and Signal Analysis, University of Oulu, Finland
+b Department of Electrical and Computer Engineering, Rutgers University, Piscataway, NJ, USA
+c Department of Electrical and Computer Engineering, University of Maryland, College Park, USA
+d College of Information System and Management, National University of Defense Technology, China
+
+article info                                         abstract
+
+Article history:                                     In this paper, we propose a robust local descriptor for face recognition. It consists of two components, one based
+Received 25 October 2015                             on a shearlet-decomposition and the other on local binary pattern (LBP). Shearlets can completely analyze the
+Received in revised form 28 March 2017               singular structures of piecewise smooth images, which is useful since singularities and irregular structures
+Accepted 13 May 2017                                 carry useful information in an underlying image. Furthermore, LBP is effective for describing the edges extracted
+Available online 31 May 2017                         by shearlets even when the images contain high level of noise. Experimental results using the Face Recognition
+                                                     Grand Challenge dataset show that the proposed local descriptor significantly outperforms many widely used
+Keywords:                                            features (e.g., Gabor and deep learning-based features) when the images are corrupted by random noise, demon-
+Robust local feature                                 strating robustness to noise. In addition, experimental results show promising results for two challenging
+Remote face recognition                              datasets which have poor image quality, i.e., a remote face dataset and the Point and Shoot Face Recognition
+                                                     Challenge dataset.
+
+                                                                                                                                                      © 2017 Elsevier B.V. All rights reserved.
+
+1. Introduction                                                                              data. Despite the power of deep learning methods, they still lack much
+                                                                                             of the functionality needed for realizing this goal entirely [42].
+    Feature descriptor is a key factor in the performance of many com-
+puter vision and pattern recognition applications. A plethora of feature                         For the class of hand-crafted local features, typical examples are LBP
+descriptors has been developed to improve the performance for these                          [45], Gabor [12], and SIFT [40]. These local features achieved very good
+applications. There are several studies that evaluate the performance                        performance for texture classification, face recognition and object
+of these methods, such as [39,43,44]. These methods can be divided                           recognition. Specifically, Ojala et al. proposed a simple but very power-
+into two classes: one is learning-based deep features in supervised,                         ful local descriptor, i.e., local binary pattern (LBP). It is one of the best
+weakly supervised or unsupervised way, attempting to model high-                             performing texture descriptors and has been widely used in various
+level abstractions in data by using architectures composed of multiple                       applications, such as textures classification and face recognition [45].
+non-linear transformations [24]. The other one is traditional local                          Chen et al. developed a robust local binary pattern [9]. Liu and Fieguth
+features, nowadays often called hand-crafted features inspired by neu-                       proposed a random feature for texture classification [38]. Zhang et al.
+roscience studies, e.g., Weber local descriptor (WLD) [8], Gabor [12],                       proposed to use Gabor and LBP for face recognition [58]. Lowe in-
+scale-invariant feature transform (SIFT) [40], and local binary pattern                      troduced SIFT, which performs well for matching and recognition
+(LBP) [45].                                                                                  tasks [40].
+
+    For learning-based deep features, a typical approach is deep learning                        However, one issue of feature descriptors (learning-based deep
+(DL), introduced by Hinton [24]. It performs very well for hand-written                      features and hand-crafted local features) is that they are not robust
+digit recognition [25], face recognition [49,50], human pose estimation                      to the noise present in images. Vincent proposed the denoising
+[52] and object recognition [30]. The main criticism of deep learning                        autoencoders (dA) to improve deep learning-based methods [53],
+comes from the observation that it requires tons of annotated training                       which showed good results when the input data to the autoencoders
+                                                                                             was contaminated with noise. In this paper, we propose a local de-
+  This paper has been recommended for acceptance by Bulent Sankur.                           scriptor robust to noise. It is a hand-crafted local feature, which
+   Corresponding author at: College of Information System and Management, National           achieves good performance when the scale of the training set is not
+University of Defense Technology, China.                                                     sufficient for deep learning (see Section 3 for details.). The proposed
+                                                                                             local descriptor consists of two components. One is based on the
+     E-mail addresses: jiechen@ee.oulu.fi (J. Chen), vishal.m.patel@rutgers.edu              shearlet decomposition and the other on local binary patterns (LBPs).
+(V.M. Patel), lili@ee.oulu.fi (L. Liu), kello@ee.oulu.fi (V. Kellokumpu), gyzhao@ee.oulu.fi  Shearlets can detect the edges in images even when they have high
+(G. Zhao), mkp@ee.oulu.fi (M. Pietikäinen), rama@umiacs.umd.edu (R. Chellappa).              level of noise. Furthermore, LBP is effective in describing the edges
+
+http://dx.doi.org/10.1016/j.imavis.2017.05.006
+0262-8856/© 2017 Elsevier B.V. All rights reserved.
+                           J. Chen et al. / Image and Vision Computing 64 (2017) 34­46                                                                                 35
+
+extracted by shearlets. The proposed descriptor is called LSF since          where a,t(u) = a-1(a-1(u - t)) , a N 0, t  R2 and  is the complex
+it combines LBP and shearlet and the shearlet transformation is              conjugate. If the function  satisfies the admissibility or Caldern condi-
+performed in the Fourier domain. Experimental results on the Face
+Recognition Grand Challenge (FRGC) dataset show that the proposed            tion  R      jðaÞj2  da  ¼  1       for  a.e.        R2  (where    denotes  the  Fourier
+local descriptor significantly outperforms many widely used features                              a
+(e.g., Gabor and deep learning based features) when noise is present                 0
+in the images. In addition, experimental results show promising results
+for two challenging datasets which have poor image quality, i.e., a          transform of ), then  is referred to as a wavelet, and any g  L2(R2)
+remote face dataset [5] and the Point and Shoot Face Recognition
+Challenge (PaSC) dataset [2].                                                can be recovered via the reproducing formula:
+
+1.1. Related works                                                                 Z Z D              E            da
+
+    In this section, we introduce some related works and discuss the         g¼           R2 g; a;t a;t dt a4 :                                                        ð2Þ
+difference between these works and the proposed method.
+                                                                                       0
+    Lim developed the discrete shearlet transform (DST) which provides
+efficient multiscale directional representation and showed how to im-            Despite the success of wavelets in signal and image processing appli-
+plement the shearlet transform by multiresolution analysis (MRA). He         cations, it is known mathematically that traditional wavelets are not
+assessed the performance of DST in image denoising and approximation         very effective in dealing with multidimensional signals containing dis-
+applications [35]. Dong et al., [14] and He et al., [23] used shearlets for  continuities such as edges. This is due to the fact that this transform
+texture classification. Different from them, we use shearlets and LBP        is isotropic (the analyzing elements a,t are obtained by applying the
+for face recognition. In addition, we tested different thresholds and dif-   same dilation factor for all coordinate directions) and, as a result, it
+ferent filters for the shearlet transformation (see Table 2). We found       has a very limited ability to resolve edges and other distributed discon-
+that only the real part of the shearlet transformation in the Fourier        tinuities which usually occur in multidimensional data.
+domain is good for face recognition. We also tested the robustness of
+shearlets and LBP over high level of noise and compared to state-of-             In this section, we briefly describe a multi-scale and multi-
+the-art methods, such as the deep learning-based method [24]. Further-       directional representation called the shearlet transform [16]. The
+more, we tested the proposed method for two challenging datasets,            shearlet transform combines the power of multi-scale methods with
+i.e., a remote face dataset [5] and PaSC [2], and obtained promising         the ability to capture the geometry of multidimensional signals and is
+results.                                                                     essentially optimal in representing images containing edges.
+
+    Face recognition, as one of the typical applications of image analysis       The shearlet construction can be considered as a natural extension
+and understanding, has attracted significant attention in many areas         of wavelets into two-dimensions [16]. Its representative elements are
+such as entertainment, information security, law enforcement, and sur-       defined by the two-dimensional affine system
+veillance [26,32,60]. There are quite a lot of methods presented recently,
+e.g., [1,3,4,6,7,11,13,27,41,47,55­58]. Specifically, Danti and Zeng used    n                                                        o
+shearlets for face recognition and achieved promising results for some        ~astðxÞ ¼ jdet Masj-12 ~ M-as1x-t : t  R2 ;
+face datasets, i.e., ORL and FERET [11,56]. In contrast, we use shearlet                                                                                               ð3Þ
+transform for face recognition in a different setting, that is, a remote
+face dataset [5] and PaSC [2]. Zhang et al. [58] used Gabor plus LBP for     where
+face recognition. Zhang et al. [33] used the phase patterns for face recog-
+nition. Vu and Caplier [54] enhanced patterns of oriented edges magni-                                           
+tude for face recognition and image matching. Tan and Triggs [51]                         1  s    a p0ffiffiffi
+proposed local texture feature sets for face recognition under difficult     Mas ¼        0  1    0a
+lighting conditions.
+                                                                             is a product of a shearing and anisotropic dilation matrix for (a, s) R+ ×
+    In this paper, we employ shearlets and LBP for dealing with heavy        R. The generating function ~ is such that
+noise in face recognition because the shearlets form robust features
+and can detect edges elegantly even in the presence of high level of                                                   
+noise. Technically, we divide each face into blocks and use an individual                                                   2
+classifier for each block and then combine the similarity scores from all    ~ ð Þ ¼ ~ ð 1;  2Þ ¼ ~ 1ð 1Þ~ 2                1  ;                                       ð4Þ
+the blocks for better performance.
+                                                                             where ~ 1 is a continuous wavelet for which ~ 1  CðRÞ with supp ~ 1 
+                                                                             [- 2, 1/2]  [1/2, 2], and ~ 2 is chosen so that ~ 2  CðRÞ, supp ~ 2 
+
+2. Method
+
+    In this section, we first introduce the shearlet transformation and
+LBP. We then discuss methods for combining them to represent face
+images.
+
+2.1. Shearlet transform
+
+    The continuous wavelet transform provides a decomposition of
+
+a signal over dilated and translated versions of a fixed waveform .
+Specifically, for a fixed   L2(R2), this is defined as the mapping W
+with domain L2(R2) such that for g L2(R2)
+
+           Z
+
+Wgða; tÞ ¼ gðuÞa;t ðuÞdu;  ð1Þ
+              R2
+                                                                                          Fig. 1. Frequency support of the shearlets for different values of a and s.
+36                                                                            J. Chen et al. / Image and Vision Computing 64 (2017) 34­46
+
+                                                                                               The matrices Aj (i.e., anisotropic scaling matrices) and Bl (i.e., shear
+                                                                                           matrices) lead to windows that can be elongated along arbitrary direc-
+                                                                                           tions and the geometric structures of singularities in images (Fig. 1).
+                                                                                           In fact, one can approximate 2-D piecewise smooth functions with
+                                                                                           singularities with nearly optimal approximation rate using shearlets.
+                                                                                           In addition, shearlets can completely analyze the singular structures of
+                                                                                           piecewise smooth images. These properties of shearlets are useful in
+                                                                                           image processing especially since singularities and irregular structures
+                                                                                           carry essential information in an underlying image. For example, dis-
+                                                                                           continuities in the intensity of an image indicate the presence of edges
+                                                                                           [35]. For more details about the discrete shearlets and how to imple-
+                                                                                           ment the shearlet transformation in frequency domain, please refer to
+                                                                                           [16].
+
+                                                                                               Shearlets form a Parseval frame (tight frame with bounds equal to
+                                                                                           1) for L2(R2) given the appropriate choice of the generating function ~
+                                                                                           [16]. An M-channel filter bank implementation can be done by using
+                                                                                           the techniques given in [17]. As a consequence, its implementation
+                                                                                           has a complexity of O(N2 log2(N)) for an N × N image. Fig. 2 shows
+                                                                                           some basis elements from a shearlet dictionary.
+
+                                                                                           2.2. Local binary pattern
+
+Fig. 2. A few atoms from a shearlet dictionary. Each block represents the result of the        The basic form of LBP is illustrated in Fig. 3(a) and (b) [45]. The
+shearlet transform for a particular scale and orientation after applying it to a centered  operator takes as input a local neighborhood around each pixel and
+impulse response.                                                                          thresholds the neighborhood pixels at the value of the central pixel.
+                                                                                           The resulting binary-valued string is then weighted as follows:
+
+[-1, 1], with ~ 2 N 0 on (-1, 1), and k~ 2k2 ¼ 1. Under these assump-                      P-1
+tions, a function fL2(R2) can be represented as                                            LBPðIcÞ ¼  2isðIi-IcÞ;
+                                                                                                                                                    ð8Þ
+
+                                                                                           i¼0
+
+          Z Z  Z D                      ~ ast  E                da                         where the parameter P means the number of the neighbors (e.g., P = 8
+                                                ~ ast           a3                         in Fig. 3), and Ic is the central pixel. Ic and Ii are the gray-level values at c
+f ðxÞ ¼      R2 - 0         f;                             ðxÞ      dsdt;     ð5Þ          and i, and s(A) is 1 if A  0 and 0 otherwise.
+
+for a  R+, s  R, and t  R2. The operator SH defined by
+
+                   D                 E                                                     2.3. Combining shearlets and LBP
+
+SHð f ; a; s; tÞ ¼ f ; ~ast                                                   ð6Þ
+
+is referred to as the continuous shearlet transform of fL2(R). It is depen-                    We use the shearlet coefficients and LBP to represent faces. For a
+dent on the scale variable a, the shear s, and the location t. Frequency                   given image, we perform the shearlet transform and then compute
+support of the shearlets for different values of a and s is shown in                       the LBP features of images resulting from the shearlet transform. Specif-
+Fig. 1. In addition, the shearlets are defined on the Cartesian domain                     ically, as shown in Fig. 4, given an image or a patch, we have two steps.
+and the various directions are obtained from the action of shearing                        For the first step, we perform the shearlet transform. In this step, we
+transformations.                                                                           perform the fast Fourier transform (FFT) first and then carry out the
+                                                                                           shearlet transformation as discussed in Section 2.1. We keep the real
+    The collection of discrete shearlets is given by [16,35]                               part of the resulting images after taking the shearlet transformation.
+                                                                                           We then employ a filter derived from 1-D using maximally flat mapping
+n         ¼  jdet        j        A  j               :  j; l    Z;         o  ð7Þ          function with two vanishing moments for denoising, better frequency
+ ~ j;l;k                    ~ Bl        x-k                         k  Z2 ;                selectivity and regularity [10]. The second step is to compute the LBP
+                   Aj2                                                                     feature as discussed in Section 2.2.
+
+where                                                                                          For the filter in our framework, we use the nonsubsampled
+                                                                                           contourlet transform (NSCT) developed by [10]. NSCT is based on a
+          1  1                    2     p0ffiffiffi                                        nonsubsampled pyramid structure and nonsubsampled directional fil-
+          0  1                    0       2                                                ter banks. The resulting decomposition by NSCT is a flexible multiscale,
+B¼                 ; A¼                                 :                                  multidirection, and shift invariant image decomposition [10]. The core
+                                                                                           of NSCT is the nonseparable two-channel nonsubsampled filter bank.
+    Note that the discrete shearlet transform is complex. Please refer to                  NSCT is designed to be with better frequency selectivity and regularity.
+[16,35] for details.
+
+                                                                              Fig. 3. LBP. (a) A pixel and its eight neighbors; (b) the basic LBP.
+                    J. Chen et al. / Image and Vision Computing 64 (2017) 34­46                    37
+
+                         Shearlet
+
+Input image/ patch       Shearlet                                             Filter  LBP  Output
+
+                    FFT  transformation
+
+                    Fig. 4. Flowchart of combining shearlet and LBP for faces.
+
+There are two kinds of filters used in our method, i.e., `pyr' and `pyrexc'.  good frequency localization and directional selectivity (i.e., edges).
+Meanwhile, `pyr' means that we use a nonsubsampled pyramid struc-             Accordingly, LBP is good at describing edges extracted by the shearlet
+ture to compute the shearlet transform. `pyrexc' means that we use            transform. Secondly, LBP is not so robust to noise [45]. However, the
+nonsubsampled pyramid structure but exchanging the two highpass               shearlet transformation detects the edges very well although the
+filters. The highpass at higher scales is filtered by the portion of the      image is contaminated by high level of Gaussian noise. For example,
+directional highpass filter that has "bad" response. Please see [10] for      for the image with Gaussian noise as shown in Fig. 5(a2, b2, c2 and
+more details about these two kinds of filters.                                d2), we can find that shearlet is able to completely analyze the singular
+                                                                              structures of piecewise smooth images (i.e., edges). For more discussions
+2.4. Representation for faces                                                 on the robustness of shearlet to noise, please refer to [19,35]. Note that
+                                                                              images in Fig. 5(b1­f1, b2­f2) are the real parts of the shearlet transform
+    In Fig. 5, we show the resulting images of applying the multi-            since we find that the imaginary part is not useful for classification.
+resolution shearlet transform for an input image in its original form         Specifically, Fig. 5(b3)­(f3) shows the imaginary parts of shearlet trans-
+(row a1) and under high level of additive Gaussian noise (a2, a3), re-        formation in different levels for an image with high level of noise
+spectively. The resulting images in Fig. 5(b1­f1 and b2­f2) are the real      (i.e., Fig. 5(a3)). From these images, we find that these imaginary
+part of the transform, and the transformation is constructed in the           parts contain few discriminative features for face recognition. Later in
+Fourier domain. In addition, Fig. 5(b1­f1) correspond to the different        Section 3, experimental results also confirm this observation.
+scales, i.e., a in Eq. (6). The six images in Fig. 5(c1) correspond to the
+different directions, i.e., s in Eq. (6). The same is for the other images        We use the shearlet plus LBP to represent faces in low quality im-
+in Figs. 5 and 6. For more details about how to set up the number of          ages/videos. Given a face image, I, we compute its real part of the
+shear orientations, please refer to [36,22].                                  shearlet transform ~ j;l;k as shown in Eq. (7), and some resulting example
+                                                                              images are shown in Fig. 6. After that we use LBP to compute the texture
+    Shearlet transform and LBP are complementary, and combining them          features of the resulting faces from the shearlet transformation ~ j;l;k,
+will improve the performance of the classifier. Firstly, from Figs. 5 and 6,  and then concatenate them into one long histogram, i.e., the multi-
+we can find that the multi-resolution shearlet transformation provides        resolution transformation as shown in Figs. 5(b1­f1 and b2­f2) and 6.
+
+Fig. 5. Multi-resolution transformation for one image from FRGC. (a1) is noise free; (a2) and (a3) are with high level of noise; (b1­f1) are the real parts after the shearlet transformation for
+(a1); (b2­f2) are the real parts after the shearlet transformation for (a2); (b3­f3) are the imaginary parts after the shearlet transformation for (a3). Note that (a2) and (a3) are the same
+image.
+38  J. Chen et al. / Image and Vision Computing 64 (2017) 34­46
+
+Fig. 6. Multi-resolution transformation for face images from remote face dataset by the shearlet transform to provide good frequency localization and directional selectivity. All these multi-
+resolution transformation of face images are the real parts after the shearlet transformation.
+
+    In addition, as shown in Fig. 6, we find that this transformation also             Fig. 7. Face patches.
+completely captures the singular structures of face images with poor
+image quality. From Fig. 5(f1), we can find that the residual has very
+little information. In our case we do not use this part of shearlet trans-
+formation for face recognition.
+
+    When we use the shearlet plus LBP for face recognition, we divide
+each face into patches as done in [1,58]. One example is shown in
+Fig. 7. Unlike [1,58], we build one classifier for each patch. Specifically,
+for each patch pi, where i = 1, 2...20, we compute its shearlet transfor-
+mation ~ j;l;k as in Eq. (7) and then LBP feature as in Eq. (8), i.e., fLBP(~ j;l;k).
+The window to compute LBP is 3 × 3 neighbors as in Fig. 3 and we then
+build the histogram for each patch. Thus we have 256 bins for each ~ j;l;k.
+We then use the PCA to reduce the dimensionality of the feature
+fLBP(~ j;l;k). We keep 98% energy following [4]. After that, we get  =
+fPCA(fLBP(~ j;l;k)). For the resulting features , we use Linear Discriminant
+Analysis (LDA) [18] to perform face recognition. Note that we did not
+concatenate the LBP features of each patch into one long histogram
+and both PCA and LDA are applied to per patch histogram here.
+
+    During recognition, given two face images S1 and S2, we first divide
+them into patches, pj,i where j = 1, 2 and i = 1, 2...20. We compute
+the similarities between two corresponding patches in these two
+faces, i and i = 1, 2...20. The final similarity between these two face
+images is  = ii.
+
+3. Experiments
+
+    In this section, we present the experimental results for face recogni-
+tion using the proposed features discussed in Section 2.
+                                                              J. Chen et al. / Image and Vision Computing 64 (2017) 34­46         39
+
+3.1. Dataset                                                                                        For the remote face recognition problem, we use the dataset from
+                                                                                                [5]. Some face examples are shown in Fig. 9. All the images were taken
+    We use three datasets for face recognition, i.e., FRGC version 2.0 and                      in an unconstrained outdoor environment, at a distance varying from
+                                                                                                10 m to 250 m. The face images are manually labeled with five points
+add noise to the face images, a recently published remote face dataset                          for each face, including the left pupil, right pupil, nose tip, left mouth
+                                                                                                corner and right mouth corner. The face images are cropped based on
+[5] and PaSC dataset [2]. FRGC 2.0 is designed to promote face recogni-                         the fiducial points and kept in their original resolution. The resulting da-
+                                                                                                tabase for still color face images contains 17 subjects and 2102 cropped
+tion in general with emphasis on 3D and high resolution still imaginary.                        face images in total. The number of faces per subject falls between
+                                                                                                29 and 306. The captured images can be of very low resolution, with a
+Meanwhile, there are six experimental protocols in FRGC and Experi-                             typical resolution of 20 by 30 pixels. Moreover, low resolution images
+                                                                                                are often coupled with blurring effects. Also, large out-of-plane pose
+ments 1, 2 and 4 are designed for still images. There are 222 subjects                          variations are observed. Since the distance between the camera and
+                                                                                                subjects is large, high magnification blur can be seen. Furthermore,
+showing 12,776 still images in the training set. In our case, we adopt                          due to the motion between camera and subjects, some of the images
+                                                                                                also suffer from motion blur. Finally, in some of the images, we see the
+experiment 1 for evaluations. Experiment 1 measures performance on                              presence of both blur and poor illumination condition.
+
+16,028 frontal facial images. These images are taken under controlled                               This dataset consists of 6 subsets. The first one is blur, which shows
+                                                                                                the variations of blur and has 75 face images. The second one is Illum,
+illumination and both target and query set have the same number of                              which shows the variations of illuminations and has 561 face images.
+                                                                                                The third one is Illum_blur, which shows both variations of illuminations
+samples (i.e., 16,028). The performance is reported as Verification                             and blur and has 128 face images. The fourth one is low_reso, which
+                                                                                                shows the variations of low resolutions and has 90 face images. The
+Rates (VR) at 0.1% False Acceptance Rate (FAR). Here, we only consider                          fifth one is pose_frontal, which shows the faces close to frontal pose
+
+the still images; some example faces in FRGC data set are presented in
+
+Fig. 8(a). As shown in Fig. 8(b), we add white Gaussian noise to face im-
+
+ages in FRGC data set. Here, the level of the noise is log(1/SNR), i.e., the
+
+logarithm of the inverse of the signal-to-noise ratio (SNR). The SNR
+
+is computed as: SNR = f(I) / f(N), where f(I) and f(N) are the power
+
+of  the  input    image     I  and  the  noise  image  N:  f  ðIÞ  ¼  1  n-1  jI2i j,  f ðNÞ ¼
+                                                                      n
+                                                                         
+   n-1
+                                                                         i¼0
+   
+1       jNi2  j,  where  n  is  the  dimensionality    of  the     input      image    and
+n  i¼0
+
+noise image.
+
+                                Origin                     0.020              0.030             (a)                        0.200
+                                  al                                                                   log(1/SNR)
+
+                                                                                                0.050 0.067 0.100
+
+                                white Gaussian
+                                      noise
+
+                                         DWT
+
+                                     Gaussian
+
+                                     Wiener
+
+                           Median
+
+                                                               (b)
+
+Fig. 8. (a) Example images from the FRGC dataset. (b) The first row is faces with white Gaussian noise; the following rows are filtered by DWT, Gaussian, Wiener and Median filters,
+respectively.
+40  J. Chen et al. / Image and Vision Computing 64 (2017) 34­46
+
+    Blur                                                                    Illum
+
+    illum_blur                                                              low_reso
+
+    pose_frontal                                                            pose_non_frontal
+
+    Fig. 9. Some example faces from the remote face dataset [5].
+
+and has 1166 face images. The last one is pose_non_frontal, which shows     PaSC, these two datasets provide face landmarks. All the methods in
+the variations of poses and has 846 face images.                            Sections 3.3 and 3.4 which are tested over these two datasets use the
+                                                                            exactly same setups.
+    The PaSC dataset includes 9376 still images of 293 subject balanced
+with respect to distance to the camera, alternative sensors, frontal ver-   3.2. Experimental results for FRGC
+sus not-frontal views, and varying location. There are also 2802 videos
+for 265 subject: a subset of the 293 subject. Some examples for the             As shown in Table 1, we test several combinations between the
+videos and still images are shown in Fig. 10.                               shearlet and LBP. Here, LBP is the method we described in Section 2.2.
+                                                                            DWT is the Discrete Wavelet Transform, and the wavelet used in exper-
+    All these face images are cropped using the landmarks of two eyes,      iments is the shearlet as mentioned in Section 2.1. In other words,
+and are normalized to 64 × 80. Each face is divided into patches as in      shearlet transformation is equal to performing DWT for an input
+Fig. 7. Each patch is of 16 × 16. We perform the shearlet transform         image plus image reconstruction plus NSCT filtering [35]. One example
+for each patch ~ j;l;k as shown in Section 2.1. We have three levels,       of performing DWT for one image is shown in Fig. 11. In our case, we
+i.e., j = 0, 1, 2. The first 0-level is the low frequency part. The 1- and  perform two levels of transformation and create seven subimages,
+2-levels of shearlet transformation capture the different texture struc-    i.e., HH, LH, HL, and LL subbands for levels 1 and 2.
+tures in different frequency parts.
+                                                                                LBP + DWT means LBP feature computed over the multi-resolution
+    In addition, SCface is a very challenging database with daytime and     decomposition resulting from DWT (e.g., the seven subbands in
+nighttime protocols [21]. Collected faces in infrared spectrum are a        Fig. 11(b)). LBP + DWT_coef_T means that we perform the multi-
+good way for illumination invariant face recognition. We also exploited     resolution decomposition for each image using DWT (see Fig. 11) and
+how to use near infrared for illumination invariant face recognition [7].   then denoise the multi-resolution decomposition by the threshold T.
+                                                                            After that we compute the LBP feature for the wavelet-denoised images.
+    For face images in the FRGC dataset, they are manually landmarked       Here we have two kinds of thresholds (T), i.e., soft thresholding
+by us and then cropped. All the methods in Section 3.2 which are tested
+over this dataset are re-implemented by us, and we use the same setups
+for these methods for fair comparison. For the remote face dataset and
+
+    (a)                                                                               (b)
+
+Fig. 10. Some example faces from the PaSC. (a) Examples taken during four sessions. Locations were changed between sessions, and sensor, distance to camera and pose were changed
+within sessions. (b) Cropped face images extracted from still images, showing lighting, motion blur and poor focus variations.
+                                J. Chen et al. / Image and Vision Computing 64 (2017) 34­46                                  41
+
+Table 1                         LBP feature computation                         Threshold    Band of DWT
+LBP + DWT feature computation.
+                                Over DWT reconstructed images                   Soft         level_2(LL + HH + LH) + level_1(HL + HH + HL + LH)
+  LBP + DWT                     Over DWT coefficients                           Hard         level_2(LL + HH + LH) + level_1(HL + HH + HL + LH)
+  LBP + DWT + coef_hard         Over DWT coefficients                           Soft
+  LBP + DWT + coef_soft
+
+and hard thresholding [15]. In brief, to suppress the noise, the hard           structure but exchanging the two highpass filters [10]. `real' means we
+thresholding applies the following nonlinear transform to the empirical         only use the real part and `imag' means we only use the imaginary
+wavelet coefficients: F(x) = x·I(|x| N t), where t is a certain threshold;      part. LSF + `pyr'-real + imag means that we use both the real and imag-
+I(x) is the input signal and F(x) is output. The choice of the threshold        inary parts.
+is a very delicate and important statistical problem. For soft
+thresholding the following nonlinear transform is used: S(x) =                      From Table 3, we can find that LSF + `pyr'-real works the best.
+sign(x)·(|x|-t)I(|x| N t), where t is a threshold.                              The performances between LSF + `pyr'-real and LSF + `pyrexc'-real
+                                                                                are close. It means that by exchanging the two highpass filters for
+    We compute the shearlet plus LBP feature for faces as shown in              the pyramid structure the performance can be improved marginally.
+Section 2.4. Experimental results are shown in Tables 2, 3, 4 and 5.            However, if we use the imaginary part of shearlet transform, the perfor-
+                                                                                mance changes significantly. Even when we combine both real and
+    In Table 2, we test the performance of the methods using shearlet to        imaginary parts, the performance is not as good as that of only using
+remove the noise in the images. We perform this group of experiments            the real part. One explanation is that the imaginary part cannot detect
+since shearlet can be used to denoise the images very well [35,17]. Here,       the edges well in images and is also easily affected by the noise in the
+LSF means LBP + shearlet + FFT and we compute the feature as shown              images. In the following, we will use LSF to represent LSF + `pyr'-real
+in Section 2.3 and using Fourier based shearlet transform to improve            for short.
+the efficiency, where FFT is the fast Fourier transform. `pyr' means
+that we use a non-subsampled pyramid structure [10] to compute the                  In Table 4, we compare our method with others for FRGC, e.g., LBP
+shearlet transform. `real' means that we only use the real part of shearlet     plus several filters for noisy faces, e.g., Wiener, Gaussian, and Median.
+transform.                                                                      Specifically, we use Matlab function for these filters. For the median
+                                                                                filter, the neighborhood size takes the default value (3 × 3). For the
+    From Table 2, we can find that LBP + DWT_coef_T works much better           Wiener filter, it automatically estimates the additive noise power be-
+than LBP + DWT and LBP, especially for high level of noise. However, the        fore doing the filtering and the neighborhood size takes the default
+different thresholding methods (i.e., soft and hard) change the perfor-         value (3 × 3). For Gaussian filter, it filters an image with a 2-D Gaussian
+mance marginally. One explanation is that shearlets detect the edges            smoothing kernel with standard deviation of 0.5. For the DWT denoising,
+well even with high level of noise, and LBP describes these edges in            we use the method NSCT proposed in [10].
+faces well. Further, LSF + `pyr'-real outperforms significantly compared
+to LBP + DWT_coef_T, i.e., 86.18% vs. 71.48% and 72.45% for the high                From Table 4, we can find that LSF works the best, especially with the
+level of noise. It shows that LSF + `pyr'-real works well for high level        high level of noise, 86.18% compared to LBP + Gabor (64.25%), and LBP
+of noise and the `pyr' (i.e., nonsubsampled pyramid structure) is good          (25.68%). In addition, LBP plus different filters, i.e., Wiener, Gaussian and
+for the face recognition when the faces are with noise.                         Median are not as good as LSF. One explanation is that these filters
+                                                                                blur the edges in the image, while these edges help face recognition.
+    In Table 3, we test LSF with different filters, i.e., `pyr' and +`pyrexc'.  However, shearlets perform well in detecting edges with the high
+Here `pyr' means that we use a non-subsampled pyramid structure as              level of noise as shown in Fig. 5.
+mentioned before. `pyrexc' means that we use nonsubsampled pyramid
+
+                                                               2LL              2HL
+
+                                                               2LH              2HH                                     1HL
+
+                                                                                1LH                                     1HH
+
+                                Fig. 11. (a) Original image, (b) multi-resolution transformation by DWT for one image.
+42                                                          J. Chen et al. / Image and Vision Computing 64 (2017) 34­46
+
+Table 2
+Performance comparison (%) of the components of shearlet plus LBP over FRGC by adding white Gaussian noise.
+(LSF = LBP + shearlet + FFT and real = real part of shearlet).
+
+Methods                         log(1/SNR)
+
+                                0             0.020         0.022         0.025  0.028  0.033                         0.040        0.050  0.067  0.100  0.200
+
+LBP                             95.53         93.64         91.54         91.86  91.46  90.37                         89.67        86.42  78.64  56.48  25.68
+LBP + DWT                       96.34         96.15         96.23         96.37  96.78  95.43                         94.82        91.76  86.42  76.18  58.94
+LBP + DWT + coef_hard           97.86         97.98         97.43         97.57  97.66  98.21                         97.32        97.16  94.21  85.49  71.48
+LBP + DWT + coef_soft           97.86         97.84         97.65         97.42  97.81  98.24                         97.93        97.87  94.69  85.76  72.45
+LSF + `pyr'-real                98.13         98.16         98.27         98.31  98.34  97.56                         97.38        97.24  97.16  92.18  86.18
+
+Bold number means the best performance of each row.
+
+    In addition, we also compare with other existing descriptors in                         In addition, the performance comparison of LSF and existing
+Table 5, such as LBP + Gabor [58], Completed Local Binary Pattern                       methods for FRGC without noise is shown in Fig. 12. Here, LBP, CLBP,
+(CLBP) [20], Dominant Local Binary Patterns (DLBP) [34], Local Ternary                  LQP, DFD, LBP + Gabor [58], and LSF use the same setups for classifica-
+Patterns (LTP) [51], Local Phase Quantization (LQP) [46], Discriminant                  tion but using different features. The results of Ding [13], Huwang
+Face Descriptor (DFD) [31], DL [24], and denoising autoencoders (dA)                    [28], Liu [37], and Su [48] are quoted directly from the original papers.
+[53]. For DL, we use Caffe and the other methods are implemented by us.                 From this figure, one can find that LSF gets the best results over this
+                                                                                        dataset. In addition, LBP, CLBP, DFD, Su, DL and LBP + Gabor also achieve
+    From Table 5, one can find that LSF works comparable to state-                      very good results. We also use CLBP to replace LBP to combine with
+of-the-art methods for low level of noise (e.g., log(1/SNR) = 0.020)                    shearlet and find that the performance difference between CLBP +
+and outperforms them significantly for the high level of noise                          shearlet and LBP + shearlet is not significant. Thus, we use LBP + shearlet
+(e.g., log(1/SNR) = 0.200). LBP + Gabor, CLBP, DLBP, LTP and DFD                        in the following experiments.
+work quite well for low level of noise but their performances drop
+with the increase in the level of noise, especially for high level of noise             3.3. Remote face recognition
+since the faces are blurred seriously (see Fig. 8). DL also works well for
+low level of noise but the performance also drops with the increase of                      The performance comparison of LSF and several existing methods is
+the level of noise. dA improves the performance since we use the                        shown in Table 6. Here, LBP, LPQ [46], BSIF [29], Gabor [58], and DFD
+noisy images as input and the noise free images as output to fine tune                  [31] and LSF use the same setups for classification but using different fea-
+the neural network. However, the performance is not as good as LSF                      tures. In addition, the remote face dataset [5] does not provide a training
+for high level of noise. One reason that DL and dA work not so well as                  set. We thus use the training set of FRGC 2.0 Experiment 1, i.e., 16,028
+the other descriptors for high level of noise might be that the training                frontal facial images and they are quite different from the images in the
+set is not large enough to train a well-performed network (i.e., 16,028                 remote face dataset [5]. In other words, we train our classifier over the
+images for training and 16,028 images for testing).                                     dataset in FRGC 2.0 Experiment 1 and test over the remote face dataset.
+
+    DLBP works the best for noise free images but its performance drops                     From Table 6, one can find that LSF gets the best results over this
+quickly when white Gaussian noise is added. A possible reason is that                   dataset, especially for the subset Illum. One reason is the illumination
+noise may change the pattern type of a dominant pattern present                         does not change the texture/edge in faces. In addition, for subsets,
+in the noise-free case. Therefore, the noise may possibly reshape the                   Blur, Illum_blur, Pose_frontal and Pose_non_frontal, LSF achieves prom-
+dominant pattern histogram in some cases by assigning some of the                       ising results. LBP, CLBP, DFD, Su, DL and LBP + Gabor also achieve very
+dominant pattern's occurrence to other types of patterns.
+
+Table 3
+Performance comparison (%) using different filters and real/imaginary part for shearlet over FRGC by adding white Gaussian noise.
+
+Methods                         log(1/SNR)
+
+LBP                             0             0.020         0.022  0.025         0.028  0.033                         0.040        0.050  0.067  0.100  0.200
+LSF + `pyr'-real
+LSF + `pyrexc'-real             95.53         93.64         91.54  91.86         91.46  90.37                         89.67        86.42  78.64  56.48  25.68
+LSF + `pyr'-real + imag         98.13         98.16         98.27  98.31         98.34  97.56                         97.38        97.24  97.16  92.18  86.18
+LSF + `pyr'-imag                98.32         98.25         98.31  98.45         98.47  97.93                         97.65        97.04  97.13  92.08  85.43
+                                98.27         98.05         98.13  98.24         98.17  97.21                         97.06        96.87  96.76  91.56  83.74
+                                78.64         78.42         77.96  76.58         76.42  76.85                         75.86        74.86  72.68  68.45  55.37
+
+Bold number means the best performance of each row.
+
+Table 4
+Performance comparison (%) using different filters to filter out the noise over FRGC by adding white Gaussian noise.
+
+Methods                  log(1/SNR)
+
+                         0             0.020         0.022         0.025         0.028  0.033                         0.040        0.050  0.067  0.100  0.200
+
+LBP                      95.53         93.64         91.54         91.86         91.46  90.37                         89.67        86.42  78.64  56.48  25.68
+LBP + Gabor              97.46         97.35         96.89         96.87         94.56  93.16                         91.67        86.54  83.16  78.35  64.25
+LBP + Wiener             92.46         92.17         91.97         91.93         92.06  92.04                         91.82        89.16  85.07  73.82  53.57
+LBP + Gaussian           87.65         87.34         88.76         87.95         88.63  87.26                         81.39        80.34  81.02  75.62  60.42
+LBP + Median             93.54         92.84         91.27         91.89         92.68  92.34                         91.38        89.46  83.63  72.96  50.31
+LSF                      98.13         98.16         98.27         98.31         98.34  97.56                         97.38        97.24  97.16  92.18  86.18
+
+Bold number means the best performance of each row.
+                                                     J. Chen et al. / Image and Vision Computing 64 (2017) 34­46                                                               43
+
+Table 5                                                                                                                                                                 0.200
+Performance comparison with exiting methods over FRGC by adding white Gaussian noise.                                                                                   25.68
+                                                                                                                                                                        64.25
+Methods      log(1/SNR)                                                                                                                                                 30.58
+             0                                                                                                                                                          17.59
+                          0.020    0.022             0.025                                    0.028        0.033           0.040  0.050             0.067  0.100        48.28
+                                                                                                                                                                        54.89
+LBP          95.53        93.64    91.54             91.86                                    91.46        90.37           89.67  86.42             78.64  56.48        26.53
+LBP + Gabor  97.46        97.35    96.89             96.87                                    94.56        93.16           91.67  86.54             83.16  78.35        75.39
+CLBP         96.17        95.89    95.69             94.58                                    93.82        92.17           91.58  88.76             78.93  58.94        26.18
+DLBP         98.46        50.67    52.48             49.87                                    48.64        40.29           39.87  38.16             35.24  30.68        68.35
+LTP          98.13        98.11    97.89             97.78                                    95.64        93.15           91.59  84.28             82.49  65.26        86.18
+LQP          92.75        92.46    91.97             91.83                                    90.46        88.67           87.95  87.38             85.48  76.49
+DFD          98.03        98.23    98.15             97.15                                    97.14        96.89           95.67  92.48             72.39  58.64
+Shearlet     90.26        90.35    90.63             90.36                                    89.56        89.37           88.56  88.47             88.67  84.61
+DL           97.32        96.95    94.68             93.29                                    93.57        92.64           92.46  91.56             72.36  47.26
+dA           97.43        97.09    97.12             96.34                                    95.67        94.38           92.65  87.17             82.63  76.52
+LSF          98.13        98.16    98.27             98.31                                    98.34        97.56           97.38  97.24             97.16  92.18
+
+Bold number means the best performance of each row.
+
+             Base Line                                                                               × 80 pixels and transformed to gray-scale. The gray-scale images are
+                     LBP                                                                             then used as input for the feature extraction procedure as discussed
+                           CLBP                                                                      on Section 2. During feature extraction, LSF feature sets are generated
+                                   LQP                                                               for each still image and each processed frame of a given video sequence.
+                                          DFD
+                                                Huwang                                                   To ensure that our framework produces fixed size templates regard-
+                                                                                                     less of the number of frames in the video, we use the same procedure as
+                                                       Liu                                           that in [47]. Before extracting features, we partition the frames of a
+                                                             Su                                      given video into two groups depending on the extent of the head rota-
+                                                                     DL                              tion (yaw) of the person shown in the video. Here, the first group con-
+                                                                            LBP+Gabor                tains frames with yaw angles below 15°, and the second group contains
+                                                                                  Ding               frames with yaw angles greater than 15°. Frames with negative yaw
+                                                                                         LSF         angles are mirrored prior to feature extraction to ensure that two
+                                                                                                     frame-groups are sufficient to cover all rotation-dependent variability
+     Fig. 12. Performance comparison with existing methods over FRGC face dataset.                   of the faces.
+
+good results. For the subset Low_reso, all the features do not work very                                 In Fig. 13, we compare our methods with state-of-the-art methods.
+well since the face images are blurred seriously and the faces are of                                Here, CAS was proposed by [27], which is based on Hybrid Euclidean-
+small size, e.g., with a typical resolution of 20 by 30 pixels. Detecting                            and-Riemannian Metric Learning combined with deeply learned
+textures/edges from these faces is very difficult. Here, DL does not                                 features (abbr. to HERML-DeLF). It is for image set classification with
+work well. One explanation is that the test set is different from the                                image features learned by a deep neural network. Uni-Lj was proposed
+face images for training. However, DL achieves comparable performance                                by [47], which used the MODEST framework to represent facial images
+to other methods for the subset Pose_frontal since this subset has similar                           (or frames) with various texture descriptors and using the computed
+distribution as the training set in FRGC 2.0 Experiment 1.                                           descriptors as input to a probabilistic modeling technique capable of
+                                                                                                     deriving low-dimensional representations from the extracted texture
+3.4. PaSC                                                                                            representations. SIT was developed by [33], which use the Hierarchi-
+                                                                                                     cal-Probabilistic Elastic Part (PEP) model to approach the video face
+    For PaSC dataset, we firstly crop the facial region from the given                               recognition problem. The Hierarchical-PEP model builds pose-invariant
+video frame based on the eye coordinates provided by the organizers                                  face representation by applying the PEP model hierarchically to decom-
+[2]. The cropped facial region is aligned and scaled to a size of 64                                 pose a face image into face parts at different levels of detail and thus
+                                                                                                     to build pose-invariant part-based face representations. Surrey was de-
+                                                                                                     veloped by [4], which tackles the PaSC video-to-video matching by
+
+Table 6
+Rank-1 analysis on the remote face dataset [5] using five face images of each subject as gallery.
+
+Condition    Descriptors  Acc (%)                    Condition                                Descriptors         Acc (%)         Condition                Descriptors  Acc (%)
+Blur                                                 Illum                                                                        Illum_blur
+             LBP          45.9                                                                LBP                 78.4                                     LBP          73.2
+Low_reso     LPQ          58.1                       Pose_frontal                             LPQ                 79.5            Pose_non_frontal         LPQ          75.6
+             BSIF         62.2                                                                BSIF                79.3                                     BSIF         74.8
+             Gabor        65.3                                                                Gabor               85.5                                     Gabor        75.0
+             DFD          63.5                                                                DFD                 83.4                                     DFD          75.2
+             DL           48.6                                                                DL                  80.4                                     DL           71.8
+             Shearlet     62.5                                                                Shearlet            81.6                                     Shearlet     74.3
+             LSF          67.3                                                                LSF                 92.5                                     LSF          76.0
+             LBP          12.4                                                                LBP                 67.9                                     LBP          49.9
+             LPQ          13.5                                                                LPQ                 70.6                                     LPQ          47.5
+             BSIF         11.2                                                                BSIF                70.1                                     BSIF         49.2
+             Gabor        15.9                                                                Gabor               76.8                                     Gabor        50.2
+             DFD          14.5                                                                DFD                 78.6                                     DFD          52.5
+             DL           11.5                                                                DL                  80.3                                     DL           49.8
+             Shearlet     13.8                                                                Shearlet            77.8                                     Shearlet     51.7
+             LSF          19.9                                                                LSF                 83.8                                     LSF          57.2
+44                        J. Chen et al. / Image and Vision Computing 64 (2017) 34­46
+
+             Verification rate0.58                                                                                                        0.59
+                 0.0 0.2 0.4 0.6 0.8 1.00.44
+                                                                                                                                      0.38
+                                                                                                  Verification rate0.39                           0.33
+                                                                                                      0.0 0.2 0.4 0.6 0.8 1.00.35
+                                                                                                                                          0.31
+                        0.20                                                                                                          0.13
+
+                        0.10                                                                                                             0.08
+
+             0.001  0.01                             0.1  1.0                                                                  0.001  0.01              0.1   1.0
+
+                       False accept rate                                                                                                   False accept rate
+                    (a) Control videos                                                                                                (b) Handheld videos
+
+                    Fig. 13. ROC curves for the control and handheld video evaluations.
+
+combining a dynamic video frame selection method with a multiscale          the face in Fig. 6(a3) is blurred seriously and the local and global
+local phase quantization (MLPQ) based frame-to-frame matching algo-         features are computed successfully. On the other hand, the small face
+rithm and a simple voting strategy. LRPCA is the baseline, which uses       in Fig. 6(a1) has a clear appearance, so its low frequency part and the
+principal component analysis for local region (LRPCA) [3]. Video person     second level of shearlet transformation show good discriminative
+recognition evaluation for all these methods is presented in [3].           power. From Table 6, we can see the subset Pose_frontal gets very
+                                                                            good performance (i.e., 83.8%) although several faces are of low resolu-
+    From Fig. 13, we can find that our methods achieve promising results    tion. It is the same for the subset Illum (i.e., 92.5%). However, for the
+and CAS performs the best. Here, CAS is a deep learning based method,       blurred faces, as shown in Fig. 6(a3), its third level of shearlet transfor-
+which is heavily trained. Firstly, it is pre-trained using "Celebrities on  mation contains small amount of discriminative information for face
+the Web" (CFW) database [59] and then fine-tuned using other two            recognition. Thus, the performance of the subset blur reduces to 67.3%.
+datasets. The first is the training portion of the PaSC [2]. The second is  However, the discriminative information in low frequency part and
+the Institute of Computing Technology, CAS-OMRON Social Solutions           the second level of shearlet transformation still make the performance
+Co. Ltd.-Xinjiang University (COX) face database collected by the mem-      of LSF much better than existing methods.
+bers of the CAS group [27].
+                                                                                LSF descriptor and Gabor get comparable performance for high
+3.5. Discussion                                                             quality faces (98.13% vs. 97.46%, Table 5, without noise for FRGC), but
+                                                                            LSF works better than Gabor for faces of poor quality (86.18% vs.
+    In this section, we will discuss the time complexity of LSF and the     64.25%, Table 5, with high level of noise for FRGC, and also for remote
+reasons that LSF works for remote face recognition.                         face dataset and PaSC). One explanation is that the Gabor transform
+                                                                            can extract local texture features (i.e., edges and their orientations) for
+    As shown in Table 7, we perform a quantitative comparison of            faces very well when the faces are in high quality. As the image quality
+timing information for LSF with LBP and Gabor for an image 128              degrades, local textures in the faces become weak. Specifically, local
+× 160. We test over 1000 face images and calculate the average time.        edges reduce and their orientations also change. Thus, the performance
+All of them are implemented in C++ and tested on an i5-2400 CPU@            of Gabor degrades. However, the shearlet is designed to extract the sin-
+8.0G memory. Both Gabor and LSF are speeded up using FFT. From this         gular structures of piecewise smooth images although the image quality
+table, we can find that both LSF and LBP are very efficient compared        degrades, as shown in Figs. 5 and 6. Thus, LSF works better than Gabor
+to Gabor.                                                                   for the faces in poor quality images.
+
+    For the remote face dataset, the usual variations which degrade the     4. Conclusion
+performance of face recognition are low resolution, blur and poor illu-
+mination condition. Some examples showing low resolution, serious               In this paper, we proposed a robust descriptor LSF, which combines
+illumination variations and blur variations and their multi-resolution      the shearlet coefficients and LBP. We performed the shearlet transform
+transformation by the shearlet transform are shown in Fig. 6. We can        in the Fourier domain and tested its real and imaginary parts. We also
+see that the shearlet transform provides good frequency localization        tested different filters for the shearlet transform. We then used LBP to
+and directional selectivity, especially the low frequency part and the      encode the textures (i.e., edges) in faces detected by the shearlet trans-
+second level of shearlet transformation. In addition, the shadow in         form. The resulting LSF is robust to the noise in images and achieves
+the face shown in Fig. 6(a2) blurs the edges of this face. The local        very good results for face recognition. Specifically, the experimental
+textures/edges and the global features are well extracted. Likewise,        results over FRGC and the noisy faces show promising results. For
+                                                                            example, LSF achieves an accuracy of 98.13% for the dataset without
+    Table 7                                                                 noise and 86.18% with high levels of noise, while LBP gets the accuracy
+    Comparison of the average time consumption with                         of 95.53% for the dataset without noise and 25.68% with high levels of
+    LBP and Gabor.                                                          noise. LSF also outperforms deep learning based method (97.32% with-
+                                                                            out noise and 26.18% with high levels of noise) for this dataset even that
+    Methods         Times (s)                                               we use the denoising autoencoders version of deep learning (97.43%
+                                                                            without noise and 68.35% with high levels of noise). In addition, we
+    LBP             0.0075                                                  also test LSF over two challenging datasets, remote face dataset [5]
+    Gabor           1.2                                                     and PaSC. LSF also outperforms the state-of-the-art methods.
+    LSF             0.0306
+J. Chen et al. / Image and Vision Computing 64 (2017) 34­46                                            45
+
+Acknowledgment                                                                                         [32] S.Z. Li, A.K. Jain, Handbook of Face Recognition, Second ed Springer-Verlag, Aug.
+                                                                                                              2011.
+    This work was supported by Academy of Finland 277395, Tekes
+                                                                                                       [33] H. Li, G. Hua, Z. Lin, J. Brandt, J. Yang, Probabilistic elastic matching for pose variant
+Fidipro Program 1849/31/2015 and Infotech Oulu. VMP was supported                                             face verification, Proc. IEEE Int'l Conf. on Computer Vision and Pattern Recognition,
+                                                                                                              2013.
+by US Office of Naval Research (ONR) Grant YIP N00014-16-1-3134.
+                                                                                                       [34] S. Liao, Max W.K. Law, Albert C.S. Chung, Dominant local binary patterns for texture
+References                                                                                                    classification, IEEE Trans. Image Process. 18 (5) (2009) 1107­1118.
+
+ [1] T. Ahonen, A. Hadid, M. Pietikäinen, Face description with local binary patterns:                 [35] W.-Q. Lim, The discrete shearlet transform: a new directional transform and compact-
+       application to face recognition, IEEE Trans. Pattern Anal. Mach. Intell. 28 (12)                       ly supported shearlet frames, IEEE Trans. Image Process. 19 (5) (2010) 1166­1180.
+       (2006) 2037­2041.
+                                                                                                       [36] W.-Q. Lim, Nonseparable shearlet transform, IEEE Trans. Image Process. 22 (5)
+ [2] J.R. Beveridge, P.J. Phillips, D. Bolme, B.A. Draper, G.H. Givens, Y.-M. Lui, M.N. Teli, H.              (2013) 2056­2065.
+       Zhang, W.T. Scruggs, K.W. Bowyer, P.J. Flynn, S. Cheng, The Challenge of Face Recog-
+       nition From Digital Point-and-Shoot Cameras, IEEE Sixth International Conference                [37] C. Liu, Capitalize on dimensionality increasing techniques for improving face
+       on Biometrics: Theory, Applications and Systems (BTAS), 2013.                                          recognition performance, IEEE Trans. Pattern Anal. Mach. Intell. 28 (5) (2006)
+                                                                                                              725­737.
+ [3] J.R. Beveridge, P.J. Flynn, Z. Feng, P. Huber, J. Kittler, Zhiwu Huang, S. Li, Y. Li, M. Kan, R.
+       Wang, S. Shan, X. Chen, H. Li, G. Hau, V. Struc, J. Krizaj, C. Ding, D. Tao, P.J. Phillips,     [38] L. Liu, P.W. Fieguth, Texture classification from random features, IEEE Trans. Pattern
+       Report on the FG, Video person recognition evaluation, The Eleventh IEEE International                 Anal. Mach. Intell. 34 (3) (2012) 574­586.
+       Conference on Automatic Face and Gesture Recognition, 2015.
+                                                                                                       [39] L. Liu, P. Fieguth, Y. Guo, X. Wang, M. Pietikäinen, Local binary features for texture
+ [4] C.H. Chan, M. Tahir, J. Kittler, M. Pietikainen, Multiscale local phase quantization                     texture classification: taxonomy and experimental study, Pattern Recogn. 62
+       for robust component-based face recognition using kernel fusion of multiple                            (2017) 135­160.
+       descriptors, IEEE Trans. Pattern Anal. Mach. Intell. 35 (5) (2013) 1164­1177.
+                                                                                                       [40] D.G. Lowe, Distinctive image features from scale-invariant keypoints, Int. J. Comput.
+ [5] R. Chellappa, J. Ni, V.M. Patel, Remote identification of faces: problems, prospects,                    Vis. 60 (2) (2004) 91­110.
+       and progress, Pattern Recogn. Lett. 33 (14, 15) (2012) 1849­1859.
+                                                                                                       [41] J. Lu, V.E. Liong, X. Zhou, J. Zhou, Learning compact binary face descriptor for face
+ [6] D. Chen, X. Cao, F. Wen, J. Sun, Blessing of dimensionality: high-dimensional feature                    recognition, IEEE Trans. Pattern Anal. Mach. Intell. 37 (10) (2015) 2041­2056.
+       and its efficient compression for face verification, Proc. IEEE Int'l Conf. on Computer
+       Vision and Pattern Recognition, 2013.                                                           [42] G. Marcus, Is "Deep Learning" a Revolution in Artificial Intelligence? The New
+                                                                                                              Yorker, 25 November 2012.
+ [7] J. Chen, D. Yi, J. Yang, G. Zhao, S. Li, M. Pietikäinen, Learning mappings for face syn-
+       thesis from near infrared to visual light images, Proc. IEEE Int'l Conf. on Computer            [43] K. Mikolajczyk, C. Schmid, A performance evaluation of local descriptors, IEEE Trans.
+       Vision and Pattern Recognition, 2009.                                                                  Pattern Anal. Mach. Intell. 27 (10) (2005) 1615­1630.
+
+ [8] J. Chen, S. Shan, C. He, G. Zhao, M. Pietikäinen, X. Chen, W. Gao, WLD: a robust                  [44] P. Moreels, P. Perona, Evaluation of features detectors and descriptors based on 3D
+       local image descriptor, IEEE Trans. Pattern Anal. Mach. Intell. 32 (9) (2010)                          objects, Int. J. Comput. Vis. 73 (3) (2007) 263­284.
+       1705­1720.
+                                                                                                       [45] T. Ojala, M. Pietikäinen, T. Mäenpää, Multiresolution gray scale and rotation invari-
+ [9] J. Chen, V. Kellokumpu, G. Zhao, M. Pietikäinen, RLBP: robust local binary pattern,                      ant texture analysis with local binary patterns, IEEE Trans. Pattern Anal. Mach. Intell.
+       Proc. the British Machine Vision Conference, 2013.                                                     24 (7) (2002) 971­987.
+
+[10] A.L. da Cunha, J. Zhou, M.N. Do, The nonsubsampled contourlet transform: theory,                  [46] E. Rahtu, J. Heikkila, V. Ojansivu, T. Ahonen, Local phase quantization for blur-
+       design, and applications, IEEE Trans. Image Process. 15 (10) (2006) 3089­3101.                         insensitive image analysis, Image Vis. Comput. 30 (8) (2012) 501­512.
+
+[11] A. Danti, K.M. Poornima, Face recognition using shearlets, 7th IEEE International                 [47] J.K.V. Struc, S. Dobrisek, MODEST face recognition, International Workshop on
+       Conference on Industrial and Information Systems, 2012.                                                Biometrics and Forensics, 2015.
+
+[12] J.G. Daugman, High confidence visual recognition of persons by a test of statistical              [48] Y. Su, S. Shan, X. Chen, W. Gao, Hierarchical ensemble of global and local classifiers
+       independence, IEEE Trans. Pattern Anal. Mach. Intell. 15 (11) (1993) 1148­1161.                        for face recognition, Proc. IEEE Int'l Conf. on Computer Vision, 2007.
+
+[13] C. Ding, J. Choi, D. Tao, L.S. Davis, Multi-Directional Multi-Level Dual-Cross Patterns           [49] Y. Sun, X. Wang, X. Tang, Deep Learning Face Representation by Joint Identification-
+       for Robust Face Recognition, IEEE TPAMI 38 (3) (2016) 518­531.                                         Verification, Proc. IEEE Int'l Conf. On Computer Vision and Pattern Recognition,
+                                                                                                              2014.
+[14] Y. Dong, D. Tao, X. Li, J. Ma, J. Pu, Texture classification and retrieval using shearlets
+       and linear regression, IEEE Trans. Cybern. 45 (3) (2013) 358­369.                               [50] Y. Taigman, M. Yang, M. Ranzato, L. Wolf, DeepFace: Closing the gap to human-level
+                                                                                                              performance in face verification, Proc. IEEE Int'l Conf. on Computer Vision and
+[15] D.L. Donoho, De-noising by soft-thresholding, IEEE Trans. Inf. Theory 41 (3) (1995)                      Pattern Recognition, 2014.
+       613­627.
+                                                                                                       [51] X. Tan, B. Triggs, Enhanced local texture feature sets for face recognition under
+[16] G.R. Easley, D. Labate, W.Q. Lim, Sparse directional image representations using the                     difficult lighting conditions, IEEE International Workshop on Analysis and Modeling
+       discrete Shearlet transform, Appl. Comput. Harmon. Anal. 25 (1) (2008) 25­46.                          of Faces and Gestures, 2007.
+
+[17] G.R. Easley, D. Labate, V.M. Patel, Directional multiscale processing of images                   [52] A. Toshev, C. Szegedy, DeepPose: human pose estimation via deep neural networks,
+       using wavelets with composite dilations, J. Math. Imaging Vision 48 (1) (2012)                         Proc. IEEE Int'l Conf. on Computer Vision and Pattern Recognition, 2014.
+       13­34.
+                                                                                                       [53] P. Vincent, H. Larochelle, Y. Bengio, P.A. Manzagol, Extracting and composing robust
+[18] K. Fukunaga, Introduction to Statistical Pattern Classification, Academic Press, USA,                    features with denoising autoencoders, Proc. Int'l Conf. on Machine Learning, 2008.
+       1990.
+                                                                                                       [54] N. Vu, A. Caplier, Enhanced patterns of oriented edge magnitudes for face recogni-
+[19] K. Guo, D. Labate, W. Lim, Edge analysis and identification using the continuous                         tion and image matching, IEEE Trans. Image Process. 21 (3) (2012) 1352­1365.
+       shearlet transform, Appl. Comput. Harmon. Anal. 27 (1) (2009) 24­46.
+                                                                                                       [55] S. Xie, S. Shan, X. Chen, J. Chen, Fusing local patterns of Gabor magnitude and phase
+[20] Z. Guo, L. Zhang, D. Zhang, A completed modeling of local binary pattern operator                        for face recognition, IEEE Trans. Image Process. 19 (5) (2010) 1349­1361.
+       for texture classification, IEEE Trans. Image Process. 19 (6) (2010) 1657­1663.
+                                                                                                       [56] Z. Zeng, J. Hu, Face recognition based on shearlets transform and principle
+[21] M. Grgic, K. Delac, S. Grgic, SCface surveillance cameras face database, Multimedia                      component analysis, 5th International Conference on Intelligent Networking and
+       Tools Appl. 51 (3) (2009) 863­879.                                                                     Collaborative Systems, 2013.
+
+[22] S. Hauser, G. Steidl, Fast Finite Shearlet Transform: A Tutorial(arXiv:1202.1773v2)               [57] B. Zhang, S. Shan, X. Chen, W. Gao, Histogram of Gabor phase patterns (HGPP):
+       July 24, 2014.                                                                                         a novel object representation approach for face recognition, IEEE Trans. Image
+                                                                                                              Process. 16 (1) (2007) 57­68.
+[23] J. He, H. Ji, X. Yang, Rotation invariant texture descriptor using local shearlet-based
+       energy histograms, IEEE Signal Process. Lett. 20 (9) (2013) 905­908.                            [58] W. Zhang, S. Shan, W. Gao, X. Chen, H. Zhang, Local Gabor Binary Pattern Histogram
+                                                                                                              Sequence (LGBPHS): a novel non-statistical model for face representation and
+[24] G.E. Hinton, R.R. Salakhutdinov, Reducing the dimensionality of data with neural                         recognition, Proc. IEEE Int'l Conf. on Computer Vision, 2005.
+       networks, Science 313 (5786) (2006) 504­507.
+                                                                                                       [59] X. Zhang, L. Zhang, X.-J. Wang, H.-Y. Shum, Finding celebrities in billions of web
+[25] G.E. Hinton, S. Osindero, Y. Teh, A fast learning algorithm for deep belief nets, Neural                 images, IEEE Trans. Multimedia 14 (4) (2012) 995­1007.
+       Comput. 18 (7) (2006) 1527­1554.
+                                                                                                       [60] W. Zhao, R. Chellappa, P. Phillips, A. Rosenfeld, Face recognition: a literature survey,
+[26] G.B. Huang, M. Ramesh, T. Berg, E. Learned-Miller, Labeled Faces in the Wild: a                          ACM Comput. Surv. 35 (4) (2003) 399­458.
+       database for studying face recognition in unconstrained environments, Technical
+       Report 07-49, University of Massachusetts, Amherst, 2007.                                       Jie Chen received the M.S. and Ph.D. degrees from the Harbin Institute of Technology,
+                                                                                                       Harbin, China, in 2002 and 2007, respectively. Since September 2007, he has been a senior
+[27] Z. Huang, R. Wang, S. Shan, X. Chen, Hybrid Euclidean and-Riemannian                              researcher with the Center for Machine Vision and Signal Analysis at the University of
+       Metric Learning for image set classification, Asian Conference on Computer Vision,              Oulu, Finland. In 2012, he visited the Computer Vision Laboratory at the University of
+       2014.                                                                                           Maryland, USA. In 2015, he visited the Electrical and Computer Engineering Department
+                                                                                                       at the Duke University, USA. His research interests include pattern recognition, computer
+[28] W. Hwang, G. Park, J. Lee, S.C. Kee, Multiple face model of hybrid Fourier feature                vision, machine learning, dynamic texture and watermarking. He has authored over 50 pa-
+       for large face image set, Proc. IEEE Int'l Conf. on Computer Vision and Pattern                 pers in journals and conferences and he is a Program Committee Member for many con-
+       Recognition, 2006.                                                                              ferences. Dr. Chen was a Co-Chair of International Workshops at ICCV2017, CVPR2016
+                                                                                                       and ACCV2014. He is associate editor for The Visual Computer and also served as a guest
+[29] J. Kannala, E. Rahtu, BSIF: binarized statistical image features, Proc. of International          editor for Neurocomputing 2014 and TPAMI 2017. He is a member of the IEEE.
+       Conference on Pattern Recognition, 2012.
+                                                                                                       Vishal M. Patel received the B.S. degree in electrical engineering and applied mathematics
+[30] A. Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton, ImageNet classification with deep              (Hons.) and the M.S. degree in applied mathematics from North Carolina State University,
+       convolutional neural networks, Proc. of Neural Information Processing Systems,                  Raleigh, NC, USA, in 2004 and 2005, respectively, and the Ph.D. degree in electrical engi-
+       2012.                                                                                           neering from the University of Maryland College Park, MD, USA, in 2010. He is currently
+
+[31] Z. Lei, M. Pietikainen, Stan Z. Li, Learning discriminant face descriptor, IEEE Trans.
+       Pattern Anal. Mach. Intell. 36 (2) (2014) 289­302.
+46  J. Chen et al. / Image and Vision Computing 64 (2017) 34­46
+
+an A. Walter Tyson Assistant Professor in the Department of Electrical and Computer          Matti Pietikäinen received his Doctor of Science in Technology degree from the
+Engineering (ECE) at Rutgers University. Prior to joining Rutgers University, he was a mem-  University of Oulu, Finland. He is currently a professor, Scientific Director of Infotech
+ber of the research faculty at the University of Maryland Institute for Advanced Computer    Oulu and Director of Machine Vision Group at the University of Oulu. From 1980 to
+Studies (UMIACS). His current research interests include signal processing, computer vi-     1981 and from 1984 to 1985, he visited the Computer Vision Laboratory at the University
+sion, and pattern recognition with applications in biometrics and imaging. He has received   of Maryland. He has made pioneering contributions, e.g. to local binary pattern (LBP)
+a number of awards including the 2016 ONR Young Investigator Award, the 2016 Jimmy           methodology, texture-based image and video analysis, and facial image analysis. He has
+Lin Award for Invention, A. Walter Tyson Assistant Professorship Award, the Best Paper       authored over 340 refereed papers in international journals, books and conferences. He
+Award at IEEE BTAS 2015, and Best Poster Awards at BTAS 2015 and 2016. He is an Asso-        was Associate Editor of IEEE Transactions on Pattern Analysis and Machine Intelligence
+ciate Editor of the IEEE Signal Processing Magazine, IEEE Biometrics Compendium, and         and Pattern Recognition journals, and currently serves as Associate Editor of Image and
+serves on the Information Forensics and Security Technical Committee of the IEEE Signal      Vision Computing and IEEE Transactions on Forensics and Security journals. He was the
+Processing Society. He is a member of Eta Kappa Nu, Pi Mu Epsilon, and Phi Beta Kappa.       President of the Pattern Recognition Society of Finland from 1989 to 1992, and was named its
+                                                                                             Honorary Member in 2014. From 1989 to 2007 he served as Member of the Governing Board
+Li Liu received the B.S. degree in communication engineering, the M.S. degree in photo-      of International Association for Pattern Recognition (IAPR), and became one of the founding fel-
+grammetry and remote sensing and the Ph.D. degree in information and communication           lows of the IAPR in 1994. He is an IEEE Fellow for contributions to texture and facial image anal-
+engineering from the National University of Defense Technology, China, in 2003, 2005         ysis for machine vision. In 2014, his research on LBP-based face description was awarded the
+and 2012, respectively. She joined the faculty at the National University of Defense Tech-   Koenderink Prize for Fundamental Contributions in Computer Vision.
+nology in 2012, where she is currently an Associate Professor with the College of Informa-
+tion System and Management. During her Ph.D. study, she spent more than two years as a       Rama Chellappa received the B.E. (Hons.) degree in electronics and communication engi-
+Visiting Student at the University of Waterloo, Canada, from 2008 to 2010. From 2015 to      neering from the University of Madras, Chennai, India, in 1975, the M.E. (with Distinction)
+2016, she visited the Multimedia Laboratory at the Chinese University of Hong Kong. From     degree from the Indian Institute of Science, Bangalore, India, in 1977, and the M.S.E.E. and
+2016 to 2018, she is visiting Machine Vision Group at the University of Oulu, Finland. Her   Ph.D. degrees in electrical engineering from Purdue University, West Lafayette, IN, USA, in
+research interests include texture analysis, object detection and recognition, and scene     1978 and 1981, respectively. He was a Faculty Member with the Department of Electrical
+classification. Dr. Liu was a Co-Chair of International Workshops at ICCV2017, CVPR2016      Engineering/Systems, University of Southern California (USC), from 1981 to 1991. Since
+and ACCV2014. She is associate editor for The Visual Computer and also served as a guest     1991, he has been a Professor of electrical and computer engineering (ECE) and an affiliate
+editor for Neurocomputing 2014 and TPAMI 2017.                                               Professor of computer science with the University of Maryland (UMD), College Park, MD,
+                                                                                             USA. He is also affiliated with the Center for Automation Research and the Institute for
+Vili-Petteri Kellokumpu received the Ph.D. degree in Center for Machine Vision and           Advanced Computer Studies (Permanent Member) and is serving as the Chair of the ECE
+Signal Analysis, University of Oulu, Finland, in 2011. He is currently a senior research     Department. In 2005, he was named a Minta Martin Professor of Engineering. He holds
+scientist with the Center for Machine Vision and Signal Analysis, University of Oulu,        three patents. His current research interests include face recognition, clustering and video
+Finland. He has authored and co-authored about 20 papers in journals and conferences.        summarization, 3D modeling from video, image and video-based recognition of objects,
+He is a Program Committee Member for many conferences. His current research interests        events and activities, dictionary-based inference, compressive sensing, domain adaptation
+include gait analysis, and dynamic-texture recognition.                                      and hyper spectral processing.
+                                                                                             Dr. Chellappa was the recipient of an NSF Presidential Young Investigator Award, four IBM
+Guoying Zhao (SM'12) received the Ph.D. degree in computer science from the Chinese          Faculty Development Awards, an Excellence in Teaching Award from the School of
+Academy of Sciences, Beijing, China, in 2005. She is currently an Associate Professor with   Engineering at USC, and two paper awards from the International Association of Pattern
+the Center for Machine Vision and Signal Analysis, University of Oulu, Finland, where she    Recognition (IAPR). He is a recipient of the K.S. Fu Prize from IAPR. He received the Society,
+has been a senior researcher since 2005, and a visiting Professor in Northwest University    Technical Achievement and Meritorious Service Awards from the IEEE Signal Processing
+in China. In 2011, she was selected to the highly competitive Academy Research Fellow po-    Society. He was also the recipient of the Technical Achievement and Meritorious Service
+sition. She has authored or co-authored more than 160 papers in journals and conferences.    Awards from the IEEE Computer Society. At UMD, he was elected as a Distinguished
+Her papers have currently over 5800 citations in Google Scholar (h-index 33).She has         Faculty Research Fellow and Distinguished Scholar­Teacher, received an Outstanding
+served as area chairs for FG 2017 and WACV 2017 and is associate editor for Pattern Rec-     Innovator Award from the Office of Technology Commercialization, and received an
+ognition and Image and Vision Computing Journals. She has lectured tutorials at ICPR         Outstanding GEMSTONE Mentor Award from the Honors College. He received the
+2006, ICCV 2009, and SCIA 2013, authored/edited three books and six special issues in        Outstanding Faculty Research Award and the Poole and Kent Teaching Award for Senior
+journals. Dr. Zhao was a Co-Chair of 12 International Workshops at ECCV, ICCV, CVPR          Faculty from the College of Engineering. In 2010, he was recognized as an Outstanding
+and ACCV, and two special sessions at FG13 and FG15. Her current research interests in-      ECE by Purdue University. He is a Fellow of IAPR, OSA and AAAS.
+clude image and video descriptors, facial-expression and micro-expression recognition,       Prof. Chellappa served as the Editor-in-Chief of the IEEE transactions on Pattern Analysis and
+gait analysis, dynamic-texture recognition, human motion analysis, and person identifica-    Machine Intelligence. He has served as a General and Technical Program Chair for several
+tion. Her research has been reported by Finnish TV programs, newspapers and MIT Tech-        IEEE international and national conferences and workshops. He is a Golden Core Member of
+nology Review.                                                                               the IEEE Computer Society and served as a Distinguished Lecturer of the IEEE Signal Processing
+                                                                                             Society. Recently, he completed a two-year term as the President of the IEEE Biometrics Council.
+

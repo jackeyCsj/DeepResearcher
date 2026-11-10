@@ -1,0 +1,588 @@
+This WACV paper is the Open Access version, provided by the Computer Vision Foundation.
+                 Except for this watermark, it is identical to the accepted version;
+
+           the final published version of the proceedings is available on IEEE Xplore.
+
+Beyond Spatial Explanations: Explainable Face Recognition in the Frequency
+                                             Domain
+
+                                         Marco Huber and Naser Damer
+                  Fraunhofer Institute for Computer Graphics Research IGD, Germany
+
+                                 Technische Universita¨t Darmstadt, Germany
+                                   Email: marco.huber@igd.fraunhofer.de
+
+                        Abstract                                 Figure 1. Between the "semantic" components and the frequency
+                                                                 components of the data, a correlation exists [48]. While the human
+   The need for more transparent face recognition (FR),          face matcher relies on the human interpretation (semantic compo-
+along with other visual-based decision-making systems has        nent), the FR model also utilizes frequency components [37, 38].
+recently attracted more attention in research, society, and      Current explainable FR approaches only focus on highlighting the
+industry. The reasons why two face images are matched            spatial semantic clues.
+or not matched by a deep learning-based face recognition
+system are not obvious due to the high number of param-          ios [24]. However, in recent years, drawbacks such as un-
+eters and the complexity of the models. However, it is im-       fair behavior [11, 42, 45] of FR systems and vulnerabili-
+portant for users, operators, and developers to ensure trust     ties to different types of attacks [6, 9, 25, 52], including
+and accountability of the system and to analyze drawbacks        adversarial attacks, gained attention in the research com-
+such as biased behavior. While many previous works use           munity. Since modern FR systems highly rely on deep
+spatial semantic maps to highlight the regions that have         learning with millions of parameters in highly complex
+a significant influence on the decision of the face recog-       models, their outcomes are difficult to understand for hu-
+nition system, frequency components which are also con-          mans [40]. Gaining a better understanding of the inter-
+sidered by CNNs, are neglected. In this work, we take a          nal behavior of the models is for various reasons of high
+step forward and investigate explainable face recognition        interest, especially in biometric systems which are often
+in the unexplored frequency domain. This makes this work         used in security-critical scenarios and process highly pri-
+the first to propose explainability of verification-based deci-  vate data [46]. A better understanding could increase trust,
+sions in the frequency domain, thus explaining the relative      highlight unfair behavior, or guide developers to achieve
+influence of the frequency components of each input toward       higher-performing and more robust models. In the area of
+the obtained outcome. To achieve this, we manipulate face        explainable FR, several works have been proposed in recent
+images in the spatial frequency domain and investigate the       years [3, 7, 12, 16­19, 27, 28, 30, 33­36, 44].
+impact on verification outcomes. In extensive quantitative
+experiments, along with investigating two special scenarios         Current FR models utilize convolutions neural networks
+cases, cross-resolution FR and morphing attacks (the latter      (CNNs) to process face images and distinguish individu-
+in supplementary material), we observe the applicability of      als [4, 10]. These CNNs process the information present
+our proposed frequency-based explanations.                       in the training face images to create a model that extracts
+                                                                 identity representations that can be used to verify and iden-
+1. Introduction                                                  tify individuals by comparing such representations. How-
+
+   Automatic face recognition (FR) has developed into a
+technology with a wide range of applications and has be-
+come an integral part of many everyday situations. It is used
+to cross borders at automatic border checkpoints, to un-
+lock personal smartphones, or to verify payments. Among
+other things, this is due to high accuracy, ease of use, and
+high convenience for users and operators in many scenar-
+
+                                                                 1016
+ever, as previous research showed, the CNNs are not only        2. Related Work
+using human-understandable and visible "semantic" clues
+but also imperceptible high-frequency patterns [48]. This          The performance of FR systems improved over the re-
+general idea is visualized in Fig. 1. Current approaches        cent years and already surpassed the performance of hu-
+[17, 27, 36] in explainable FR are mainly focused on expla-     mans [31]. New FR-specific loss function such as ArcFace
+nations using spatial saliency maps, which highlight impor-     [10], CurricularFace [15], ElasticFace [4] or AdaFace [26],
+tant areas as processed by the FR system. However, under-       as well as larger models [13] and larger datasets [2, 5, 53]
+standing the influence of different frequency components in     led to this improvement in terms of verification accuracy. A
+FR decisions was never addressed before this work. For          drawback of this is that the increasing size and complexity
+the rest of the paper, for simplicity, we refer to the spatial  of the FR models result in a lower understanding of their de-
+frequency domain as the frequency domain.                       cisions. This raises questions about the inner workings and
+                                                                causes for decisions, thus motivating innovations targeting
+   In the area of biometrics, transparency, explainability,     explainable FR [40].
+and interpretability of biometric decisions and systems are
+still considered an outstanding problem [23]. In the area          The major research direction in the area of explainable
+of explainable face matching decisions, Lin et al. pro-         computer vision is the trend of visualizing important areas
+posed xCos [30], based on an interpretable cosine metric        in images using saliency or heatmaps [43, 47]. They are
+that provides patched cosine and attention maps, highlight-     mainly designed and applied to explain classification deci-
+ing the important areas for the decision in a spatial man-      sions by highlighting which areas led to a certain classifica-
+ner. More fine-grained explanations are provided by other       tion output. Applying methods like GradCam [43] or Score-
+works [17, 27, 34­36] that provide explanations on pixel or     CAM [47] on FR models is not natively possible, since they
+near-pixel level. Recent works aimed at providing textual       are only designed for classification systems and not for an
+explanations leveraging large language models [8]. In the       FR process that includes feature extraction and feature com-
+area of frequencies and their impact on CNNs, Wang et           parison sub-steps.
+al. [48] investigated the abilities of CNNs to capture high-
+frequencies, while Abello et al. [1] proposed to weigh dif-        This motivated the development of approaches specif-
+ferent frequency bands to gain the influence of different fre-  ically designed to visualize important areas for an FR
+quency bands for the classification decision.                   model's decision. Lin et al. [30] proposed a learnable mod-
+                                                                ule named xCos which is based on a novel similarity metric
+   In this work, we propose the novel concept of explain-       and provides patched attention and similarity maps. More
+ing FR in the frequency domain and thus revealing, for          fine-grained explanations are generated by the black-box
+any FR verification process, the relative contribution of the   approaches [27, 34­36]. All of them are based on pertur-
+frequency components to its outcome. This allows us to          bations and manipulation of the input image in the spatial
+provide more complete explanations, covering also human-        domain while observing the output/decision. In contrast,
+imperceptible clues that are used by the FR systems and         to black-box attacks which assume no access to the model
+cannot be visualized in the spatial domain. It is impor-        weights, also white-box approaches exist. In that direction,
+tant to highlight, that frequency-based explanations aim at     Huber et al. [17] proposed to use similarity score-based
+extending the means of explanations and not replace spa-        gradients to obtain fine-grained similarity and dissimilarity
+tial explanations. To evaluate the performance and show         heatmaps, while Xu et al. [32] proposed a white-box ap-
+the transferability of our approach, we utilize two differ-     proach based on feature-guided gradient backpropagation.
+ent state-of-the-art FR models using adjusted insertion and     All existing works explaining FR decisions or other com-
+deletion curves [41] and visual investigations.                 puter vision decisions have focused on the spatial domain
+                                                                and have not addressed explanations in the frequency do-
+   Our contributions are: 1) The first work to propose the      main, i.e. answering questions regarding the most important
+concept of explaining visual-based decisions of FR in the       frequency bands contributing to a certain decision. This is
+frequency domain, 2) Investigate frequency-based explain-       of special interest, as the relationship between the frequency
+ability of FR, thus including human imperceptible clues into    spectrum of images and the behavior of CNNs has been re-
+the provided explanation, 3) Extensive experiments with         cently investigated by Wang et al. [48]. They especially
+two state-of-the-art FR models on the LFW dataset [14] in       look at the generalization behavior of CNNs and the impact
+a quantitative and visualized manner, 4) Exploring potential    of the low- and high-frequency components during train-
+use cases of frequency-based explanations by investigating      ing and inference. One of their conclusion is that CNNs
+cross-resolution verifications and morphing attack decisions    capture high-frequency patterns that misalign with human
+(in the supplementary material).                                visual preference.
+
+                                                                   While not directly referring to frequencies, Ilyas et al.
+                                                                [21] investigated and provided a theoretical framework re-
+                                                                garding the existence of non-robust features which are
+
+                                                                1017
+Figure 2. Overview of the proposed frequency-based explainability approach. In the first step, the images of an image pair are transformed
+into the frequency domain. Certain frequencies are masked and the images are re-transformed into the spatial domain, in a lossless process.
+In the next step, the unaltered images and the set of frequency-masked images are processed by an FR model to create face embeddings
+and to calculate cosine similarity scores. In the last step, the difference between the cosine similarity scores of the masked image pairs
+and the unaltered image pair is used to assign an influence score to the different frequencies (bands). The normalized influences are either
+presented as the absolute (a) or directed (b) frequency heat plots (FHPs).
+
+derived by the model from the data distribution and are         we propose to analyze spatial image pairs in the frequency
+highly predictive for the model, but incomprehensible to        domain using Discrete Fourier Transform (DFT) and apply
+humans. They concluded, that as long as models rely on          a black-box masking approach by masking different fre-
+non-robust, human incomprehensible features the explana-        quency bands to remove the information present in these
+tions of model behavior cannot be both faithful and human-      frequencies. After the masking, the manipulated image is
+meaningful [21]. Abello et al. [1] provided a framework         transformed back to the spatial domain utilizing the inverse
+for dividing the frequency spectrum in equally sized dis-       Discrete Fourier Transform (iDFT) without any additional
+joint energy discs to investigate the importance of the dif-    information loss. To obtain our explanation in the form of
+ferent discs. Their experiments and the results indicate no     a frequency heat plot (FHP), the change in the compari-
+clear bias to high-frequencies. Abello et al. [1] utilized      son score is observed between the frequency-masked im-
+an FR model in their experiments in an identity classifi-       age pairs and the unaltered image pair. If the change in the
+cation manner, but neglected the established feature cre-       similarity score is relatively large, the masked frequencies
+ation and matching process. More recently, several works        had a relatively high influence on the face verification pro-
+[37­39, 49] exploited the frequency domain to perform           cess and vice versa. A schematic overview of our proposed
+privacy-preserving FR by manipulating the frequencies in        approach is shown in Fig. 2. Our proposed training-free
+different ways. Which points out the importance of fre-         approach follows the black-box approach [27,35,36] which
+quency domain analyses in FR. However, no works have            does not need access to the model's internals and can be
+addressed the explainability task in the frequency domain.      applied to any CNN-based FR model.
+
+3. Frequency-based Explanations                                 3.1. From Spatial Domain to Frequency Domain
+                                                                      and Back
+   In this section, we propose our frequency-based explain-
+ability approach. Utilizing recent findings on the impact           To investigate the impact of certain frequencies on the
+and importance of frequencies in the internal behavior of       model's behavior, we propose to remove these frequencies
+CNNs [1,48], we move away from spatial explanations such        from the image pair. Therefore, in the first step, we trans-
+as heatmaps and saliency maps [17, 27, 35] and explain face     form the image from the spatial domain into the frequency
+matching in the frequency domain.                               domain. Given an image in spatial domain Is  RN×N , we
+                                                                apply all following operations color channel-wise, follow-
+   The benefit of leveraging the frequency domain for ex-       ing [1, 48]. With Is(x, y) we refer to the value in the spatial
+planation is that it also allows us to understand the relative  domain at position (x, y). We refer to the Fourier transform
+contributions of different frequency components, including      F as the Discrete Fourier Transform (DFT):
+high-frequency patterns used by the model in the explana-
+tions that are human imperceptible [48]. To achieve this,
+
+                                                                1018
+                1  N -1 N -1                    kx      ly                similarity of the masked image pairs and the unaltered image pairs
+               N2                               N       N                 given some arbitrary FR model as a measure of influence for each
+F(k, l)     =                 Is  (x,  y)e-i2(      +       )  ,     (1)  frequency band.
+
+                   x=0 y=0                                                    Therefore, given II^s and an FR model, E, that maps its spatial
+                                                                          input I into a feature representation eI in an identity embedding
+    where F (k, l) denotes the value of Is(x, y) in the spatial fre-      space:
+quency domain. Therefore, F (k, l) is a complex-valued matrix,
+where each (k, l) pair represents the frequency. To simplify the                eI = E(I),                  (6)
+calculation of frequency bands later on, we shift the zeroth fre-
+quency to the center as it is usually done when processing images         where eI is a mathematical representation of the identity present
+in frequency domain, leaving any information unchanged [1].               in image I in an identity space learned by the FR model E, we
+                                                                          calculate for each manipulated image pair I^s  II^s , J^s  JJ^s
+    To estimate the influence of each frequency band, we apply a          their corresponding eI^ and e^j. To calculate the similarity of the
+masking scheme. This masking scheme removes all information               representations, we use cosine similarity cs, which can be defined
+in a certain frequency band by setting the corresponding value to
+zero in the frequency domain. Due to the frequency shifting of the        as:
+zeroth frequency to the center, the size/height ("low" and "high")
+of the frequencies of the image in the frequency domain is a norm               cs(eI , eJ ) =  eI · eJ  ,  (7)
+of F(k, l). To mask different frequencies, we define a frequency                                eI eJ
+mask MB  RN×N for a frequency band B(b, t) with b denoting
+the lower frequency bound and t the upper frequency bound as:
+
+MB(k, l) =  0,  if F (k, l) > b or F(k, l)  t ,                      (2)      and provides a comparison score cs  [-1, 1] with values
+            1,  otherwise                                                 close to 1 indicating similarity, values close to 0 independence,
+                                                                          and values close to -1 indicating dissimilarity. The similarity is
+    Additionally, we define s = t - b as the frequency band               always calculated between the manipulated image with the same
+size. We apply the obtained map MB(k, l) channel-wise (per color          frequency mask applied (MB) and we manipulate both images of
+channel) on the image in the frequency domain F (k, l):                   the pair and not just one, to remove the information present in
+                                                                          the frequency from both images and not just from one. To obtain
+            FM (k, l) = F (k, l) × MB(k, l),                         (3)  a reference similarity that we can use to measure the difference in
+                                                                          similarity, we calculate the cosine similarity csref of the unaltered
+to remove the selected frequency band B(b, t) from the frequency          image pair Is, Js. In the final step, we define the frequency band
+domain image F (k, l), obtaining the masked version FM (k, l). In         influence as:
+the last step, we invert the shifting of the zeroth frequency to the
+                                                                                hB = |csref - csB|          (8)
+center and utilize the inverse Discrete Fourier Transform (iDFT),
+F -1:
+
+                   N -1 N -1                        kx     ly             where hB denotes the influence of a specific frequency band B
+                                                    N      N              and csB the comparison score of the embedded images I^s and J^s
+Is(x, y) = F -1 =                 F    (k,  l)ei2(      +      )  ,  (4)  that had the frequency band B masked. Therefore, we interpret the
+                                                                          absolute distance in the cosine similarity score between the unal-
+                   k=0 l=0                                                tered image pair and their B-frequency manipulated counterpart
+                                                                          as the influence.
+    to transform the frequency-masked image back to the spatial
+domain. To summarise briefly, we calculate:
+
+               I^s = F -1(F (Is) × MB),                              (5)  3.3. Visualizing Frequency Influence
+
+to obtain a spatial version of the image Is, I^s that had certain fre-        To visualize the obtained frequency influence scores, we pro-
+quencies masked (B(b, t)) in the frequency domain.                        pose two different frequency heat plots (FHPs), the absolute FHP
+                                                                          and the directed FHP. The proposed plots are bar plots that visu-
+    By doing the above mentioned transformation and masking in            alize the impact of each frequency band on the reference compar-
+the frequency domain for each image on each frequency band Bi,            ison score of the unaltered reference images in terms of similar-
+we obtain a set of images II^s of image Is with certain frequen-          ity. This allows us to visualize the influence of certain frequency
+cies, and the information present in this frequencies, removed. It        bands on the utilized FR models and allows us to also cover high-
+is important to note, that we do not mask the zeroth frequency (DC        frequencies in the explanations. To make them comparable be-
+component) as it carries a different meaning with the average in-         tween different FHPs we normalize the influence score to sum up
+tensity of the pixels in the image and that the transformation step       to 1 in each plot. While the absolute FHP is based on the absolute
+does not change the image without masking.                                distance Hb, the directed FHP maintains the direction (sign) of the
+                                                                          difference after being normalized. This allows us to also observe
+3.2. Assigning Frequency Influence for Face Verifi-                       and explain if a certain frequency band had a positive or negative
+      cation                                                              influence on the similarity. An example for both, the absolute (a)
+                                                                          and the directed FIP (b) is shown in Fig. 2.
+    Starting from the set of images II^s obtained using the non-
+overlapping frequency masking, we investigate the change in the
+
+                                                                          1019
+4. Experimental Setup                                                 at estimating the influence of the different frequency bands and
+                                                                      then iteratively masking the different frequency bands based on
+4.1. Face Recognition Models & Evaluation                             the estimated influence and evaluating using the face verification
+      Datasets                                                        performance. We perform the masking in the frequency domain
+                                                                      on both images of each pair to remove the information present in
+    To demonstrate the generalizability and validity of our pro-      the frequency from both images. In the evaluation using the inser-
+posed frequency-based explainable FR approach, we utilize two         tion and deletion curves, we utilize the influence provided by the
+different state-of-the-art FR models. All models share the same       absolute FHPs as in contrast to the directed FHPs, they provide a
+ResNet-100 [13] architecture and have been trained with the cor-      fixed ordering, from highest to lowest influence.
+responding loss functions. The utilized models are ElasticFace-
+Arc [4] and CurricularFace [15]. We obtained the trained models           We provide two evaluation scenarios for each curve. In the first
+(trained on MS1MV2 [10]) from the respective official reposito-       case, we investigate the Equal Error Rate (EER) [22], which pro-
+ries.                                                                 vides the evaluation at the threshold that achieves the same False
+                                                                      Match Rate (FMR) as the False Non-Match Rate (FNMR). With
+    For the evaluation benchmark, following FR explainability         the EER we can measure both errors within a single evaluation
+works [17, 27], we utilize Labeled Faces in the Wild (LFW) [14]       curve. In the second case, we imitate a more practical scenario
+which is an established face verification benchmark and consists of   with a fixed threshold, that is not adapted during the evaluation.
+3000 genuine (matching) and 3000 imposter (non-matching) pairs.       Employed FR systems usually utilize a fixed threshold that is set
+The images have been aligned and cropped using MTCNN [50]             based on some reference dataset and then used during operation.
+following Deng et al. [10] to the size of 112 × 112 × 3. In the       We set this threshold at FMR= 0.1 on the unaltered LFW [14]
+supplementary material, we provide additional quantitative results    dataset and report the error in terms of FNMR.
+on the Cross-Age LFW (CALFW) dataset [51].
+                                                                          A fair comparison of frequency-based explanations with spa-
+    Last, we investigate two possible use cases of our frequency-     tial explanations using insertion & delete curves is not possible, as
+based explanations: cross-resolution FR and morphing attack de-       the amount of information removed or inserted is different when
+cisions (in the supplementary material). For the analysis of the      manipulating frequencies or pixels. To validate our results, we
+cross-resolution FR, the low-resolution images have been created      compare our explanations with a baseline of unaware explanations.
+by down- and up-scaling [29] the image with bilinear interpolation    These unaware explanations are built by assuming that the fre-
+using the downscaling factor m = 0.25. Our approach should be         quency bands are masked randomly but using the same frequency
+able to explain, how in low-resolution image pairs less details af-   band size s as in the proposed approach. The masked frequency
+fect the influence of information present in certain frequencies.     bands are in random order for each image pair. In the resulting in-
+We expect that the influence of low frequencies increases as there    sertion curves, a fast increase in verification performance indicates
+is less information in high-frequency bands due to the removed        a good explanation as it indicates that the approach has captured
+details. The details of the morphing attack decisions are provided    the most crucial information, and adding these parts should reduce
+in the supplementary material.                                        the verification error more than adding less crucial information.
+                                                                      In the deletion curves, a fast decrease in verification performance
+4.2. Hyper-parameters                                                 indicates a good explanation as by removing the most crucial in-
+                                                                      formation the model should be disturbed more than by removing
+    Based on the approach described above, we investigate differ-     less crucial information.
+ent hyper-parameters in our experiments. Motivated by related
+works, we investigate L1 (used by Abello et al. [1]) and L2 (used     4.4. Visual Investigations
+by Wang et al. [48]) norm as the distance functions during the
+frequency masking. The results using L2 are provided in this pa-          For the visual analysis, we present the absolute and directed
+per, and the results using L1 are provided in the supplementary       frequency heat plots (FHP) for image pairs. The FHPs provide
+material. Furthermore, we chose the size of the frequency band        an explanation, of how influential certain frequency bands are for
+s  [1, 2, 4, 8, 14] to investigate a wide range of possible band-     the FR model. To demonstrate the usefulness of our proposed
+widths. With s = 1 we investigate single frequencies, while larger    FHPs, we provide them for two different use cases. For the cross-
+s might provide more robust explanations as single frequencies        resolution use case, we provide absolute and directed FHPs, for
+might have an insignificant effect [1].                               the morphing attack decision use case, we provide the mean FHPs
+                                                                      and the standard deviation over the genuine and attack pairs in the
+4.3. Insertion & Deletion Curves                                      supplementary material.
+
+    To determine the quality of the produced frequency-based ex-      5. Results
+planations, we utilize adapted insertion and deletion curves [41].
+The rationale of insertion and deletion curves is, that if the most       This section presents the results of our proposed frequency-
+important areas of an image are removed from an image or in-          based explainability framework, starting with the presentation of
+serted into a blank canvas, the performance should decrease or        the quantitative findings, followed by the analysis of selected vi-
+increase most, in contrast to if the same is done for less important  sual observations. In our quantitative analysis, we examine the
+areas. This approach has been established as a way to evaluate        insertion and deletion curves pertaining to our frequency-based
+spatial explainable FR approaches [17, 20, 34] along with explain-    explainable FR approach, as described earlier, employing two dis-
+ability approaches in other domains [41, 47]. We adapt insertion      tinct FR models and two evaluation scenarios. These scenarios
+and deletion curves and in contrast to existing works, perform the    include one with a pre-determined starting threshold (fixed FMR)
+masking in the frequency domain. Our adapted evaluation aims          and another with a dynamically adaptable threshold set by the
+
+                                                                      1020
+(a) Deletion - EER  (b) Deletion - FNMR                                     (c) Insertion - EER  (d) Insertion - FNMR
+
+Figure 3. Deletion and insertion curves using ElasticFace-Arc [4] on LFW [14]. The solid lines are a result of our proposed explanations.
+The dotted line indicates the performance of the baseline with the same frequency band size s as its color counterpart in solid line. In the
+baseline approach, the frequency bands are masked randomly. Both faster ascending deletion curves and faster descending insertion curves
+point to the effectiveness of the proposed explanations.
+
+(a) Deletion - EER  (b) Deletion - FNMR                                     (c) Insertion - EER  (d) Insertion - FNMR
+
+Figure 4. Deletion and insertion curves using CurricularFace [15] on LFW [14]. The solid lines are a result of our proposed explanations.
+The dotted line indicates the performance of the baseline with the same frequency band size s as its color counterpart in solid line. In the
+baseline approach, the frequency bands are masked randomly. Both faster ascending deletion curves and faster descending insertion curves
+point to the effectiveness of the proposed explanations.
+
+EER. For the visual investigation, we observe the FHPs of un-             Interestingly, in both figures, it can be observed, that even large
+altered image pairs as defined by the LFW benchmark [14] and          frequency bands (s = 14) allow a good estimation of which fre-
+low-resolution versions of these pairs. The quantitative results are  quency bands are important, while smaller frequency band sizes
+based on using L2-norm as motivated by Wang et al. [48], the          allow a more fine-granular explanation of the influence.
+results using L1-norm as motivated in [1], are provided in the sup-
+plementary material.                                                  5.2. Visual Investigation - Use Case: Cross Resolu-
+                                                                            tion FR
+5.1. Quantitative Results
+                                                                          For the visual analysis, we investigate two image pairs from the
+    The insertion and deletion curves on the ElasticFace-Arc [4]      LFW dataset [14], one genuine (matching) pair and one imposter
+model for the EER and FNMR case are shown in Fig. 3 using L2-         (non-matching) pair. The investigation is extended to the evalua-
+norm. The dotted lines indicate the performance of the baseline.      tion of how FHPs change in a low-resolution and cross-resolution
+The plot in Fig. 3a proves that the explanations by our proposed      case. All the FHPs in this section have been created using the
+approach are meaningful, as the error in terms of EER increases       ElasticFace-Arc model [4] and L2-norm. We provide more exam-
+faster as the baseline. The frequencies that are determined to have   ples in the supplementary material.
+a higher influence have a higher impact on the performance than
+if they are selected randomly. This remains true for all the con-         Fig. 5 shows two matching (genuine) pairs with their corre-
+sidered frequency band sizes and is also true in the insertion curve  sponding FHPs. The first row of FHPs provides the absolute in-
+(Fig. 4c), where the error decreases faster as our proposed ap-       fluence FHP with frequency band size s = 8, while the second
+proach successfully detected the most influential frequencies first   row shows the absolute influence FHP with frequency band size
+which reduces the verification error faster than the baseline. Simi-  s = 4, The last row of FHPs shows the directed FHP with the
+lar behavior can also be observed in the FNMR evaluation scenario     same band size as the second row. Next to the unaltered pairs
+using a fixed starting threshold based on the FMR (Fig. 3b and Fig.   (columns 1 and 3), we provide the low-resolution pairs (columns
+3d).                                                                  2 and 4) that have been downscaled and upscaled with a scaling
+                                                                      factor of 0.25. The FHPs in Fig. 5 show, that for both unaltered
+    The insertion and deletion curves on the CurricularFace [15]      pairs the low to mid frequencies (1 to 28) have the highest influ-
+model are shown in Fig. 4. The performance observed in all cases,     ence on the FR model decision, explaining the impact of certain
+EER (Fig. 4a, Fig. 4c) and fixed starting threshold (Fig. 4b, Fig.    frequency bands on the decision. In contrast, high frequencies (40
+4d) outperforms the baseline and follows a similar performance        to 56) are not as influential. As we expect if our explainability tool
+that can be observed in the ElastiFace-Arc [4] model, which shows     functions appropriately, there is a strong agreement between FHPs
+the generalizability of the proposed explainability solution.         with different frequency band sizes s. The directed FHP in the
+
+                                                                      1021
+Figure 5. Matching (genuine) pairs and their low-resolution versions with FHPs. The FHPs provide image pair specific frequency-based
+explanations on the influence of certain frequency bands. The low-frequency bands are the most influential and get even more influential on
+low-resolution images that lack details. Under each image pair we show two) with different s absolute FHPs followed by a third directed
+FHP.
+
+Figure 6. Non-matching pairs and their low-resolution versions with FHPs. Also for the non-matching image pairs the low-frequency
+bands are most influential for the dissimilarity as captured by the FHPs. In the low-resolution images the low-frequency bands gain even
+more influence. Under each image pair we show two) with different s absolute FHPs followed by a third directed FHP.
+
+                                                                                   1022
+Figure 7. Matching and non-matching pairs with cross-resolution counterpart. In the cross-resolution scenario, also a shift to the lower
+frequency-bands can be observed, indicating that the FR model relies more on low-frequency information than high-frequency information
+in this case. Under each image pair we show two) with different s absolute FHPs followed by a third directed FHP.
+
+last row shows that the influence of the frequency bands is nega-      non-matching pair and in both cases, the influence shifts even
+tive, meaning that removing the frequency band leads to a decrease     more to the lower frequency bands when investigating the cross-
+in the similarity score. This follows the expectation as removing      resolution in comparison to the unaltered image pair indicating
+frequency bands means that frequencies containing identity infor-      that the FR model relies on low-frequency information regarding
+mation are removed which reduces the similarity of the matching        the similarity of the faces.
+pair. Based on the FHPs provided, it also shows that the expla-
+nations are image pair-specific. When comparing the FHP of the         6. Conclusion
+low-resolution image pair with the FHP of the unaltered image
+pair, the FHPs of the low-resolution pairs indicate the higher influ-      In this work, we proposed a novel explainability space for FR
+ence of the lower frequencies as it is the case on the FHPs of the     by going beyond the explanations in the spatial domain to expla-
+unaltered image pairs. This shows that the approach captures that      nations in the frequency domain. To achieve that, we utilize a
+image details are mainly present in higher frequencies that have       frequency-based masking scheme allowing us to assign an influ-
+been altered by the down- and up-sampling of the images.               ence score to each frequency component (band). Recent work
+                                                                       has shown, that CNNs which are the backbone of current FR sys-
+    Two non-matching (imposter) pairs, their low-resolution coun-      tems, utilize different frequencies including frequencies impercep-
+terparts, and the corresponding FHPs are shown in Fig. 6. Similar      tible to humans to come to their conclusion. Our approach moves
+to the matching pairs in Fig. 5, the most influential frequency        away from spatial heatmaps to explain the behavior of these mod-
+bands are the low-frequency bands. In contrast to the matching         els in the frequency domain using frequency heat plots (FHPs),
+pairs, the similarity increases in most cases for the non-matching     obtaining more complete explanations. Our quantitative and vi-
+pairs as frequency bands are removed (as shown by the directed         sual evaluation using two state-of-the-art FR models showed the
+FHPs). As the pairs are from different identities and the similarity   effectiveness of our proposed approach also investigating two use
+scores should be small (in comparison to genuine pairs), removing      cases. Furthermore, being the first work to propose frequency-
+certain frequencies can actually lead to a minor increase in sim-      based explanations of verification-based decisions, we aim to mo-
+ilarity. It is important to note, as described in Sec. 3.3, that the   tivate more novel approaches in this direction, even beyond FR.
+FHPs are normalized for each pair to make them comparable and          Possible future work could include the combination of spatial and
+therefore the change in the similarity score might be smaller in the   frequency-based explanations.
+imposter pairs than in the genuine pairs. Similar to the observa-
+tions in Fig. 5, the FHPs of the low-resolution pairs show a higher    Acknowledgement This research work has been funded by
+influence of the lower frequencies on the similarity score than their  the German Federal Ministry of Education and Research and the
+counterparts, indicating the lack of discriminative identity details   Hessian Ministry of Higher Education, Research, Science, and
+in the low-resolution images.                                          the Arts within their joint support of the National Research Cen-
+                                                                       ter for Applied Cybersecurity ATHENE. This work has been par-
+    In Fig. 7, samples of the cross-resolution scenario are com-       tially funded by the German Federal Ministry of Education and
+pared to the unaltered image pairs. We provide a matching and          Research through the Software Campus Project.
+
+                                                                       1023
+References                                                            [11] Pawel Drozdowski, Christian Rathgeb, Antitza Dantcheva,
+                                                                            Naser Damer, and Christoph Busch. Demographic bias in
+ [1] Antonio A. Abello, Roberto Hirata, and Zhangyang Wang.                 biometrics: A survey on an emerging challenge. IEEE Trans-
+      Dissecting the high-frequency bias in convolutional neural            actions on Technology and Society, 1(2):89­103, 2020. 1
+      networks. In IEEE Conference on Computer Vision and Pat-
+      tern Recognition Workshops, CVPR Workshops 2021, vir-           [12] Biying Fu and Naser Damer. Towards explaining demo-
+      tual, June 19-25, 2021, pages 863­871. Computer Vision                graphic bias through the eyes of face recognition models.
+      Foundation / IEEE, 2021. 2, 3, 4, 5, 6                                In IEEE International Joint Conference on Biometrics, IJCB
+                                                                            2022, Abu Dhabi, United Arab Emirates, October 10-13,
+ [2] Xiang An, Xuhan Zhu, Yuan Gao, Yang Xiao, Yongle Zhao,                 2022, pages 1­10. IEEE, 2022. 1
+      Ziyong Feng, Lan Wu, Bin Qin, Ming Zhang, Debing Zhang,
+      and Ying Fu. Partial FC: training 10 million identities on      [13] Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+      a single machine. In IEEE/CVF International Conference                Deep residual learning for image recognition. In 2016 IEEE
+      on Computer Vision Workshops, ICCVW 2021, Montreal,                   Conference on Computer Vision and Pattern Recognition,
+      BC, Canada, October 11-17, 2021, pages 1445­1449. IEEE,               CVPR 2016, Las Vegas, NV, USA, June 27-30, 2016, pages
+      2021. 2                                                               770­778. IEEE Computer Society, 2016. 2, 5
+
+ [3] Clara Biagi, Louis Rethfeld, Arjan Kuijper, and Philipp          [14] Gary B. Huang, Manu Ramesh, Tamara Berg, and Erik
+      Terho¨rst. Explaining face recognition through shap-based             Learned-Miller. Labeled faces in the wild: A database
+      pixel-level face image quality assessment. In IEEE Inter-             for studying face recognition in unconstrained environ-
+      national Joint Conference on Biometrics, IJCB 2023, Ljubl-            ments. Technical Report 07-49, University of Massachusetts,
+      jana, Slovenia, September 25-28, 2023, pages 1­10. IEEE,              Amherst, October 2007. 2, 5, 6
+      2023. 1
+                                                                      [15] Yuge Huang, Yuhan Wang, Ying Tai, Xiaoming Liu,
+ [4] Fadi Boutros, Naser Damer, Florian Kirchbuchner, and Ar-               Pengcheng Shen, Shaoxin Li, Jilin Li, and Feiyue Huang.
+      jan Kuijper. Elasticface: Elastic margin loss for deep face           Curricularface: Adaptive curriculum learning loss for deep
+      recognition. In IEEE/CVF Conference on Computer Vision                face recognition. In 2020 IEEE/CVF Conference on Com-
+      and Pattern Recognition Workshops, CVPR Workshops 2022,               puter Vision and Pattern Recognition, CVPR 2020, Seattle,
+      New Orleans, LA, USA, June 19-20, 2022, pages 1577­1586.              WA, USA, June 13-19, 2020, pages 5900­5909. Computer
+      IEEE, 2022. 1, 2, 5, 6                                                Vision Foundation / IEEE, 2020. 2, 5, 6
+
+ [5] Tahar Chettaoui, Naser Damer, and Fadi Boutros. Froun-           [16] Marco Huber, Anh Thi Luu, and Naser Damer. Recognition
+      dation: Are foundation models ready for face recognition?             performance variation across demographic groups through
+      CoRR, abs/2410.23831, 2024. 2                                         the eyes of explainable face recognition. In 18th IEEE Inter-
+                                                                            national Conference on Automatic Face and Gesture Recog-
+ [6] Naser Damer, Meiling Fang, Patrick Siebke, Jan Niklas Kolf,            nition, FG 2024, Istanbul, Turkey, May 27-31, 2024, pages
+      Marco Huber, and Fadi Boutros. Mordiff: Recognition                   1­10. IEEE, 2024. 1
+      vulnerability and attack detectability of face morphing at-
+      tacks created by diffusion autoencoders. In 11th Interna-       [17] Marco Huber, Anh Thi Luu, Philipp Terho¨rst, and Naser
+      tional Workshop on Biometrics and Forensics, IWBF 2023,               Damer. Efficient explainable face verification based on sim-
+      Barcelona, Spain, April 19-20, 2023, pages 1­6. IEEE, 2023.           ilarity score argument backpropagation. In Proceedings of
+      1                                                                     the IEEE/CVF Winter Conference on Applications of Com-
+                                                                            puter Vision (WACV), pages 4736­4745, January 2024. 1, 2,
+ [7] Ivan DeAndres-Tame, Ruben Tolosana, Rube´n Vera-                       3, 5
+      Rodr´iguez, Aythami Morales, Julian Fie´rrez, and Javier
+      Ortega-Garcia. How good is chatgpt at face biometrics? A        [18] Marco Huber, Philipp Terho¨rst, Florian Kirchbuchner, Naser
+      first look into recognition, soft biometrics, and explainabil-        Damer, and Arjan Kuijper. Stating comparison score uncer-
+      ity. IEEE Access, 12:34390­34401, 2024. 1                             tainty and verification decision confidence towards transpar-
+                                                                            ent face recognition. In 33rd British Machine Vision Con-
+ [8] Ivan DeAndres-Tame, Ruben Tolosana, Ruben Vera-                        ference 2022, BMVC 2022, London, UK, November 21-24,
+      Rodriguez, Aythami Morales, Julian Fierrez, and Javier                2022, page 506. BMVA Press, 2022. 1
+      Ortega-Garcia. How good is chatgpt at face biometrics? a
+      first look into recognition, soft biometrics, and explainabil-  [19] Marco Huber, Philipp Terho¨rst, Florian Kirchbuchner, Arjan
+      ity. arXiv preprint arXiv:2401.13641, 2024. 2                         Kuijper, and Naser Damer. Uncertainty-aware comparison
+                                                                            scores for face recognition. In 11th International Workshop
+ [9] Debayan Deb, Jianbang Zhang, and Anil K. Jain. Advfaces:               on Biometrics and Forensics, IWBF 2023, Barcelona, Spain,
+      Adversarial face synthesis. In 2020 IEEE International Joint          April 19-20, 2023, pages 1­6. IEEE, 2023. 1
+      Conference on Biometrics, IJCB 2020, Houston, TX, USA,
+      September 28 - October 1, 2020, pages 1­10. IEEE, 2020. 1       [20] Marco Huber, Philipp Terho¨st, Florian Kirchbuchner, Naser
+                                                                            Damer, and Arjan Kuijper. On evaluating pixel-level face im-
+[10] Jiankang Deng, Jia Guo, Niannan Xue, and Stefanos                      age quality assessment. In 2022 30th European Signal Pro-
+      Zafeiriou. Arcface: Additive angular margin loss for deep             cessing Conference (EUSIPCO), pages 1052­1056. IEEE,
+      face recognition. In IEEE Conference on Computer Vi-                  2022. 5
+      sion and Pattern Recognition, CVPR 2019, Long Beach, CA,
+      USA, June 16-20, 2019, pages 4690­4699. Computer Vision         [21] Andrew Ilyas, Shibani Santurkar, Dimitris Tsipras, Logan
+      Foundation / IEEE, 2019. 1, 2, 5                                      Engstrom, Brandon Tran, and Aleksander Madry. Adversar-
+                                                                            ial examples are not bugs, they are features. In Hanna M.
+
+                                                                      1024
+      Wallach, Hugo Larochelle, Alina Beygelzimer, Florence          [34] Yuhang Lu, Zewei Xu, and Touradj Ebrahimi. Towards vi-
+      d'Alche´-Buc, Emily B. Fox, and Roman Garnett, editors,              sual saliency explanations of face verification. In Proceed-
+      Advances in Neural Information Processing Systems 32: An-            ings of the IEEE/CVF Winter Conference on Applications of
+      nual Conference on Neural Information Processing Systems             Computer Vision (WACV), pages 4726­4735, January 2024.
+      2019, NeurIPS 2019, December 8-14, 2019, Vancouver, BC,              1, 2, 5
+      Canada, pages 125­136, 2019. 2, 3
+[22] ISO/IEC JTC1 SC37 Biometrics. ISO/IEC 19795-1:2021 In-          [35] Domingo Mery. True black-box explanation in facial analy-
+      formation technology -- Biometric performance testing and            sis. In IEEE/CVF Conference on Computer Vision and Pat-
+      reporting -- Part 1: Principles and framework. International         tern Recognition Workshops, CVPR Workshops 2022, New
+      Organization for Standardization, 2021. 5                            Orleans, LA, USA, June 19-20, 2022, pages 1595­1604.
+[23] Anil K. Jain, Debayan Deb, and Joshua J. Engelsma. Bio-               IEEE, 2022. 1, 2, 3
+      metrics: Trust, but verify. IEEE Trans. Biom. Behav. Identity
+      Sci., 4(3):303­323, 2022. 2                                    [36] Domingo Mery and Bernardita Morris. On black-box expla-
+[24] Anil K. Jain, Arun Ross, and Salil Prabhakar. An intro-               nation for face verification. In IEEE/CVF Winter Conference
+      duction to biometric recognition. IEEE Trans. Circuits Syst.         on Applications of Computer Vision, WACV 2022, Waikoloa,
+      Video Technol., 14(1):4­20, 2004. 1                                  HI, USA, January 3-8, 2022, pages 1194­1203. IEEE, 2022.
+[25] Shuai Jia, Bangjie Yin, Taiping Yao, Shouhong Ding, Chun-             1, 2, 3
+      hua Shen, Xiaokang Yang, and Chao Ma. Adv-attribute:
+      Inconspicuous and transferable adversarial attack on face      [37] Yuxi Mi, Yuge Huang, Jiazhen Ji, Hongquan Liu, Xingkun
+      recognition. In S. Koyejo, S. Mohamed, A. Agarwal, D.                Xu, Shouhong Ding, and Shuigeng Zhou. Duetface: Col-
+      Belgrave, K. Cho, and A. Oh, editors, Advances in Neural             laborative privacy-preserving face recognition via channel
+      Information Processing Systems, volume 35, pages 34136­              splitting in the frequency domain. In Joa~o Magalha~es,
+      34147. Curran Associates, Inc., 2022. 1                              Alberto Del Bimbo, Shin'ichi Satoh, Nicu Sebe, Xavier
+[26] Minchul Kim, Anil K. Jain, and Xiaoming Liu. Adaface:                 Alameda-Pineda, Qin Jin, Vincent Oria, and Laura Toni, ed-
+      Quality adaptive margin for face recognition. In IEEE/CVF            itors, MM '22: The 30th ACM International Conference on
+      Conference on Computer Vision and Pattern Recognition,               Multimedia, Lisboa, Portugal, October 10 - 14, 2022, pages
+      CVPR 2022, New Orleans, LA, USA, June 18-24, 2022,                   6755­6764. ACM, 2022. 1, 3
+      pages 18729­18738. IEEE, 2022. 2
+[27] Martin Knoche, Torben Teepe, Stefan Ho¨rmann, and Ger-          [38] Yuxi Mi, Yuge Huang, Jiazhen Ji, Minyi Zhao, Jiaxiang Wu,
+      hard Rigoll. Explainable model-agnostic similarity and con-          Xingkun Xu, Shouhong Ding, and Shuigeng Zhou. Privacy-
+      fidence in face verification. In IEEE/CVF Winter Conference          preserving face recognition using random frequency compo-
+      on Applications of Computer Vision Workshops, WACV 2023              nents. In IEEE/CVF International Conference on Computer
+      - Workshops, Waikoloa, HI, USA, January 3-7, 2023, pages             Vision, ICCV 2023, Paris, France, October 1-6, 2023, pages
+      1­8. IEEE, 2023. 1, 2, 3, 5                                          19616­19627. IEEE, 2023. 1, 3
+[28] Janez Krizaj, Richard Plesh, Mahesh Banavar, Stephanie
+      Schuckers, and Vitomir Struc. Deep face decoder: Towards       [39] Yuxi Mi, Yuge Huang, Jiazhen Ji, Minyi Zhao, Jiaxiang Wu,
+      understanding the embedding space of convolutional net-              Xingkun Xu, Shouhong Ding, and Shuigeng Zhou. Privacy-
+      works through visual reconstruction of deep face templates.          preserving face recognition using random frequency compo-
+      Eng. Appl. Artif. Intell., 132:107941, 2024. 1                       nents. In IEEE/CVF International Conference on Computer
+[29] Pei Li, Loreto Prieto, Domingo Mery, and Patrick J. Flynn.            Vision, ICCV 2023, Paris, France, October 1-6, 2023, pages
+      On low-resolution face recognition in the wild: Compar-              19616­19627. IEEE, 2023. 3
+      isons and new techniques. IEEE Trans. Inf. Forensics Secur.,
+      14(8):2000­2012, 2019. 5                                       [40] Pedro C. Neto, Tiago Gonc¸alves, Joa~o Ribeiro Pinto, Wilson
+[30] Yu-Sheng Lin, Zhe Yu Liu, Yu-An Chen, Yu-Siang Wang,                  Silva, Ana Filipa Sequeira, Arun Ross, and Jaime S. Car-
+      Ya-Liang Chang, and Winston H. Hsu. xcos: An explainable             doso. Explainable biometrics in the age of deep learning.
+      cosine metric for face verification task. ACM Trans. Multim.         CoRR, abs/2208.09500, 2022. 1, 2
+      Comput. Commun. Appl., 17(3s):112:1­112:16, 2021. 1, 2
+[31] Chaochao Lu and Xiaoou Tang. Surpassing human-level face        [41] Vitali Petsiuk, Abir Das, and Kate Saenko. RISE: random-
+      verification performance on lfw with gaussianface. In Pro-           ized input sampling for explanation of black-box models. In
+      ceedings of the AAAI conference on artificial intelligence,          British Machine Vision Conference 2018, BMVC 2018, New-
+      volume 29, 2015. 2                                                   castle, UK, September 3-6, 2018, page 151. BMVA Press,
+[32] Yuhang Lu, Zewei Xu, and Touradj Ebrahimi. Explainable                2018. 2, 5
+      face verification via feature-guided gradient backpropaga-
+      tion. CoRR, abs/2403.04549, 2024. 2                            [42] Joseph P. Robinson, Gennady Livitz, Yann Henon, Can Qin,
+[33] Yuhang Lu, Zewei Xu, and Touradj Ebrahimi. Towards A                  Yun Fu, and Samson Timoner. Face recognition: Too bias, or
+      comprehensive visual saliency explanation framework for              not too bias? In 2020 IEEE/CVF Conference on Computer
+      ai-based face recognition systems. CoRR, abs/2407.05983,             Vision and Pattern Recognition, CVPR Workshops 2020,
+      2024. 1                                                              Seattle, WA, USA, June 14-19, 2020, pages 1­10. Computer
+                                                                           Vision Foundation / IEEE, 2020. 1
+
+                                                                     [43] Ramprasaath R Selvaraju, Michael Cogswell, Abhishek Das,
+                                                                           Ramakrishna Vedantam, Devi Parikh, and Dhruv Batra.
+                                                                           Grad-cam: Visual explanations from deep networks via
+                                                                           gradient-based localization. In Proceedings of the IEEE in-
+                                                                           ternational conference on computer vision, pages 618­626,
+                                                                           2017. 2
+
+                                                                     1025
+[44] Philipp Terho¨rst, Marco Huber, Naser Damer, Florian Kirch-
+      buchner, Kiran B. Raja, and Arjan Kuijper. Pixel-level face
+      image quality assessment for explainable face recognition.
+      IEEE Trans. Biom. Behav. Identity Sci., 5(2):288­297, 2023.
+      1
+
+[45] Philipp Terho¨rst, Jan Niklas Kolf, Marco Huber, Florian
+      Kirchbuchner, Naser Damer, Aythami Morales Moreno, Ju-
+      lian Fierrez, and Arjan Kuijper. A comprehensive study on
+      face recognition biases beyond demographics. IEEE Trans-
+      actions on Technology and Society, 3(1):16­30, 2021. 1
+
+[46] The European Parliament and the Council of the European
+      Union. General data protection regulation, 2016. 1
+
+[47] Haofan Wang, Zifan Wang, Mengnan Du, Fan Yang, Zijian
+      Zhang, Sirui Ding, Piotr Mardziel, and Xia Hu. Score-cam:
+      Score-weighted visual explanations for convolutional neural
+      networks. In 2020 IEEE/CVF Conference on Computer Vi-
+      sion and Pattern Recognition, CVPR Workshops 2020, Seat-
+      tle, WA, USA, June 14-19, 2020, pages 111­119. Computer
+      Vision Foundation / IEEE, 2020. 2, 5
+
+[48] Haohan Wang, Xindi Wu, Zeyi Huang, and Eric P. Xing.
+      High-frequency component helps explain the generalization
+      of convolutional neural networks. In 2020 IEEE/CVF Con-
+      ference on Computer Vision and Pattern Recognition, CVPR
+      2020, Seattle, WA, USA, June 13-19, 2020, pages 8681­
+      8691. Computer Vision Foundation / IEEE, 2020. 1, 2, 3,
+      5, 6
+
+[49] Yinggui Wang, Jian Liu, Man Luo, Le Yang, and Li Wang.
+      Privacy-preserving face recognition in the frequency domain.
+      In Thirty-Sixth AAAI Conference on Artificial Intelligence,
+      AAAI 2022, Thirty-Fourth Conference on Innovative Appli-
+      cations of Artificial Intelligence, IAAI 2022, The Twelveth
+      Symposium on Educational Advances in Artificial Intelli-
+      gence, EAAI 2022 Virtual Event, February 22 - March 1,
+      2022, pages 2558­2566. AAAI Press, 2022. 3
+
+[50] Kaipeng Zhang, Zhanpeng Zhang, Zhifeng Li, and Yu Qiao.
+      Joint face detection and alignment using multitask cas-
+      caded convolutional networks. IEEE Signal Process. Lett.,
+      23(10):1499­1503, 2016. 5
+
+[51] Tianyue Zheng, Weihong Deng, and Jiani Hu. Cross-age
+      LFW: A database for studying cross-age face recognition in
+      unconstrained environments. CoRR, abs/1708.08197, 2017.
+      5
+
+[52] Yaoyao Zhong and Weihong Deng. Towards transferable ad-
+      versarial attack against deep face recognition. IEEE Transac-
+      tions on Information Forensics and Security, 16:1452­1466,
+      2021. 1
+
+[53] Zheng Zhu, Guan Huang, Jiankang Deng, Yun Ye, Junjie
+      Huang, Xinze Chen, Jiagang Zhu, Tian Yang, Jiwen Lu, Da-
+      long Du, and Jie Zhou. Webface260m: A benchmark un-
+      veiling the power of million-scale deep face recognition. In
+      IEEE Conference on Computer Vision and Pattern Recogni-
+      tion, CVPR 2021, virtual, June 19-25, 2021, pages 10492­
+      10502. Computer Vision Foundation / IEEE, 2021. 2
+
+                                                                                   1026
+

@@ -1,4 +1,5 @@
 import json
+import asyncio
 from contextlib import contextmanager
 from types import SimpleNamespace
 
@@ -159,4 +160,84 @@ def test_chat_turn_rejects_a_session_owned_by_another_user(monkeypatch):
     with Session(engine) as db:
         messages = list(db.scalars(select(ChatMessage).where(ChatMessage.session_id == session.id)))
     assert [item.content for item in messages] == ["Private research"]
+    engine.dispose()
+
+
+def test_chat_turn_report_qa_works_with_expiring_sqlalchemy_sessions(monkeypatch):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(engine)  # SQLAlchemy's production default: expire_on_commit=True
+
+    @contextmanager
+    def isolated_session_scope():
+        db = factory()
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    monkeypatch.setattr(api_module, "session_scope", isolated_session_scope)
+    with isolated_session_scope() as db:
+        repo = ChatRepository(db)
+        session = repo.create_session("user-a", "Research DeepJSCC")
+        session_id = session.id
+        task = repo.create_research_task(session_id, "DeepJSCC", "DeepJSCC report")
+        task_id = task.id
+        repo.create_workspace(session_id, active_task_id=task_id)
+        run = repo.create_research_run(task_id, "initial_research", "Research DeepJSCC")
+        version = repo.create_report_version(task_id, run.id, "report.md", "DeepJSCC")
+        version_id = version.id
+
+    sources = [{"title": "Research note", "file_id": "note.md", "excerpt": "DeepJSCC details"}]
+    retrieval_calls = []
+    llm = FakeLLM(content="DeepJSCC 使用联合信源信道编码。[1]")
+    orchestrator = SimpleNamespace(
+        llm_client=llm,
+        rag_pipeline=SimpleNamespace(
+            retrieve_with_sources=lambda **kwargs: retrieval_calls.append(kwargs) or sources,
+        ),
+    )
+    clarifier = SimpleNamespace(
+        route_turn=lambda *_args: SimpleNamespace(
+            intent="report_qa",
+            needs_clarification=False,
+            message="",
+            directions=[],
+            research_brief="",
+            resolved_query="DeepJSCC 是什么意思？",
+            target_section="",
+        )
+    )
+    request = SimpleNamespace(
+        app=SimpleNamespace(state=SimpleNamespace(orchestrator=orchestrator, clarifier=clarifier))
+    )
+
+    response = api_module.chat_turn(
+        TurnRequest(
+            message="它是什么意思？",
+            turn_id="turn-1",
+            session_id=session_id,
+            task_id=task_id,
+            report_version_id=version_id,
+        ),
+        request,
+        SimpleNamespace(id="user-a"),
+    )
+
+    async def read_events():
+        return "".join([chunk async for chunk in response.body_iterator])
+
+    events = asyncio.run(read_events())
+    assert "event: answer" in events
+    assert "DeepJSCC 使用联合信源信道编码。[1]" in events
+    assert "event: error" not in events
+    assert llm.calls[0]["messages"][1]["content"].find("[1] Research note") >= 0
+    assert retrieval_calls[0]["preferred_file_id"] == "report.md"
+    with Session(engine) as db:
+        messages = list(db.scalars(select(ChatMessage).where(ChatMessage.session_id == session_id)))
+    assert sum((item.extra or {}).get("client_turn_id") == "turn-1" for item in messages) == 1
     engine.dispose()

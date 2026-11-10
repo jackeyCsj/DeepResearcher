@@ -1,0 +1,582 @@
+The Thirty-Sixth AAAI Conference on Artificial Intelligence (AAAI-22)
+
+           Privacy-Preserving Face Recognition in the Frequency Domain
+
+                         Yinggui Wang1, Jian Liu1, Man Luo1, Le Yang2, Li Wang1
+
+                                                   1Ant Group, 2University of Canterbury
+wyinggui@gmail.com, {rex.lj, sankuai.luoman}@antgroup.com, le.yang@canterbury.ac.nz, raymond.wangl@antgroup.com
+
+                              Abstract                                                                            (a)
+
+   Some applications require performing face recognition (FR)                                                    (b)
+   on third-party servers, which could be accessed by attackers
+   with malicious intents to compromise the privacy of users'               Figure 1: (a) Image perception in the frequency domain; (b)
+   face information. This paper advocates a practical privacy-              Framework of privacy-preserving FR.
+   preserving frequency-domain FR scheme without key man-
+   agement. The new scheme first collects the components with               a heuristic analysis of the impact of high-frequency infor-
+   the same frequency from different blocks of a face image                 mation on image classification is conducted. But it does not
+   to form component channels. Only part of the channels are                identify which frequency components are crucial for im-
+   retained and fed into the analysis network that performs an              age classification. In this paper, we shall propose a trade-off
+   interpretable privacy-accuracy trade-off analysis to identify            analysis network that can score the importance of each fre-
+   channels important for face image visualization but not cru-             quency component in images. This lays down the foundation
+   cial for maintaining high FR accuracy. For this purpose, the             for designing image processing techniques for new accurate
+   loss function of the analysis network consists of the empiri-            FR systems that can explore processed face images with lit-
+   cal FR error loss and a face visualization penalty term, and             tle visual information. Fig. 1(b) shows the framework of the
+   the network is trained in an end-to-end manner. We find                  privacy-preserving FR that we adopt. During model training,
+   that with the developed analysis network, more than 94%                  data owners perform some preprocessings, such as face de-
+   of the image energy can be dropped while the face recog-                 tection, alignment and anti-spoofing, and then mask the face
+   nition accuracy stays almost undegraded. In order to further             images. These masked images are utilized to training the FR
+   protect the remaining frequency components, we propose a                 model. During inference, the built-in camera at the client
+   fast masking method. Effectiveness of the new scheme in re-              side captures the image of the user's face and then sends it
+   moving the visual information of face images while maintain-             after masking to the cloud server for face recognition. After
+   ing their distinguishability is validated over several large face        FR is done, the encrypted identification result will be trans-
+   datasets. Results show that the proposed scheme achieves a               ferred to the client side.
+   recognition performance and inference time comparable to
+   ArcFace operating on original face images directly.                         The model used for FR is one trained using the masked
+
+                      Introduction
+
+The capability of accurately recognizing faces as passwords
+while preserving the privacy of users' face information is
+essential for the success of applications based on the client-
+server model. This paper presents a practical face image
+recognition scheme without key management. It can remove
+a significant part of the visual information in original images
+for privacy protection and increase the difficulty of face re-
+covery, while retaining their distinguishability.
+
+   Fig. 1(a) illustrates image perception in the frequency do-
+main. Human perception of images mainly depends on the
+semantic information of images (i.e., visualization or low-
+frequency components), while existing deep neural network
+(DNN) based face recognition (FR) systems rely on both
+low- and high-frequency components. In (Wang et al. 2020),
+
+   Corresponding author. All authors contribute equally.
+Copyright c 2022, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.
+
+                                                                      2558
+             Method            ACC    Time cost                       This observation is utilized in the development of our face
+  ArcFace (Deng et al. 2019)   99.82   2.86ms                         masking method.
+                               99.82   2.82ms
+              FR-FD            99.69   2.01ms                         Privacy-Preserving CNNs
+          FR-FD-noDC           99.82   2.92ms
+          PPFR-FD-DC           99.68   2.23ms                         Currently available privacy-preserving CNNs (PP-CNNs)
+                               95.33   2.88ms                         can be roughly categorized into CNNs with cryptogra-
+            PPFR-FD            98.76   2.99ms                         phy theories and the ones without using cryptography. PP-
+ DP (Chamikara et al. 2020)    98.91  21.37ms                         CNNs with cryptography theories are built using privacy-
+InstaHide (Huang et al. 2020)                                         preserving deeping learning techniques that incorporate
+CPGAN (Tseng and Wu 2020)                                             knowledge of cryptography. The secure multiparty compu-
+                                                                      tation (SMC) (Mohassel and Zhang 2017; Makri et al. 2019;
+Table 1: Comparison of accuracy (ACC) and computational               Ma et al. 2019; Wagh et al. 2021; Wagh, Gupta, and Chan-
+efficiency among methods with and without privacy protec-             dran 2019; Mohassel and Rindal 2018) and homomorphic
+tion in the face recognition process for the LFW dataset.             encryption (HE) (Acar et al. 2018; Naresh Boddeti 2018) are
+                                                                      typical examples. But this kind of methods generally have
+data instead of the original face images. This makes the pro-         high computation cost. PP-CNNs without using cryptogra-
+posed system satisfy the regulatory requirements that orig-           phy operates on images whose pixels and color channels
+inal face images cannot be directly utilized in both train-           have been 'randomly' perturbated (Tanaka 2018; Sirichote-
+ing and inference, or recovered easily from masked data. On           dumrong, Kinoshita, and Kiya 2019; Madono et al. 2020).
+the basis of deep convolutional neural networks (DCNNs),              One disadvantage of these networks is that their recogni-
+multiple FR methods have become available, including the              tion accuracy is evidently lower that their counterparts us-
+softmax loss-based algorithms (Cao et al. 2018), triplet-             ing original images. Morphed learning (Mole) developed in
+loss-based algorithms (Schroff, Kalenichenko, and Philbin             (Shen et al. 2019) is another PP-CNN method without using
+2015), Sphereface (Liu et al. 2017), CosFace (Wang et al.             cryptography. This approach is similar to transfer learning
+2018) and ArcFace (Deng et al. 2019). In this paper, we               (Yosinski et al. 2014). But MoLe exposes the augmented
+adopt ArcFace to illustrate the use and performance of our            convolutional layer to the developer who can deduce the
+privacy-preserving scheme (see Table 1 for part of the ex-            morphing matrix by designing images of specific structures.
+periment results over the LFW dataset).                               With the morphing matrix, the original images can be re-
+                                                                      stored. The algorithms in (Xiang et al. 2019; Zhang et al.
+   Our contributions are as follows:                                  2020) belong to the privacy protection mode of encryption
+                                                                      and decryption, but key management is not an easy task.
+· We propose a network that performs an interpretable                 (Mireshghallah et al. 2019) and (Tseng and Wu 2020; Liu
+   privacy-accuracy trade-off analysis to identify channels           et al. 2019) protect the privacy of the inference process by
+   important for face image visualization/perception but not          learning noise distribution with generative adversarial net-
+   crucial for attaining a high FR accuracy.                          works (GAN). The privatizers are composed of multiple
+                                                                      CNNs, which leads to huge increase in computation. In-
+· A new loss function is devised for the analysis network,            staHide (Huang et al. 2020) encrypts each training image
+   which consists of the empirical FR error loss and a face           with the key obtained through mixing a number of randomly
+   visualization quality penalty term. The network is trained         chosen images and applying a random pixel-wise mask, but
+   in an end-to-end manner.                                           it may still be hacked (Carlini et al. 2020).
+
+· We propose a practical privacy-preserving FR scheme,                Privacy-Preserving Face Recognition
+   which achieves satisfactory trade-off between privacy
+   and accuracy, has a fast inference time, and can be incor-         This subsection reviews some privacy-preserving techniques
+   porated into existing face recognition algorithms without          for FR. (Chamikara et al. 2020) presents the privacy us-
+   significant network structure modifications.                       ing EigEnface Perturbation (PEEP) method. It perturbates
+                                                                      eigenfaces using differential privacy (Gong et al. 2020) and
+                     Related Work                                     only stores perturbed data at the third-party servers that run
+                                                                      the eigenface algorithm. But the FR accuracy of PEEP is
+Learning in the Frequency Domain                                      much worse than that using original face images. In (Guo,
+                                                                      Xiang, and Li 2019), a scheme employing encryption and
+Representing images in the frequency domain provides                  decryption operations similar to those in (Xiang et al. 2019;
+rich patterns for various tasks. In (Xu, Zhang, and Ren               Zhang et al. 2020) to achieve privacy-preserving FR in
+2018; Wu et al. 2018), autoencoder-based networks are                 the cloud is proposed. (Ma et al. 2019) improves exist-
+trained to jointly perform image compression and infer-               ing additive secret sharing-based functions and establishes a
+ence. In (Ehrlich and Davis 2019), a model conversion al-             lightweight privacy-preserving ensemble classification algo-
+gorithm is developed to convert the spatial-domain CNNs               rithm for FR. This method has a relatively high complexity
+into frequency-domain CNNs. In (Gueguen et al. 2018),                 and long execution time.
+image classification is carried out using frequency-domain
+features. A learning-based method is established in (Xu
+et al. 2020) to identify trivial frequency components that can
+be discarded without degrading classification performance.
+
+                                                                2559
+                     Methodology                                         penalty term being dominated by frequency channels with
+                                                                         large energy levels. The loss function of privacy protection
+This section describes the proposed frequency-domain                     is thus given by
+privacy-preserving FR scheme, referred to as PPFR-FD.
+                                                                         M
+Block Discrete Cosine Transform (BDCT)
+                                                                         Losspri = ReLu (ai - ) .pi  (1)
+As the very first step of the proposed method, BDCT is car-
+ried out on the face image obtained after converting it from             i=0
+a color image to a gray one. Specifically, in a way similar
+to the convolution operation in CNN, BDCT is performed                   where ai is the trainable weight coefficient for the ith chan-
+on image blocks with a size of a × b pixels according to the             nel, pi is the energy of channel i,  denotes a threshold, and
+stride s. For each image block, an a × b BDCT coefficient                M is the number of considered frequency channels. Clearly,
+matrix is generated, in which every element represents a par-            if ai is less than , the corresponding channel is considered
+ticular frequency component. We collect, from all the image              unimportant in terms of its contribution to the loss function
+blocks, the frequency components that have the same posi-                Losspri. This is realized by the use of ReLu(y) function,
+tion in the BDCT coefficient matrix to form one frequency                which becomes zero when y is negative.
+component channel. The leftmost part of Figs. 2(a) and (b)
+gives an illustration of the above process. As an example,                  To constrain the value of ai to the range between 0 and
+suppose the size of an original face image is 112 × 112 pix-             1, we apply the transformation ai = 1/ (1 + exp (-xi)),
+els. We set the block size to be 8 × 8 pixels and stride to be           where xi is the parameter to be learned in the training pro-
+s = 8 pixels. In total, we can obtain 64 frequency compo-                cess. The composite loss function is
+nent channels, each of which has a dimensionality of 14×14.
+                                                                         Lossanalysis-network = LossF R +  · Losspri (2)
+Privacy-Accuracy Trade-off Analysis
+                                                                         where LossF R is the loss function of FR and  is a hyper
+We propose an analysis network, as shown in Fig. 2(a) for                parameter. By minimizing the loss function, the frequency
+analyzing the trade-off between privacy and FR accuracy. It              channels with higher energy tend to be suppressed while at-
+can be seen that it takes the BDCT frequency component                   tempting to maintaining a good FR accuracy using the re-
+channels extracted from the original face image as input and             maining channels only (i.e., reducing LossF R at the same
+first passes them through a channel selection module. The                time). This is desired, because we aim to remove frequency
+purpose of this module is to remove frequency component                  channels that contribute significantly to image visualization,
+channels with amplitudes close to zero, which contribute                 which are mostly channels with large energy.
+little to the distinguishability and visualization of face im-
+ages. The observation that discarding small-amplitude fre-                  Note that this training process does not have dedicated
+quency components would not greatly degrade the classifi-                protection for the image privacy. Here, we suggest two ap-
+cation accuracy was obtained when examining non-face im-                 proaches to address this issue. The first method uses pub-
+age datasets such as ImageNet (Xu et al. 2020). The chan-                licly available face data sets with distribution similar to that
+nels selected for different images for removal could be dif-             of data owners' images as training data for the analysis net-
+ferent if e.g., a trained SENet (Hu et al. 2020) is used. In this        work. We can then carry out FR classifier training after re-
+work, for simplicity, we choose to remove a pre-fixed subset             moving the designated channels of data owners' images. The
+of frequency component channels that span low to relatively              other method is to simply neglect the lowest-score channel
+high frequencies. Specifically, with the size of BDCT image              directly. Through experiments, it is found that the lowest-
+blocks being 8 × 8 pixels, only 36 out of 64 channels are                score channel is the lowest frequency channel or the direct
+kept. The basis for selecting the number of channels will be             current (DC) component, which contributes greatly to image
+discussed in the section of Security Evaluation.                         visualization, and accounts for more than 90% of the energy
+                                                                         of images, but not much to the recognition task (see also
+   Training the FR model can be guided by a loss function                Fig. 3 and Fig. 5(b) for an illustration). In order to obtain
+such as Arcface, but it is not easy to quantify face images'             the best trade-off between privacy and accuracy, the follow-
+privacy protection level. To bypass this difficulty, we ap-              ing steps are based on the second method. To further protect
+proximate the degree of privacy protection from the per-                 the remaining frequency components, we propose a fast and
+spective of image visualization. If it is difficult to restore           effective masking method.
+the visualization information from a processed image, it is
+thus considered that the degree of privacy protection is high.           Fast Face Image Masking
+It is generally believed that the frequency components with
+high energy have large contribution to image visualization.              The whole diagram of the face image masking method is
+Based on this observation, we calculate the absolute value of            shown in Fig. 2(b). It performs the BDCT and selects chan-
+the elements in each frequency channel, perform averaging                nels according the analysis network (note again that only
+over each channel, and take the results as the channel ener-             the DC component is discarded for a high FR accuracy).
+gies. These values will be weighted by learnable parameters.             Next, the remaining channels are shuffled two times with a
+Here, we use the absolute values of the frequency compo-                 channel mixing in between. After each shuffling operation,
+nents, instead of the square of them, in order to avoid the              channel self-normalization is performed. The result of the
+                                                                         second channel self-normalization is the masked face image
+                                                                         that will be transmitted to third-party servers for face recog-
+                                                                         nition. The proposed face masking method aims at further
+
+                                                                   2560
+                                                                (a)
+
+                                                                                (b)
+Figure 2: Schematic diagrams of (a) the proposed analysis network and (b) the proposed fast face image masking method.
+
+(a)  (b)  (c)                  (d)                                    the self-normalization procedure adopted in our face mask-
+                                                                      ing method is more secure, as the disclosure of the self-
+                                                                      normalization parameters for some images will not affect the
+                                                                      privacy of the remaining ones.
+
+                                                                         We then mix E¯kj through linearly combining them using
+
+Figure 3: Two pictures (a)-(b) we randomly selected to ex-                            Mkj = (E¯jk + E¯jk+1)/2                         (5)
+tract the DC components (c)-(d).
+                                                                      where j = 0, 1, . . . , 33. With the channel mixing operation,
+
+                                                                      the number of frequency component channels is reduced by
+
+increasing the difficulty in recovering the original face im-         one. This further enlarges the difficulties in reconstructing
+age from its masked version. We shall detail the operation
+of each module below. We denote the ith retained frequency            the frequency-domain information of the original face image
+component channel from image k in a dataset as Fik, where
+i = 0, 1, ..., 34 (recall that the DC component has been dis-         from the mixing output Mjk.
+carded), k = 1, 2, ..., N and N is the total number of face
+images in the dataset.                                                Mjk will go through another channel shuffling Shuffle2 (·)
+
+   The remained 35 channels are shuffled in order to in-              to obtain       Slk = Shuffle2 Mkj
+crease the difficulties in deducing their associated frequen-
+cies. Mathematically, after the first channel shuffling opera-                                                                        (6)
+tion Shuffle1(·), the retained channels are
+                                                                      where l = 0, 1, . . . , 33. Finally, Slk is self-normalized as
+
+                                                                                      S¯lk = (Slk - µ2k)./2k.                         (7)
+
+     Ekj = Shuffle1 Fik             (3)                               Here, as in (4), µ2k and 2k are two matrices whose elements
+                                                                      are the sample mean and sample standard deviation of all the
+where j = 0, 1, . . . , 34 and Ekj is the jth channel of face
+image k after channel shuffling.                                      entries in Slk. S¯lk are the masked version of face image k and
+                                                                      they will be transmitted to third-party servers for training
+   Next, we perform self-normalization on Ekj via
+                                                                      and inference.
+
+                                                                      Note that Shuffle1 is pseudo-random in order to ensure
+
+                                                                      that each channel is processed in a fixed order. However,
+
+     E¯kj = (Ekj - µk1 )./1k.                                         Shuffl2 is completely random to enhance privacy protection,
+
+                                    (4)                               and it is random for all images in the dataset.
+
+Note that the above operation is element-wise in the sense            Privacy-Preserving Face Recognition
+that each element in Ejk is self-normalized individually. In
+particular, ./ denotes element-wise division. µk1 and 1k de-          This subsection summarizes the proposed frequency-domain
+note two matrices whose elements are the sample mean                  privacy-preserving face recognition (PPFR-FD) scheme that
+and sample standard deviation of all the entries in Ejk. In           is based on the face masking method. As shown in Fig. 4(a),
+other words, each face image would have its own self-                 PPFR-FD adopts the existed FR model, such as ArcFace,
+normalization parameters µk1 and 1k. This is fundamen-                as the face classifier. To protect the privacy of users' face
+tally different from the normalization process in e.g., (Xu           data, both the training and recognition stages of PPFR-FD
+                                                                      are carried out using the masked face images only.
+et al. 2020), where the normalization parameters are cal-
+                                                                         In the training stage, all the original face images in the
+culated using all the images in the dataset (i.e., all im-            training dataset are converted to their masked version us-
+                                                                      ing the fast face masking method. Note that the order of the
+ages share the same normalization parameters). Clearly,
+
+                                                                2561
+                                    (a)                                (5)). Reconstructing data from its lower-dimensional ver-
+                                                                       sion is difficult without knowledge on e.g., the data struc-
+                                    (b)                                ture. Moreover, face image recovery requires reversing the
+                                                                       two channel shuffling operations. Consider the typical setup
+Figure 4: (a) Training process of the proposed PPFR-FD                 with a BDCT block size of 8 × 8 pixels and 35 retained fre-
+scheme. (b) Inference of the deployed PPFR-FD scheme.                  quency component channels. There would be a total number
+                                                                       of 35! × 34! possible shuffling operations. In fact, since the
+combined frequency channels in each masked data is differ-             randomized channels are sorted according to the channel en-
+ent. Before the masked data is input into the network, the             ergy in Shuffle2, the space for brute force search caused by
+channels are sorted according to a certain rule, such as the           two shuffles would be reduced, but it is still much larger than
+energy of channels. On the other hand, the masked face im-             35!. That is, the size of the search space is much greater than
+ages have more than three frequency component channels                 that of the 128-bit AES encryption algorithm. This greatly
+(see (7)). Moreover, the dimensionality of each channel is             increases the difficulty of deducing the shuffling operations
+smaller than the size of input image of ArcFace (e.g., 14×14           via the method of brute force search. The shuffle operation
+vs. 112×112). To address these aspects, we modify ArcFace              is only a part of the masking algorithm, and the security of
+by increasing the number of its input channels and upsam-              the masking algorithm is constructed by multiple steps.
+ple each frequency component channel of masked images to
+the size of 112 × 112 pixels. In this way, except for the in-             Here, we explain why the number of channels selected is
+put layer, the remaining part of ArcFace is kept intact, which         36. In terms of accuracy, too many frequency channels will
+avoids extra workload due to significantly changing the Ar-            not significantly improve the accuracy. In terms of data size,
+cFace network architecture. Another advantage is that the              too many frequency channels will increase the size of desen-
+proposed PPFR-FD scheme can provide an inference time                  sitized data. In terms of security, 36 channels are selected so
+close to that of ArcFace operating on original face images.            that the brute force cracking space from two shuffles is much
+                                                                       greater than 2128; from the perspective of cryptography, the
+   The face recognition process of the trained PPFR-FD is              size of the brute force space is safe enough under the ex-
+shown in Fig. 4(b). A user's face image is first masked and            isting computing power. So this number is a tradeoff choice
+transmitted to ArcFace to perform template matching-based              based on some aspects, and not the only choice.
+recognition. A successful match will be declared if the dis-
+tance between the features extracted from the masked data                 Note that the mask method proposed is a part of the
+and pre-stored template is less than a threshold.                      FR process as in Fig.1(b). Inputs must undergo some pre-
+                                                                       processing operations (face anti-spoofing, face detection) to
+Security Goal and Evaluation                                           reach the masking stage. So it's hard to probe masking steps
+                                                                       by using specially designed or chosen images. Even if all
+The goal of PPFR-FD is to provide a light-weight masking               steps of masking are provided to the attacker (i.e., in a white-
+method to make it difficult for attackers to recover the train-        box attack), it is still difficult to recover original images,
+ing and inference face images in the FR system (Fig. 1 (b)).           which is justified in details in the following section and Part
+Similar to comparison algorithms in Tabs. 1 and 2, it is not           1 of the appendix. Meanwhile, the sorting operation can be
+designed to provide the level of security strength as encryp-          used as a part of the white box attack to recover the raw im-
+tion methods such as RSA (Rivest, Shamir, and Adleman                  age from the masked data. See Section 'White-box Attack-
+1978). It is also an initial step towards exploring better pri-        ing Experiments' and the appendix for specific operations.
+vacy preservation while maintaining data utility. Here, we
+shall establish the security of the PPFR-FD scheme under                                    Experiments
+the condition that the flow of the face masking process is
+known but detailed knowledge on channel shuffling, mix-                In this section, we first evaluate the proposed analysis net-
+ing and self-normalization parameters is unavailable. Re-              work for trade-off analysis between privacy and accuracy.
+sults obtained under different attacking experiments on the            Performance comparisons of different algorithms over stan-
+face masking algorithm are given in Section 'Experiments'.             dard face datasets are carried out, following by attacking ex-
+                                                                       periments and discussions for PPFR-FD.
+   The first challenge for an attacker to recover the original
+face image is that we discard more than 90% of the energy              Experiments on Analysis Network
+of images, which makes it difficult to reconstruct the orig-
+inal image in the attack mode like GAN. The second chal-               In order to simplify the process and gain insights, we train
+lenge is that the number of frequency component channels               the baseline model on MobileNetV2 (Sandler et al. 2019)
+in the face masking algorithm output is smaller than that of           backbone using the ArcFace loss. The head of the base-
+the retained BDCT channels. This is owing to the use of                line model is: BackBone-Flatten-FC-BN with embedding
+channel mixing between the two shuffling operations (see               dimensions of 512 and dropout probability of 0.4 to output
+                                                                       the embedding feature. All models are trained for 50 epochs
+                                                                       using the SGD optimizer with the momentum of 0.9, weight
+                                                                       decay of 0.0001. For the threshold  in (1), we set it to 0.3.
+                                                                        in (2) is set to 1. We use CASIA (Yi et al. 2014) and LFW
+                                                                       (Zhang and Deng 2016) as the training and test datasets.
+
+                                                                          Fig 5. (a) shows the evolution of channel weighting coeffi-
+                                                                       cients ai with training epochs. For clarity, we only show the
+
+                                                                 2562
+(a)  (b)                                                              "Discard DC" and "Channel Shuffle 1" in Fig. 2(b). PPFR-
+                                                                      FD-DC denotes PPFR-FD without discarding DC. For fair
+Figure 5: Schematic diagrams of the evolution of (a) channel          comparison, the classification algorithms in the three con-
+coefficients, (b) accuracy of face recognition and energy loss        sidered methods are replaced by the FR algorithm in this
+with training epochs.                                                 section. In DP, is set to 5. For InstaHide, we set k to 3, that
+                                                                      is, only one public image used for encryption. For the con-
+weights of the first 16 channels. The considered 16 chan-             venience, we use a fixed public image for image synthesis.
+nels are indexed in a descending order according to their             The accuracy obtained by using the same public image for
+energies. It can be seen from the figure that the channel co-         encryption in training and testing is better than that in the
+efficient is set to 1 at the beginning of the training. After         large-scale dataset mentioned in InstaHide. In Table 1, we
+50 epochs, there are 6 channels whose coefficient values are          also calculate the total running time of each algorithm, in-
+less than 0.3. The indexes of these 6 channels are 0, 1, 2,           cluding masking and inference time, on the LFW dataset. In
+8, 9 and 15. Note that although the DC component is given             Table 2, although PPFR-FD reduces more than 94% energy
+the lowest score, not all channels with large energies have           of images and is masked, its performance is comparable to
+scores lower than the threshold. Fig 5. (b) compares recogni-         that of the baseline model and is better than that of other
+tion accuracy and energy loss with training epochs. AccAN ,           similar algorithms. The performance of DP is the worst. Al-
+AccRGB and AccnoDC represent accuracy of the analysis                 though CPGAN also has better performance, it takes longer
+network without constraining the number of discarded chan-            time to execute and can only protect privacy in inference.
+nels, for RGB images without removing any channels and
+for frequency domain learning with DC component removed               Attacking Experiments for PPFR-FD
+only. ELAN and ELnoDC represent the energy loss of the                In this section, the privacy protection reliability of PPFR-FD
+analysis network and using frequency domain learning with-            is analyzed based on white-box and black-box attack experi-
+out DC. It can be seen that by abandoning 6 channels, the en-         ments. Black-box means that the attacker does not know the
+ergy loss of the image has exceeded 97%, but the accuracy             structure and parameters of the model, but can access the re-
+drops about 3%. With only the DC component discarded,                 sults of the model. White-box means that the attacker can
+the energy loss of the image is over 94%, but the FR ac-              not only access the results of the model, but also know the
+curacy is marginally affected. This reflects the effectiveness        structure of the model.The purpose of attack experiments is
+of the analysis network in identifying channels not crucial           to reconstruct the original image.
+for face classification. More importantly, it reveals that the
+best trade-off between accuracy and privacy is to discard the             (a) (b) (c) (d) (e) (f) (g) (h)
+lowest-score channel, i.e., the DC channel.
+                                                                      Figure 6: White-box attack experiments for PPFR-FD-DC
+Experiments of PPFR-FD and Others                                     (the 1st row), PPFR-FD (the 2nd row), PPFR-FD utilizing
+                                                                      the DC component of Fig. 3(a) (the 3rd row). (a)(e): Raw
+We use the MS-Celeb-1M dataset with 3,648,176 images                  images; settings of (b)-(d) and (f)-(h) are listed in Table 3.
+from 79,891 subjects as the training set. 7 benchmarks in-
+cluding LFW (Zhang and Deng 2016), CFP-FP (Sengupta                   White-box Attacking Experiments We first do white-
+et al. 2016), AgeDB (Moschoglou et al. 2017), CALFW                   box attack experiments for PPFR-FD with DC, i.e., PPFR-
+(Zhang and Deng 2016), CPLFW (Zhang and Deng 2016)                    FD-DC. Some results are showed in the 1st row of Fig. 6.
+and Vggface2 (Cao et al. 2018)are used to evaluate the per-           The detailed method and some tricks used by white-box re-
+formance of PPFR-FD following the standard evaluation                 construction in Fig. 6 is shown in the appendix. Table 3 gives
+protocols. We train the baseline model on ResNet50 (He                the experiment settings for recovering face images. Figures
+et al. 2016) backbone with SE-blocks (Hu et al. 2020) and             6(a)(e) shows the original gray face images of two different
+batch size of 512. Other settings are the same as that in Sec-        persons. The images in the 2nd row of Fig. 6 show white-
+tion 'Experiments on Analysis Network'.                               box attack experiments for PPFR-FD. Due to the lack of the
+                                                                      DC component, the reconstructed images are rather fuzzy. In
+   Results are reported in Table 2. ArcFace and FR-FD de-             Fig. 6 (the 3rd row), we also consider replacing the missing
+note the face recognition algorithms for RGB images and               DC with the DC components from other pictures. We add the
+in the frequency domain without privacy protection, respec-           DC components of Fig. 3(a) to the reconstructed frequency
+tively. In FR-FD and FR-FD-noDC, the network inputs are
+data generated by the operation Choose Channels before
+
+                                                                2563
+             Method            Energy loss  Mask                 LFW    CFP-FP  AgeDB   CALFW   CPLFW   Vggface2
+  ArcFace (Deng et al. 2019)         0       No                  99.82   97.78   97.85   96.02   92.77    95.12
+                                     0       No                  99.82   96.59   97.83   95.93   91.35    94.62
+              FR-FD                          No                  99.69   95.97   97.82   95.73   91.02    94.36
+          FR-FD-noDC              94.28      Yes                 99.82   96.76   97.88   96.02   91.58    94.70
+          PPFR-FD-DC                >0       Yes                 99.68   95.04   97.37   95.72   90.78    94.08
+                                 >94.28      Yes                 95.33   92.28   93.61   90.01   85.44    89.13
+            PPFR-FD                 -        Yes                 98.76   94.15   95.76   93.49   88.90    93.17
+ DP (Chamikara et al. 2020)         -        Yes                 98.91   94.56   97.07   94.82   90.47    93.29
+InstaHide (Huang et al. 2020)       -
+CPGAN (Tseng and Wu 2020)
+
+Table 2: Comparison of the face recognition accuracy among methods with and without privacy protection in the face recog-
+nition process for different datasets. The 2nd row shows results of methods without privacy protection, the 3rd-5th rows are
+results of the ablation experiments for PPFR-FD, and the 6th-9th rows show results of methods with privacy protection.
+
+ Known operations          All operations in Fig. 2(b)                  Black-box Attacking Experiments Here, we use GAN,
+Fig. 6(b)(f): 1,2,3,4,5   1 or 4: Channel Shuffle 1, 2                  which has a strong fitting ability, to carry out black-box at-
+Fig. 6(c)(g): 2,3,4,5    2 or 5: Self-normalization 1, 2                tack. In Fig. 7, we adopt the combined model of Pix2Pix
+                                                                        (Isola et al. 2017) and StyleGAN2 (Karras et al. 2020) as
+  Fig. 6(d)(h): 2,3,5           3: Channel Mix                          the black-box attack GAN model to reconstruct original im-
+                                                                        ages from the masked images. The generetor in Pix2Pix is
+Table 3: Ablation experiment settings for recovering images.            replaced by the one from StyleGAN2 (Karras et al. 2020)
+                                                                        which is pretrained with the Flickr-Faces-HQ dataset (Kar-
+channels. From Fig. 6 (the 3rd row), we can see that the re-            ras, Laine, and Aila 2019), and the discriminator is the 6-
+constructed image contour is close to that of the face image            layer PatchCNN (Isola et al. 2017). In the training phase, we
+that provides the DC component. This illustrates that the al-           use Adam optimizer with a learning rate begins at 0.0002.
+gorithm sacrifices a little degradation in the face recognition         We carry out the GAN attack experiment on PPFR-FD. The
+accuracy, but it has high security.                                     results show that it is difficult to reconstruct face images
+                                                                        even using GAN. More results are shown in the appendix.
+   The reason of poor reconstruction performance is that the
+distinguishability of face images exists in higher frequency,           Limitations
+these frequency values are small, and small errors in them
+will lead to great impact on the visualization. The above               This paper is similar to the work in literatures (Tseng and
+image attack/reconstruction experiments are also some se-               Wu 2020; Huang et al. 2020) that solves the problem of face
+curity analysis experiments with some prior information of              privacy protection in the process of training and/or infer-
+face images and the face image processing algorithm. From               ence. From the perspective of biological template protection
+another point of view, the PPRF-FD method can protect the               (Nandakumar and Jain 2015), it also needs to address the
+privacy of face images to a certain extent, which can make              revocability and unlinkability of biological template, which
+Client/ Server applications more secure.                                is beyond the scope of this work. In addition, the design of
+                                                                        a special network for frequency-domain data is also worthy
+   (a) (b) (c) (d) (e) (f) (g) (h)                                      of investigations. This paper does not consider the privacy
+                                                                        protection for the preprocessing steps, which also needs fur-
+Figure 7: Face images recovered by GAN. (a)(e): Origi-                  ther research. However, we can alleviate this problem with
+nal images; (b)(f) are recovered images from masked data                the hardware-level protection, such as TEE (Mo et al. 2020),
+generated by PPFR-FD with 'Shuffle2' using a pseudo-                    which can build a secure computing environment.
+random sequence; (c)(g) are ones generated by PPFR-FD
+with 'Shuffle2' using fully-random sequences; (d)(h) are re-                                  Conclusion
+covered images from sorted-channel masked data generated
+by PPFR-FD with 'Shuffle2' using fully-random sequences.                In this paper, we proposed an analysis network that per-
+                                                                        forms an interpretable privacy-accuracy trade-off analysis to
+                                                                        identify channels important for face image visualization but
+                                                                        not crucial for maintaining a high FR accuracy. Based on
+                                                                        trade-off analysis bewteen privacy and accuracy, a PPFR-FD
+                                                                        scheme was developed and its security was established an-
+                                                                        alytically. The proposed scheme has the advantage of being
+                                                                        able to achieve the best trade-off between privacy and ac-
+                                                                        curacy, have a fast inference time, and be incorporated into
+                                                                        existing face recognition algorithms without significant net-
+                                                                        work structure modifications.
+
+                                                                 2564
+                       References                                      Karras, T.; Laine, S.; Aittala, M.; Hellsten, J.; Lehtinen, J.;
+                                                                       and Aila, T. 2020. Analyzing and Improving the Image
+Acar, A.; Aksu, H.; Uluagac, A. S.; and Conti, M. 2018. A              Quality of StyleGAN. In Proc. CVPR.
+Survey on Homomorphic Encryption Schemes: Theory and
+Implementation. ACM Comput. Surv., 51(4).                              Liu, S.; Shrivastava, A.; Du, J.; and Zhong, L. 2019. Better
+                                                                       accuracy with quantified privacy: representations learned via
+Cao, Q.; Shen, L.; Xie, W.; Parkhi, O. M.; and Zisserman,              reconstructive adversarial network. arXiv:1901.08730.
+A. 2018. VGGFace2: A dataset for recognising faces across
+pose and age. Proceedings - 13th IEEE International Con-               Liu, W.; Wen, Y.; Yu, Z.; Li, M.; Raj, B.; and Song, L. 2017.
+ference on Automatic Face and Gesture Recognition, FG                  SphereFace: Deep hypersphere embedding for face recog-
+2018, 67­74.                                                           nition. Proceedings - 30th IEEE Conference on Computer
+                                                                       Vision and Pattern Recognition, CVPR 2017, 2017-January:
+Carlini, N.; Deng, S.; Garg, S.; Jha, S.; Mahloujifar, S.; Mah-        6738­6746.
+moody, M.; Song, S.; Thakurta, A.; and Tramer, F. 2020. An
+Attack on InstaHide: Is Private Learning Possible with In-             Ma, Z.; Liu, Y.; Liu, X.; Ma, J.; and Ren, K. 2019.
+stance Encoding? arXiv:2011.05315.                                     Lightweight privacy-preserving ensemble classification for
+                                                                       face recognition. IEEE Internet of Things Journal, 6(3):
+Chamikara, M. A.; Bertok, P.; Khalil, I.; Liu, D.; and                 5778­5790.
+Camtepe, S. 2020. Privacy Preserving Face Recognition Uti-
+lizing Differential Privacy. Computers and Security, 97.               Madono, K.; Tanaka, M.; Onishi, M.; and Ogawa, T. 2020.
+                                                                       Block-wise Scrambled Image Recognition Using Adapta-
+Deng, J.; Guo, J.; Xue, N.; and Zafeiriou, S. 2019. Arc-               tion Network. arXiv, (Lowe 1999).
+Face: Additive angular margin loss for deep face recogni-
+tion. Proceedings of the IEEE Computer Society Confer-                 Makri, E.; Rotaru, D.; Smart, N. P.; and Vercauteren, F.
+ence on Computer Vision and Pattern Recognition, 2019-                 2019. EPIC: Efficient Private Image Classification (or:
+June: 4685­4694.                                                       Learning from the Masters). Lecture Notes in Computer Sci-
+                                                                       ence (including subseries Lecture Notes in Artificial Intelli-
+Ehrlich, M.; and Davis, L. 2019. Deep residual learning in             gence and Lecture Notes in Bioinformatics), 11405 LNCS:
+the JPEG transform domain. Proceedings of the IEEE In-                 473­492.
+ternational Conference on Computer Vision, 2019-October:
+3483­3492.                                                             Mireshghallah, F.; Taram, M.; Ramrakhyani, P.; Tullsen,
+                                                                       D. M.; and Esmaeilzadeh, H. 2019. Shredder: Learning
+Gong, M.; Xie, Y.; Pan, K.; Feng, K.; and Qin, A. K. 2020. A           Noise to Protect Privacy with Partial DNN Inference on the
+Survey on Differentially Private Machine Learning [Review              Edge. CoRR, abs/1905.11814.
+Article]. IEEE Computational Intelligence Magazine, 15(2):
+49­64.                                                                 Mo, F.; Shamsabadi, A. S.; Katevas, K.; Demetriou, S.;
+                                                                       Leontiadis, I.; Cavallaro, A.; and Haddadi, H. 2020. Dark-
+Gueguen, L.; Sergeev, A.; Liu, R.; and Yosinski, J. 2018.              netz: towards model privacy at the edge using trusted execu-
+Faster neural networks straight from JPEG. 6th Interna-                tion environments. In Proceedings of the 18th International
+tional Conference on Learning Representations, ICLR 2018               Conference on Mobile Systems, Applications, and Services,
+- Workshop Track Proceedings, (NeurIPS): 1­12.                         161­174.
+
+Guo, S.; Xiang, T.; and Li, X. 2019. Towards efficient                 Mohassel, P.; and Rindal, P. 2018. ABY3: A mixed pro-
+privacy-preserving face recognition in the cloud. Signal Pro-          tocol framework for machine learning. Proceedings of the
+cessing, 164: 320­328.                                                 ACM Conference on Computer and Communications Secu-
+                                                                       rity, 35­52.
+He, K.; Zhang, X.; Ren, S.; and Sun, J. 2016. Deep resid-
+ual learning for image recognition. Proceedings of the IEEE            Mohassel, P.; and Zhang, Y. 2017. SecureML: A System for
+Computer Society Conference on Computer Vision and Pat-                Scalable Privacy-Preserving Machine Learning. Proceed-
+tern Recognition, 2016-December: 770­778.                              ings - IEEE Symposium on Security and Privacy, 19­38.
+
+Hu, J.; Shen, L.; Albanie, S.; Sun, G.; and Wu, E. 2020.               Moschoglou, S.; Papaioannou, A.; Sagonas, C.; Deng, J.;
+Squeeze-and-Excitation Networks. IEEE Transactions on                  Kotsia, I.; and Zafeiriou, S. 2017. AgeDB: The First Manu-
+Pattern Analysis and Machine Intelligence, 42(8): 2011­                ally Collected, In-the-Wild Age Database. IEEE Computer
+2023.                                                                  Society Conference on Computer Vision and Pattern Recog-
+                                                                       nition Workshops, 2017-July: 1997­2005.
+Huang, Y.; Song, Z.; Li, K.; and Arora, S. 2020. Instahide:
+Instance-hiding schemes for private distributed learning.              Nandakumar, K.; and Jain, A. K. 2015. Biometric Template
+In International Conference on Machine Learning, 4507­                 Protection: Bridging the performance gap between theory
+4518. PMLR.                                                            and practice. IEEE Signal Processing Magazine, 32(5): 88­
+                                                                       100.
+Isola, P.; Zhu, J.-Y.; Zhou, T.; and Efros, A. A. 2017.
+Image-to-Image Translation with Conditional Adversarial                Naresh Boddeti, V. 2018. Secure Face Matching Using Fully
+Networks. CVPR.                                                        Homomorphic Encryption. In 2018 IEEE 9th International
+                                                                       Conference on Biometrics Theory, Applications and Systems
+Karras, T.; Laine, S.; and Aila, T. 2019. A Style-Based Gen-           (BTAS), 1­10.
+erator Architecture for Generative Adversarial Networks.
+arXiv:1812.04948.                                                      Rivest, R. L.; Shamir, A.; and Adleman, L. 1978. A method
+                                                                       for obtaining digital signatures and public-key cryptosys-
+                                                                       tems. Communications of the ACM, 21(2): 120­126.
+
+                                                                 2565
+Sandler, M.; Howard, A.; Zhu, M.; Zhmoginov, A.; and                   Xu, K.; Zhang, Z.; and Ren, F. 2018. LAPRAN: A scal-
+Chen, L.-C. 2019. MobileNetV2: Inverted Residuals and                  able laplacian pyramid reconstructive adversarial network
+Linear Bottlenecks. arXiv:1801.04381.                                  for flexible compressive sensing reconstruction. Lecture
+                                                                       Notes in Computer Science (including subseries Lecture
+Schroff, F.; Kalenichenko, D.; and Philbin, J. 2015. FaceNet:          Notes in Artificial Intelligence and Lecture Notes in Bioin-
+A unified embedding for face recognition and clustering.               formatics), 11214 LNCS: 491­507.
+Proceedings of the IEEE Computer Society Conference
+on Computer Vision and Pattern Recognition, 07-12-June-                Yi, D.; Lei, Z.; Liao, S.; and Li, S. Z. 2014. Learning Face
+2015: 815­823.                                                         Representation from Scratch. arXiv:1411.7923.
+
+Sengupta, S.; Chen, J. C.; Castillo, C.; Patel, V. M.; Chel-           Yosinski, J.; Clune, J.; Bengio, Y.; and Lipson, H. 2014.
+lappa, R.; and Jacobs, D. W. 2016. Frontal to profile face             How transferable are features in deep neural networks? Ad-
+verification in the wild. 2016 IEEE Winter Conference on               vances in Neural Information Processing Systems, 4(Jan-
+Applications of Computer Vision, WACV 2016.                            uary): 3320­3328.
+
+Shen, J.; Liu, J.; Chen, Y.; and Li, H. 2019. Towards efficient        Zhang, H.; Chen, Y.; Ma, H.; Cheng, X.; Ren, Q.; Xi-
+and secure delivery of data for deep learning with privacy-            ang, L.; Shi, J.; and Zhang, Q. 2020. Rotation-Equivariant
+preserving. arXiv.                                                     Neural Networks for Privacy Protection. arXiv preprint
+                                                                       arXiv:2006.13016.
+Sirichotedumrong, W.; Kinoshita, Y.; and Kiya, H. 2019.
+Pixel-Based Image Encryption without Key Management                    Zhang, N.; and Deng, W. 2016. Labeled Faces in the Wild:
+for Privacy-Preserving Deep Neural Networks. IEEE Ac-                  A Database for Studying Face Recognition in Unconstrained
+cess, 7(Ml): 177844­177855.                                            Environments. 2016 International Conference on Biomet-
+                                                                       rics, ICB 2016, 1­11.
+Tanaka, M. 2018. Learnable image encryption. In 2018
+IEEE International Conference on Consumer Electronics-
+Taiwan (ICCE-TW), 1­2. IEEE.
+
+Tseng, B.; and Wu, P. 2020. Compressive Privacy Genera-
+tive Adversarial Network. IEEE Transactions on Informa-
+tion Forensics and Security, 15: 2499­2513.
+
+Wagh, S.; Gupta, D.; and Chandran, N. 2019. SecureNN:
+3-Party Secure Computation for Neural Network Training.
+Proceedings on Privacy Enhancing Technologies, 2019(3):
+26­49.
+
+Wagh, S.; Tople, S.; Benhamouda, F.; Kushilevitz, E.; Mit-
+tal, P.; and Rabin, T. 2021. F: Honest-Majority Maliciously
+Secure Framework for Private Deep Learning. Proceedings
+on Privacy Enhancing Technologies, 2021(1): 188­208.
+
+Wang, H.; Wang, Y.; Zhou, Z.; Ji, X.; Gong, D.; Zhou, J.; Li,
+Z.; and Liu, W. 2018. CosFace: Large Margin Cosine Loss
+for Deep Face Recognition. Proceedings of the IEEE Com-
+puter Society Conference on Computer Vision and Pattern
+Recognition, 5265­5274.
+
+Wang, H.; Wu, X.; Huang, Z.; and Xing, E. P. 2020. High-
+Frequency Component Helps Explain the Generalization
+of Convolutional Neural Networks. In 2020 IEEE/CVF
+Conference on Computer Vision and Pattern Recognition
+(CVPR), 8681­8691.
+
+Wu, C. Y.; Zaheer, M.; Hu, H.; Manmatha, R.; Smola, A. J.;
+and Krahenbuhl, P. 2018. Compressed Video Action Recog-
+nition. Proceedings of the IEEE Computer Society Confer-
+ence on Computer Vision and Pattern Recognition, 6026­
+6035.
+
+Xiang, L.; Ma, H.; Zhang, H.; Zhang, Y.; and Zhang, Q.
+2019. Complex-valued neural networks for privacy protec-
+tion. arXiv preprint arXiv:1901.09546.
+
+Xu, K.; Qin, M.; Sun, F.; Wang, Y.; Chen, Y. K.; and Ren,
+F. 2020. Learning in the frequency domain. Proceedings of
+the IEEE Computer Society Conference on Computer Vision
+and Pattern Recognition, 1737­1746.
+
+                                                                 2566
+
